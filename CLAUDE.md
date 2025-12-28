@@ -1352,6 +1352,474 @@ tests/
 
 ---
 
+## Rust Language Fundamentals
+
+This section covers core Rust concepts essential to understanding the projects in this repository. Understanding these concepts is crucial for debugging, extending, and learning from the code examples.
+
+### Ownership and Borrowing
+
+#### The Ownership System
+
+Rust's fundamental rule: **Each value has exactly one owner at a time**. When ownership is transferred (moved), the original binding becomes invalid.
+
+```rust
+// Example from queue project
+let mut q = Queue::new();
+let element = q.dequeue();  // ownership transferred from q to element
+
+// q still owns itself, but the returned element owns the value
+// This prevents double-free bugs
+```
+
+**The Three Ownership Rules**:
+1. Each value in Rust has one owner
+2. You can borrow the value immutably (multiple `&T`) or mutably (single `&mut T`)
+3. When the owner drops out of scope, the value is deallocated
+
+#### Borrowing vs Ownership Transfer
+
+```rust
+// Transfer ownership (move)
+fn takes_ownership(s: String) { /* ... */ }
+let s = String::from("hello");
+takes_ownership(s);      // s is moved, no longer valid
+// println!("{}", s);    // ERROR: s is no longer accessible
+
+// Borrow immutably (multiple readers OK)
+fn borrows_immutably(s: &String) { /* ... */ }
+let s = String::from("hello");
+borrows_immutably(&s);   // s is borrowed, still valid
+println!("{}", s);       // OK: s still accessible
+
+// Borrow mutably (single writer only)
+fn borrows_mutably(s: &mut String) { s.push_str(" world"); }
+let mut s = String::from("hello");
+borrows_mutably(&mut s); // s is borrowed mutably, still valid
+println!("{}", s);       // OK: prints "hello world"
+```
+
+**Borrowing Rules Prevent Data Races**:
+- Cannot have mutable references while immutable references exist
+- Cannot have multiple mutable references to same data
+- Compiler enforces at compile time (zero runtime cost)
+
+### Move vs Copy Semantics
+
+#### Types that Implement Copy
+
+Small, stack-allocated types are `Copy` by default:
+- **Integers**: `i32`, `u64`, etc.
+- **Floats**: `f32`, `f64`
+- **Booleans**: `bool`
+- **Tuples of Copy types**: `(i32, bool)`
+
+```rust
+let x = 5;
+let y = x;    // x is COPIED (not moved), x still valid
+println!("{}", x);  // OK: x still exists
+```
+
+#### Types that Are NOT Copy
+
+Large, heap-allocated types are moved:
+- **String**: Owned heap-allocated string
+- **Vec<T>**: Owned vector
+- **Box<T>**: Owned heap allocation
+- **Custom types** (unless they derive Copy)
+
+```rust
+let s = String::from("hello");
+let s2 = s;   // s is MOVED to s2, s no longer valid
+// println!("{}", s);  // ERROR: s was moved
+
+// From binary-tree project:
+let tree = BinaryTree { value: 5, left: None, right: None };
+let tree2 = tree;  // tree is moved, no longer valid
+```
+
+**When to Use Each**:
+- **Copy**: For small values (numbers, bools) - cheap to copy
+- **Move**: For large values (strings, collections) - cheap to move, expensive to copy
+- **Borrow**: When you just need to read/modify, don't need ownership
+
+### Lifetimes
+
+Lifetimes prevent dangling references. A lifetime is a scope during which a reference is valid.
+
+#### The Basic Rule
+
+**A reference cannot outlive the value it points to.**
+
+```rust
+fn example() {
+    let x = 42;
+    let r = &x;    // r references x
+    // x is dropped here, r becomes invalid
+    // println!("{}", r);  // ERROR: x no longer exists
+}
+```
+
+#### Lifetime Annotations in Functions
+
+When a function takes references, you must specify lifetimes:
+
+```rust
+// BAD: Compiler doesn't know which reference r should track
+// fn bad_borrow(x: &i32, y: &i32) -> &i32 {
+//     if x > y { x } else { y }
+// }  // ERROR: return type has unnamed lifetime
+
+// GOOD: Lifetimes make relationships explicit
+fn good_borrow<'a>(x: &'a i32, y: &'a i32) -> &'a i32 {
+    if x > y { x } else { y }
+}
+// 'a says: "The returned reference is valid as long as both x and y are valid"
+```
+
+#### Lifetimes in Structs
+
+From the `binary-tree` project, structs holding references need lifetime annotations:
+
+```rust
+// References in structs require explicit lifetimes
+struct Node<'a> {
+    value: i32,
+    parent: Option<&'a Node<'a>>,  // 'a says parent must outlive Node
+}
+
+fn use_node(parent: &Node) {
+    let child = Node {
+        value: 10,
+        parent: Some(parent),  // lifetime of child <= lifetime of parent
+    };
+    // child is dropped here, but parent is still valid
+}
+```
+
+#### Elision Rules (Lifetimes You Don't Write)
+
+Rust has rules to infer lifetimes in common cases:
+
+```rust
+// These three are equivalent due to elision rules:
+
+// 1. Explicit (verbose)
+fn find<'a>(haystack: &'a [i32], needle: i32) -> Option<&'a i32> {
+    haystack.iter().find(|&&x| x == needle)
+}
+
+// 2. Single input lifetime (elided)
+fn find(haystack: &[i32], needle: i32) -> Option<&i32> {
+    haystack.iter().find(|&&x| x == needle)
+}
+
+// 3. Borrow from self (elided)
+impl Node {
+    fn get_value(&self) -> &i32 {  // &'self automatically applied
+        &self.value
+    }
+}
+```
+
+### Common Pitfalls
+
+#### Pitfall 1: Unwrap on Result or Option
+
+```rust
+// BAD: Panics if value is None/Err
+let result = vec![1, 2, 3].get(10);
+let value = result.unwrap();  // Panic if index out of bounds
+
+// GOOD: Handle the error case
+match vec![1, 2, 3].get(10) {
+    Some(val) => println!("Found: {}", val),
+    None => println!("Not found"),
+}
+
+// OR use ? operator (see Error Handling section)
+fn safe_access() -> Option<i32> {
+    Some(vec![1, 2, 3].get(10)?)  // ? returns None on error
+}
+```
+
+#### Pitfall 2: Fighting the Borrow Checker
+
+```rust
+// BAD: Trying to modify while borrowed
+let s = String::from("hello");
+let r1 = &s;
+let r2 = &s;
+let r3 = &mut s;  // ERROR: can't borrow as mutable while borrowed immutably
+println!("{}, {}", r1, r2);
+
+// GOOD: Order borrows to avoid overlap
+let s = String::from("hello");
+let r1 = &s;
+let r2 = &s;
+println!("{}, {}", r1, r2);  // r1 and r2 no longer used
+let r3 = &mut s;  // OK: r1 and r2 are out of scope
+r3.push_str("!");
+```
+
+#### Pitfall 3: Unnecessary Cloning
+
+```rust
+// INEFFICIENT: Cloning expensive structures
+fn process_queue(q: Queue<i32>) {
+    let q_copy = q.clone();  // Expensive copy of entire queue
+    // ...
+}
+
+// EFFICIENT: Borrow instead
+fn process_queue(q: &Queue<i32>) {
+    // Process without taking ownership
+    for item in q.iter() { /* ... */ }
+}
+```
+
+#### Pitfall 4: String vs &str Confusion
+
+```rust
+// String: Owned, mutable, on heap
+let owned = String::from("hello");
+let owned2 = "string literal".to_string();
+
+// &str: Borrowed, immutable, slice of data
+let borrowed: &str = &owned;
+let borrowed2: &str = "string literal";
+
+// Functions should generally take &str to be flexible
+fn print_message(msg: &str) {  // Works with String, &str, literals
+    println!("{}", msg);
+}
+
+print_message(&owned);           // OK: coerces String to &str
+print_message("hello");          // OK: uses literal
+print_message(borrowed);         // OK: already &str
+```
+
+### Error Handling Patterns
+
+#### The ? Operator
+
+The `?` operator propagates errors up the call stack:
+
+```rust
+// From http-get project
+fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
+    let request = Request::new(url)?;      // If error, return early
+    let response = request.send()?;         // If error, return early
+    let text = response.text()?;            // If error, return early
+    Ok(text)                                // Success case
+}
+
+// Equivalent to:
+fn fetch_url_verbose(url: &str) -> Result<String, Box<dyn Error>> {
+    let request = match Request::new(url) {
+        Ok(r) => r,
+        Err(e) => return Err(e.into()),
+    };
+    let response = match request.send() {
+        Ok(r) => r,
+        Err(e) => return Err(e.into()),
+    };
+    match response.text() {
+        Ok(t) => Ok(t),
+        Err(e) => Err(e.into()),
+    }
+}
+```
+
+#### Custom Error Types
+
+```rust
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug)]
+enum MyError {
+    FileNotFound,
+    ParseError(String),
+}
+
+impl fmt::Display for MyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MyError::FileNotFound => write!(f, "File not found"),
+            MyError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+        }
+    }
+}
+
+impl Error for MyError {}
+
+// Use with ?
+fn read_config() -> Result<Config, MyError> {
+    let content = std::fs::read_to_string("config.toml")
+        .map_err(|_| MyError::FileNotFound)?;
+    parse_config(&content)
+        .map_err(|msg| MyError::ParseError(msg))
+}
+```
+
+#### Type Erasure with Box<dyn Error>
+
+```rust
+// Allows mixed error types in same function
+fn process() -> Result<(), Box<dyn std::error::Error>> {
+    let num: i32 = "42".parse()?;              // ParseIntError
+    std::fs::read_to_string("file.txt")?;      // io::Error
+    Ok(())
+}
+// The ? operator automatically converts to Box<dyn Error>
+```
+
+### Rust Idioms and Patterns
+
+#### Builder Pattern
+
+Useful for complex structs with optional fields:
+
+```rust
+// From actix-gcd project
+struct Request {
+    method: String,
+    path: String,
+    params: HashMap<String, String>,
+}
+
+impl Request {
+    fn new(method: &str, path: &str) -> Self {
+        Request {
+            method: method.to_string(),
+            path: path.to_string(),
+            params: HashMap::new(),
+        }
+    }
+
+    fn with_param(mut self, key: &str, value: &str) -> Self {
+        self.params.insert(key.to_string(), value.to_string());
+        self  // Return modified self
+    }
+
+    fn build(self) -> Self { self }
+}
+
+// Usage: fluent, chainable API
+let req = Request::new("GET", "/path")
+    .with_param("q", "search")
+    .with_param("limit", "10")
+    .build();
+```
+
+#### Newtype Pattern
+
+Create a distinct type without runtime cost:
+
+```rust
+// Prevents mixing up different numeric IDs
+struct UserId(u32);
+struct ProductId(u32);
+
+// Cannot accidentally mix these:
+fn get_user(id: UserId) -> User { /* ... */ }
+let user_id = UserId(42);
+let product_id = ProductId(42);
+get_user(product_id);  // ERROR: type mismatch
+```
+
+#### RAII (Resource Acquisition Is Initialization)
+
+Resources are automatically cleaned up when values drop:
+
+```rust
+// File is automatically closed when file goes out of scope
+fn read_file(path: &str) -> io::Result<String> {
+    let file = std::fs::File::open(path)?;
+    let mut buf = String::new();
+    std::io::Read::read_to_string(&mut file, &mut buf)?;
+    // file is dropped here, automatically closed
+    Ok(buf)
+}
+// No need for explicit close or try/finally
+```
+
+### Anti-Patterns to Avoid
+
+#### Anti-Pattern 1: Excessive Cloning
+
+```rust
+// ❌ AVOID
+fn process(data: Vec<i32>) {
+    let copy1 = data.clone();
+    let copy2 = data.clone();
+    let copy3 = data.clone();
+    // Three expensive clones!
+}
+
+// ✅ PREFER
+fn process(data: &Vec<i32>) {
+    let copy1 = data;
+    // Can reference same data multiple times
+}
+```
+
+#### Anti-Pattern 2: Panicking in Libraries
+
+```rust
+// ❌ AVOID (in libraries)
+pub fn process(input: &str) -> String {
+    let num = input.parse::<i32>().unwrap();  // Panics on bad input
+    format!("Processed: {}", num)
+}
+
+// ✅ PREFER (in libraries)
+pub fn process(input: &str) -> Result<String, std::num::ParseIntError> {
+    let num = input.parse::<i32>()?;
+    Ok(format!("Processed: {}", num))
+}
+```
+
+#### Anti-Pattern 3: Catching All Errors
+
+```rust
+// ❌ AVOID
+match do_something() {
+    Ok(val) => println!("Success: {}", val),
+    Err(_) => println!("Failed"),  // Lost error details
+}
+
+// ✅ PREFER
+match do_something() {
+    Ok(val) => println!("Success: {}", val),
+    Err(e) => eprintln!("Failed: {}", e),  // Log error details
+}
+```
+
+### Quick Reference: Core Concepts
+
+| Concept | Definition | Example |
+|---------|-----------|---------|
+| **Ownership** | One owner per value | `let s = String::from("hi");` |
+| **Move** | Ownership transfer | `let s2 = s;` (s invalid) |
+| **Copy** | Value duplication (cheap types) | `let x = 5; let y = x;` (x still valid) |
+| **Borrow** | Temporary reference | `let r = &s;` |
+| **Mutable Borrow** | Mutable reference | `let r = &mut s;` |
+| **Lifetime** | Scope of reference validity | `fn f<'a>(x: &'a i32)` |
+| **Option<T>** | Value or nothing | `Some(val)` or `None` |
+| **Result<T,E>** | Success or error | `Ok(val)` or `Err(err)` |
+| **? Operator** | Error propagation | `value?` returns early on error |
+| **Drop** | Cleanup when value dropped | Implements `Drop` trait |
+
+### Learning Resources
+
+- **The Rust Book** (https://doc.rust-lang.org/book/): Chapters 4-8 cover ownership, references, slices
+- **Rust API Guidelines** (https://rust-lang.github.io/api-guidelines/): Best practices for library design
+- **Rustlings** (https://github.com/rust-lang/rustlings): Interactive exercises for core concepts
+- **Reference** (https://doc.rust-lang.org/reference/): Formal language specification
+
+---
+
 ## Development Workflows
 
 ### Setting Up a Project for Work
