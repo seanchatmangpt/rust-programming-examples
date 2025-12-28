@@ -1,5 +1,182 @@
 # Programming Rust: Code Examples
 
+---
+
+## Quick Reference
+
+### Most Common Commands
+
+```bash
+# Cargo essentials
+cargo build                  # Compile the project
+cargo build --release       # Optimized build
+cargo test                  # Run tests
+cargo run                   # Execute binary
+cargo run -- <args>         # Run with arguments
+cargo check                 # Check without building
+cargo fmt                   # Format code
+cargo clippy               # Lint with clippy
+cargo doc --open           # Generate and view docs
+
+# Git workflow for this feature branch
+git checkout -b feature/<name>
+git add <files>
+git commit -m "type: description"
+git push -u origin claude/create-claude-documentation-rCOwU
+gh pr create --title "Title" --body "Description"
+
+# Testing variations
+cargo test -- --nocapture           # Show output
+cargo test -- --test-threads=1      # Sequential
+cargo test <test_name>              # Specific test
+cargo test --lib                    # Unit tests only
+cargo test --test '*'               # Integration tests only
+```
+
+---
+
+## Table of Contents
+
+- [Quick Reference](#quick-reference)
+- [Project Overview](#project-overview)
+- [Stack & Versions](#stack--versions)
+- [Before You Begin (Setup & Environment)](#before-you-begin-setup--environment)
+- [Repository Map](#repository-map)
+- [Standard Commands](#standard-commands)
+- [Code Style & Conventions](#code-style--conventions)
+- [Rust Language Fundamentals](#rust-language-fundamentals)
+- [Development Workflows](#development-workflows)
+- [Debugging & Development Tools](#debugging--development-tools)
+- [Testing Strategy](#testing-strategy)
+- [Advanced Testing Strategies](#advanced-testing-strategies)
+- [Git & Branch Conventions](#git--branch-conventions)
+- [Advanced Git & DevOps](#advanced-git--devops)
+- [CI/CD & Deployment](#cicd--deployment)
+- [AI Assistant Guidelines](#ai-assistant-guidelines)
+- [Security & Compliance](#security--compliance)
+- [Troubleshooting Common Issues](#troubleshooting-common-issues)
+- [Best Practices Summary for AI Assistants](#best-practices-summary-for-ai-assistants)
+- [Additional Resources](#additional-resources)
+- [Document History](#document-history)
+- [Questions for AI Assistants](#questions-for-ai-assistants)
+- [Glossary](#glossary)
+- [Workflow Diagrams](#workflow-diagrams)
+
+---
+
+## Glossary
+
+| Acronym | Definition | Context |
+|---------|-----------|---------|
+| **FFI** | Foreign Function Interface | C interop (libgit2-rs projects) |
+| **MSRV** | Minimum Supported Rust Version | Project compatibility baseline (1.56+) |
+| **RPN** | Risk Priority Number | Documentation gap severity scoring |
+| **RAII** | Resource Acquisition Is Initialization | Rust memory management pattern |
+| **TOCTOU** | Time-of-Check-Time-of-Use | Security vulnerability pattern |
+| **ASAN** | AddressSanitizer | Memory safety testing tool |
+| **MSAN** | MemorySanitizer | Uninitialized memory detection |
+| **TSAN** | ThreadSanitizer | Data race detection tool |
+| **MCP** | Model Context Protocol | Tool integration standard for Claude Code |
+| **CI/CD** | Continuous Integration/Continuous Deployment | GitHub Actions automation |
+| **PR** | Pull Request | GitHub code review mechanism |
+| **RPN** | Risk Priority Number | FMEA severity metric |
+
+---
+
+## Workflow Diagrams
+
+### Development Workflow
+
+```
+START (Pick a Project)
+  │
+  ├─→ cd <project-name>
+  │    │
+  │    ├─→ cargo build
+  │    │    ├─→ Success → proceed
+  │    │    └─→ Failure → fix compiler errors
+  │    │
+  │    ├─→ cargo test
+  │    │    ├─→ All pass → ready for changes
+  │    │    └─→ Failures → investigate existing code
+  │    │
+  │    └─→ cargo run (if binary)
+  │         └─→ Verify behavior
+  │
+  ├─→ Make changes
+  │    ├─→ Add new code
+  │    ├─→ Modify existing code
+  │    └─→ Write tests for new functionality
+  │
+  ├─→ Verify changes
+  │    ├─→ cargo build
+  │    ├─→ cargo test
+  │    ├─→ cargo fmt (format code)
+  │    ├─→ cargo clippy (check for warnings)
+  │    └─→ cargo doc (verify docs generate)
+  │
+  └─→ Review and commit (see Git Workflow below)
+```
+
+### Git Workflow
+
+```
+START (Feature Branch Development)
+  │
+  ├─→ git checkout -b feature/<description>
+  │    └─→ Branch created locally
+  │
+  ├─→ Make changes (iterate development cycle)
+  │    ├─→ Edit code
+  │    ├─→ cargo test (verify locally)
+  │    ├─→ git status (see what changed)
+  │    └─→ git diff (review changes)
+  │
+  ├─→ Commit changes
+  │    ├─→ git add <files>
+  │    └─→ git commit -m "type: description"
+  │         └─→ Follow conventional commit format
+  │
+  ├─→ Optional: repeat changes and commits
+  │
+  ├─→ Push to remote
+  │    └─→ git push -u origin claude/create-claude-documentation-rCOwU
+  │         └─→ Creates remote tracking branch
+  │
+  ├─→ Create pull request
+  │    └─→ gh pr create --title "Title" --body "Description"
+  │         ├─→ Links commits to PR
+  │         └─→ Enables code review
+  │
+  └─→ Merge (after review) or iterate
+```
+
+### Testing Workflow
+
+```
+Code Change
+  │
+  ├─→ Unit Tests (in src/)
+  │    ├─→ cargo test --lib
+  │    └─→ Tests within modules using #[test]
+  │
+  ├─→ Integration Tests (in tests/)
+  │    ├─→ cargo test --test '*'
+  │    └─→ Tests treating code as external library
+  │
+  ├─→ Doc Tests (in /// comments)
+  │    ├─→ cargo test --doc
+  │    └─→ Tests embedded in documentation
+  │
+  ├─→ Full Test Suite
+  │    ├─→ cargo test (all tests)
+  │    └─→ cargo test -- --nocapture (show output)
+  │
+  └─→ Result: All tests pass → Ready for commit
+```
+
+---
+
 ## Project Overview
 
 This is the **official code examples repository** for "Programming Rust" by Jim Blandy, Jason Orendorff, and Leonora Tindall. It contains 24 complete, self-contained Rust projects organized by book chapter, demonstrating Rust language features, patterns, and best practices.
@@ -28,6 +205,230 @@ Each subdirectory is an independent Rust project with its own `Cargo.toml` file,
 | FFI | libgit2-rs, libgit2-rs-safe | Manual C bindings | — |
 | Macros | json-macro | (procedural macros) | — |
 | Testing | fern_sim, spawn-blocking | — | — |
+
+---
+
+## Before You Begin (Setup & Environment)
+
+### Installation Requirements
+
+#### Rust & Cargo
+
+Before working with these projects, you need Rust installed. **Most of this work depends on it.**
+
+**macOS**:
+```bash
+# Using Homebrew (recommended)
+brew install rust
+
+# Or using rustup (official installer)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+# Verify installation
+rustc --version && cargo --version
+```
+
+**Linux (Ubuntu/Debian)**:
+```bash
+# Using apt (Ubuntu 22.04+)
+sudo apt-get install rustc cargo
+
+# Or using rustup (official, recommended for latest)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+```
+
+**Linux (Fedora/RHEL)**:
+```bash
+# Using dnf
+sudo dnf install rust cargo
+
+# Or using rustup for latest
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+```
+
+**Windows**:
+```powershell
+# Download and run: https://rustup.rs/
+# Follow the installer prompts
+# Verify in new PowerShell window:
+rustc --version
+cargo --version
+```
+
+**IMPORTANT**: Ensure you're using Rust 1.56 or later (this repository targets 1.56+):
+```bash
+# Update if needed
+rustup update
+rustc --version  # Should show 1.56.0 or later
+```
+
+#### Git & GitHub CLI
+
+**macOS**:
+```bash
+# Install Git
+brew install git
+
+# Install GitHub CLI
+brew install gh
+
+# Verify
+git --version && gh --version
+```
+
+**Linux (Ubuntu/Debian)**:
+```bash
+# Install Git (usually pre-installed)
+sudo apt-get install git
+
+# Install GitHub CLI
+sudo apt-get install gh
+
+# Verify
+git --version && gh --version
+```
+
+**Windows**:
+```powershell
+# Download Git: https://git-scm.com/download/win
+# Download GitHub CLI: https://github.com/cli/cli/releases
+# Or via Chocolatey:
+choco install git gh
+```
+
+#### Additional Dependencies (Project-Specific)
+
+Some projects require system libraries:
+
+**For libgit2-rs projects** (FFI bindings):
+- **macOS**: `brew install libgit2`
+- **Ubuntu/Debian**: `sudo apt-get install libgit2-dev`
+- **Fedora**: `sudo dnf install libgit2-devel`
+
+**For other projects**: Most are pure Rust with external crate dependencies handled automatically by Cargo.
+
+### Environment Verification Checklist
+
+Run these commands to verify your setup is complete:
+
+```bash
+# Rust
+rustc --version          # Should show 1.56.0 or later
+cargo --version          # Should show 1.x.x
+rustup --version         # Should show recent version
+
+# Git
+git --version            # Should show 2.x.x or later
+git config --global user.name "Your Name"  # Configure if needed
+git config --global user.email "you@example.com"
+
+# GitHub CLI
+gh --version             # Should show 2.x.x or later
+gh auth status           # Check authentication status
+
+# Cargo tools (optional but useful)
+cargo fmt --version      # Code formatter (usually pre-installed)
+cargo clippy --version   # Linter (usually pre-installed)
+```
+
+If any command fails, refer to the installation section above for your platform.
+
+### First 5 Minutes: Quick Start with GCD Project
+
+Once you have Rust, Git, and GitHub CLI installed, test your setup:
+
+```bash
+# 1. Clone or navigate to the repository
+cd rust-programming-examples
+
+# 2. Build the simplest project (gcd - greatest common divisor)
+cd gcd
+cargo build
+
+# 3. Run the built binary with test data
+cargo run 42 56 64
+# Expected output: largest common denominator of the arguments
+
+# 4. Run the project's tests
+cargo test
+
+# 5. Read the source code
+cat src/lib.rs          # Library code
+cat src/main.rs         # Command-line interface
+
+# 6. Make a simple change (e.g., modify a comment in main.rs)
+# Then verify it compiles:
+cargo build
+cargo test
+
+# 7. Back out of the project
+cd ..
+```
+
+**If this works**, your Rust development environment is correctly set up.
+
+### Learning Path Progression
+
+**Start Here** (Absolute Beginner):
+1. **gcd** (30 min) - CLI basics, functions, loops
+2. **queue** (45 min) - Structs, methods, ownership
+3. **complex** (1 hr) - Operator overloading, traits
+
+**Then Move To** (Intermediate):
+4. **binary-tree** (1.5 hrs) - Enums, pattern matching, iterators
+5. **grep** (1 hr) - File I/O, command-line arguments
+6. **actix-gcd** (1.5 hrs) - Web frameworks, HTTP, async basics
+
+**Advanced Topics** (When Ready):
+- **Async**: cheapo-request → many-requests → spawn-blocking
+- **Unsafe**: ascii → ref-with-flag → gap-buffer
+- **Systems**: libgit2-rs → libgit2-rs-safe (FFI patterns)
+
+### Common First-Time Issues & Solutions
+
+**Issue**: `error: could not compile` after installation
+- **Check**: Run `rustc --version` - must be 1.56+
+- **Solution**: Run `rustup update` to upgrade Rust
+
+**Issue**: `command not found: cargo` (on Linux)
+- **Check**: Is `~/.cargo/bin` in your `$PATH`?
+- **Solution**: Add to `~/.bashrc` or `~/.zshrc`:
+  ```bash
+  export PATH="$HOME/.cargo/bin:$PATH"
+  ```
+  Then: `source ~/.bashrc` and restart terminal
+
+**Issue**: `cargo: permission denied` (on macOS/Linux)
+- **Solution**: Ensure Rust is executable:
+  ```bash
+  chmod +x ~/.cargo/bin/cargo
+  ```
+
+**Issue**: `error: failed to fetch <crate>` (network timeout)
+- **Solution**: Try again, or temporarily use mirror:
+  ```bash
+  # Create ~/.cargo/config.toml
+  [source.crates-io]
+  replace-with = 'tsinghua'
+
+  [source.tsinghua]
+  registry = "https://mirrors.tsinghua.edu.cn/git/crates.io-index.git"
+  ```
+
+**Issue**: libgit2 not found (for libgit2-rs project)
+- **Solution**: Install system dependency:
+  - macOS: `brew install libgit2`
+  - Linux: `sudo apt-get install libgit2-dev` (Debian) or `sudo dnf install libgit2-devel` (Fedora)
+
+### Key Assumptions
+
+- You have a terminal/command-line interface available
+- You have internet connectivity for downloading Rust and crates
+- You have write access to your home directory (`~`)
+- For FFI projects, you may need a C compiler (`gcc`/`clang`) - usually pre-installed
 
 ---
 
@@ -1293,23 +1694,377 @@ Ask the developer (not just assume) about:
 
 ## Security & Compliance
 
-### Code Safety
+### Unsafe Code Safety
 
-- **Unsafe code**: Clearly documented in `ascii`, `ref-with-flag`, `gap-buffer` projects
-- **Invariants**: Documented when unsafe code relies on assumptions
-- **Public APIs**: Should be safe to use (unsafe hidden in implementation)
+Unsafe code appears in three projects in this repository: `ascii`, `ref-with-flag`, and `gap-buffer`. These examples demonstrate safe abstractions over unsafe internals.
 
-### Dependencies
+#### SAFETY Comment Pattern
 
-- **Minimize external crates**: Most examples use few dependencies
-- **Review transitive dependencies**: Check `cargo tree` output
-- **Security updates**: Keep dependencies current for security patches
+All unsafe code must be documented with a SAFETY comment explaining the invariants being maintained:
 
-### Testing Security
+```rust
+pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &Ascii {
+    // SAFETY: Ascii is a transparent wrapper around [u8], so converting a &[u8]
+    // to &Ascii is safe as long as the bytes are valid ASCII. The caller must
+    // ensure all bytes are in the range 0x00..0x7f.
+    std::mem::transmute(bytes)
+}
+```
 
-- **Input validation**: Test edge cases and invalid inputs
-- **Error handling**: Don't panic on bad input (use Result types)
-- **Unsafe boundaries**: Test assumptions made by unsafe code
+#### Unsafe Code Checklist
+
+Before writing unsafe code, verify:
+- ✅ **Documented invariants**: Every unsafe block has a SAFETY comment
+- ✅ **Minimal scope**: Unsafe code is isolated in dedicated functions
+- ✅ **Bounds checking**: Pointer operations have explicit bounds verification
+- ✅ **Lifetime safety**: References don't outlive the data they point to
+- ✅ **Drop safety**: Custom drop implementations don't violate memory safety
+- ✅ **Panic safety**: Unsafe code doesn't assume panics won't happen (use catch_unwind if needed)
+
+### Memory Safety Considerations
+
+#### Move vs Copy Semantics
+- **Default behavior**: Types are moved (ownership transferred)
+- **Copy types**: Primitives and simple aggregates implement `Copy`
+- **String handling**: Use `String` for owned data, `&str` for borrowed
+- **Heap allocations**: Vectors, boxes require careful ownership management
+
+**Memory Safety Checklist**:
+- ✅ No double-frees (ownership ensures this automatically)
+- ✅ No use-after-free (borrow checker prevents this)
+- ✅ No null pointer dereferences (use `Option<T>` instead)
+- ✅ No uninitialized memory (Rust initializes all variables)
+
+### Dependency Vulnerability Scanning
+
+#### cargo-audit: Check for Known Vulnerabilities
+
+```bash
+# Install audit tool
+cargo install cargo-audit
+
+# Scan for security advisories
+cd <project>
+cargo audit
+
+# Output shows CVEs, severity levels, and remediation
+```
+
+#### cargo-deny: Advanced Dependency Policy
+
+Create `deny.toml` in project root:
+
+```toml
+[advisories]
+vulnerability = "deny"  # Deny vulnerable crates
+unmaintained = "warn"   # Warn for unmaintained crates
+
+[licenses]
+allow = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"]
+deny = ["GPL-2.0", "AGPL-3.0"]  # Customize as needed
+
+[sources]
+allow-git = []  # Restrict git dependencies
+```
+
+Use in CI/CD:
+```bash
+cargo install cargo-deny
+cargo deny check
+```
+
+#### GitHub Dependabot Configuration
+
+Add `.github/dependabot.yml`:
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-type: "all"
+```
+
+This automatically:
+- Checks for dependency updates weekly
+- Creates pull requests for minor/patch updates
+- Requires manual approval for major updates
+
+### FFI Safety Guidelines
+
+For projects using Foreign Function Interface (`libgit2-rs`, `libgit2-rs-safe`):
+
+#### Null Pointer Checks
+
+```rust
+// SAFETY: libgit2_init is a C function that can return null on failure
+let repo = unsafe {
+    let raw_repo = git_repository_open(path.as_ptr());
+    if raw_repo.is_null() {
+        return Err("Failed to open repository".into());
+    }
+    raw_repo
+};
+```
+
+#### Ownership Transfer
+
+```rust
+// SAFETY: After calling free_resource, the pointer is invalid.
+// We must NOT use it again. Rust's type system enforces this.
+unsafe {
+    free_resource(ptr);
+}
+// ptr is no longer accessible here
+```
+
+#### Panic Safety with C Code
+
+```rust
+// SAFETY: Must not panic while holding C resources
+struct CResource {
+    ptr: *mut CStruct,
+}
+
+impl Drop for CResource {
+    fn drop(&mut self) {
+        // This must not panic - C doesn't understand Rust unwinding
+        unsafe {
+            free_resource(self.ptr);
+        }
+    }
+}
+```
+
+### Secure Coding Practices
+
+#### Input Validation
+
+- **Command-line arguments**: Validate before use (grep, copy projects)
+- **File paths**: Resolve and canonicalize to prevent path traversal
+- **User data**: Never trust external input - validate and sanitize
+- **Network data**: Assume all network input is malicious
+
+Example:
+```rust
+use std::path::Path;
+
+fn safe_file_access(user_path: &str) -> Result<String> {
+    let canonical = std::fs::canonicalize(user_path)?;
+    // Verify it's within allowed directory
+    if !canonical.starts_with("/allowed/base") {
+        return Err("Path traversal attempt".into());
+    }
+    std::fs::read_to_string(canonical)
+}
+```
+
+#### TOCTOU Prevention (Time-of-Check-Time-of-Use)
+
+**Vulnerable**: Check then use (file could change between)
+```rust
+// ❌ WRONG: File could be replaced between check and open
+if std::fs::exists(path) {
+    std::fs::read_to_string(path)
+}
+```
+
+**Secure**: Atomic operation
+```rust
+// ✅ RIGHT: Single atomic operation
+std::fs::read_to_string(path)
+```
+
+#### Secrets Management
+
+- **Never commit secrets**: Add to `.gitignore`
+- **Use environment variables**: `std::env::var("SECRET_KEY")?`
+- **Scrub from logs**: Remove sensitive data from error messages
+- **Constant-time comparison**: Use `subtle` crate for password/token comparison
+
+```rust
+// Bad - timing attack vulnerability
+if password_hash == user_input {  // ❌ Can be timed
+    authenticate()
+}
+
+// Good - constant-time comparison
+use subtle::ConstantTimeComparison;
+if password_hash.ct_eq(&user_input) {  // ✅ Timing-safe
+    authenticate()
+}
+```
+
+### Supply Chain Security
+
+#### Cargo.lock Usage
+
+- **Libraries**: Don't commit `Cargo.lock` (lock files in binaries only)
+- **Binaries/Applications**: Always commit `Cargo.lock`
+- **Reproducibility**: Allows exact dependency reproduction
+
+#### Dependency Vendoring
+
+For offline or locked environments:
+```bash
+cargo vendor                    # Download all dependencies
+# Then in .cargo/config.toml:
+# [source.crates-io]
+# replace-with = "vendored-sources"
+# [source."https://github.com/rust-crates/..." ]
+# replace-with = "vendored-sources"
+# [source.vendored-sources]
+# directory = "vendor"
+```
+
+#### Typosquatting Protection
+
+Review all dependencies for:
+- ✅ Correct official crate names (check crates.io directly)
+- ✅ Repository URLs (must be official GitHub organization)
+- ✅ Publish history (legitimate crates have long histories)
+- ✅ Suspicious downloads (outliers in download patterns)
+
+**Example**: Use `cargo tree` to understand dependency graph:
+```bash
+cargo tree --depth 1
+# Shows immediate dependencies and their sources
+```
+
+### Security Review Process
+
+Before each release, perform this checklist:
+
+#### Code Review
+- [ ] All unsafe code has SAFETY comments
+- [ ] No secrets in git history (use `git log -p | grep -i password`)
+- [ ] Input validation for all external data
+- [ ] Error messages don't leak sensitive information
+- [ ] Panic messages are safe (no secrets)
+
+#### Dependency Review
+- [ ] Run `cargo audit` - all advisories resolved
+- [ ] Run `cargo deny check` - license and source policies met
+- [ ] `cargo tree` reviewed for unexpected dependencies
+- [ ] No git dependencies (unless intentional and reviewed)
+
+#### Cryptographic Safety
+
+If using `ring`, `rustls`, or similar crypto crates:
+- ✅ Use library's random generation (don't invent your own)
+- ✅ Use constant-time operations where needed
+- ✅ Keep libraries updated (crypto breaks frequently)
+- ✅ Never roll your own cryptography
+
+### Async Safety
+
+#### Send and Sync Bounds
+
+```rust
+// SAFETY: Must verify future is Send if used across threads
+// Some async operations (blocking_read) are NOT Send
+fn spawn_safe<F>(future: F)
+where
+    F: Future + Send + 'static,
+{
+    tokio::spawn(future);
+}
+```
+
+#### Blocking in Async Context
+
+```rust
+// ❌ WRONG: Blocks executor thread
+async fn bad() {
+    std::thread::sleep(Duration::from_secs(1));  // BLOCKS!
+}
+
+// ✅ RIGHT: Yields to executor
+async fn good() {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+}
+
+// ✅ RIGHT: Move blocking to thread
+async fn blocking_safe() {
+    tokio::task::spawn_blocking(|| {
+        std::thread::sleep(Duration::from_secs(1));
+    }).await;
+}
+```
+
+### Security Testing
+
+#### Fuzzing
+
+For projects handling untrusted input (like parsers):
+```bash
+# Install cargo-fuzz
+cargo install cargo-fuzz
+
+# Initialize fuzzing
+cargo +nightly fuzz init
+
+# Create fuzz target in fuzz/fuzz_targets/
+# Run with: cargo +nightly fuzz run <target>
+```
+
+#### Property-Based Testing
+
+Using `proptest` for comprehensive test coverage:
+```rust
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn test_any_input(s in ".*") {
+            // Property should hold for ANY input
+            assert!(parse(&s).is_ok());
+        }
+    }
+}
+```
+
+#### Sanitizers
+
+Run with memory/thread sanitizers:
+```bash
+# AddressSanitizer (memory bugs)
+RUSTFLAGS="-Zsanitizer=address" cargo test
+
+# ThreadSanitizer (data races)
+RUSTFLAGS="-Zsanitizer=thread" cargo test
+
+# Requires nightly Rust:
+rustup default nightly
+```
+
+### Quick Security Checklist
+
+Before committing code:
+```bash
+# 1. Run tests
+cargo test
+
+# 2. Check for security advisories
+cargo audit
+
+# 3. Check for unsafe code issues
+cargo clippy -- -W rust-2018-idioms
+
+# 4. Verify no secrets in git
+git log -p --all -S "password\|secret\|token" | head -20
+
+# 5. Format code (prevents subtle bugs)
+cargo fmt
+
+# 6. Full verification
+cargo test && cargo audit && cargo clippy
+```
 
 ---
 
