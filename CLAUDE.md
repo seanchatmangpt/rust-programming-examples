@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is the **official code examples repository** for "Programming Rust" by Jim Blandy, Jason Orendorff, and Leonora Tindall. It contains 25 complete, self-contained Rust projects organized by book chapter, demonstrating Rust language features, patterns, and best practices.
+This is the **official code examples repository** for "Programming Rust" by Jim Blandy, Jason Orendorff, and Leonora Tindall. It contains 24 complete, self-contained Rust projects organized by book chapter, demonstrating Rust language features, patterns, and best practices.
 
 Each subdirectory is an independent Rust project with its own `Cargo.toml` file, buildable and testable in isolation.
 
@@ -74,8 +74,8 @@ rust-programming-examples/
 ├── ref-with-flag/                     # Ch. 22: Raw pointers
 ├── gap-buffer/                        # Ch. 22: Pointer arithmetic
 │
-└── libgit2-rs/                        # Ch. 22 FFI: Unsafe FFI bindings
-    libgit2-rs-safe/                   # Ch. 22 FFI: Safe wrapper around libgit2
+├── libgit2-rs/                        # Ch. 22 FFI: Unsafe FFI bindings
+└── libgit2-rs-safe/                   # Ch. 22 FFI: Safe wrapper around libgit2
 ```
 
 ### Project Categories by Purpose
@@ -98,6 +98,657 @@ rust-programming-examples/
 - **FFI**: `libgit2-rs`, `libgit2-rs-safe`
 - **Macros**: `json-macro`
 - **Modules**: `fern_sim`
+
+---
+
+## Project Difficulty & Learning Paths
+
+This section organizes all 24 projects by difficulty level, estimated completion time, and key learning concepts. Use this guide to plan your learning journey through the repository.
+
+### Difficulty Legend
+
+- 🟢 **Beginner**: Fundamental Rust concepts, minimal complexity, single-file implementations
+- 🟡 **Intermediate**: Multi-file projects, advanced traits, moderate external dependencies
+- 🔴 **Advanced**: Unsafe code, FFI, async runtime internals, macros, complex architecture
+
+### Complete Project Catalog
+
+| Project | Chapter | Difficulty | Est. Time | Key Concepts | Type |
+|---------|---------|------------|-----------|--------------|------|
+| **gcd** | Ch. 2 | 🟢 Beginner | 30 min | CLI args, functions, loops | Binary |
+| **actix-gcd** | Ch. 2 | 🟡 Intermediate | 1.5 hrs | Web framework, HTTP, routing, forms | Binary |
+| **fern_sim** | Ch. 8 | 🟡 Intermediate | 2 hrs | Module structure, visibility, organization | Library |
+| **queue** | Ch. 9 | 🟢 Beginner | 45 min | Structs, methods, ownership | Library |
+| **generic-queue** | Ch. 9 | 🟡 Intermediate | 1 hr | Generic types, type parameters, constraints | Library |
+| **binary-tree** | Ch. 10 & 15 | 🟡 Intermediate | 2 hrs | Enums, recursive types, iterators | Library |
+| **complex** | Ch. 12 & 17 | 🟢 Beginner | 1 hr | Operator overloading, Add/Sub/Mul traits | Library |
+| **interval** | Ch. 12 | 🟡 Intermediate | 1 hr | PartialOrd, trait bounds, comparisons | Library |
+| **basic-router** | Ch. 14 | 🟡 Intermediate | 1.5 hrs | Closures, callbacks, function types | Library |
+| **grep** | Ch. 18 | 🟡 Intermediate | 2 hrs | I/O, error handling, CLI tools | Binary |
+| **copy** | Ch. 18 | 🟡 Intermediate | 1.5 hrs | Filesystem, recursion, path handling | Binary |
+| **echo-server** | Ch. 18 | 🟢 Beginner | 1 hr | TCP networking, basic I/O | Binary |
+| **http-get** | Ch. 18 | 🟢 Beginner | 45 min | HTTP client, reqwest, blocking I/O | Binary |
+| **cheapo-request** | Ch. 20 | 🟡 Intermediate | 2 hrs | async/await basics, async-std, futures | Binary |
+| **many-requests** | Ch. 20 | 🟡 Intermediate | 2 hrs | Concurrent async, join operations | Binary |
+| **many-requests-surf** | Ch. 20 | 🟡 Intermediate | 1.5 hrs | Surf crate, async HTTP patterns | Binary |
+| **spawn-blocking** | Ch. 20 | 🔴 Advanced | 3 hrs | Custom async primitives, executor internals | Library |
+| **block-on** | Ch. 20 | 🔴 Advanced | 2.5 hrs | Simple executor implementation, polling | Library |
+| **json-macro** | Ch. 21 | 🔴 Advanced | 4 hrs | Procedural macros, TokenStream, syntax | Library |
+| **ascii** | Ch. 22 | 🔴 Advanced | 2 hrs | Unsafe blocks, transmute, invariants | Library |
+| **ref-with-flag** | Ch. 22 | 🔴 Advanced | 2.5 hrs | Raw pointers, bit manipulation, unsafe | Library |
+| **gap-buffer** | Ch. 22 | 🔴 Advanced | 3 hrs | Pointer arithmetic, Vec internals, unsafe | Library |
+| **libgit2-rs** | Ch. 22 | 🔴 Advanced | 4 hrs | FFI, C bindings, extern blocks, raw types | Library |
+| **libgit2-rs-safe** | Ch. 22 | 🔴 Advanced | 3 hrs | Safe wrapper design, lifetime management | Library |
+
+### Project Distribution by Difficulty
+
+**🟢 Beginner (6 projects)**: `gcd`, `queue`, `complex`, `echo-server`, `http-get`, and parts of `interval`
+- Total estimated time: ~6 hours
+- Focus: Core Rust syntax, basic ownership, simple traits
+
+**🟡 Intermediate (11 projects)**: `actix-gcd`, `fern_sim`, `generic-queue`, `binary-tree`, `interval`, `basic-router`, `grep`, `copy`, `cheapo-request`, `many-requests`, `many-requests-surf`
+- Total estimated time: ~18-20 hours
+- Focus: Advanced traits, generics, async basics, multi-module architecture
+
+**🔴 Advanced (7 projects)**: `spawn-blocking`, `block-on`, `json-macro`, `ascii`, `ref-with-flag`, `gap-buffer`, `libgit2-rs`, `libgit2-rs-safe`
+- Total estimated time: ~24 hours
+- Focus: Unsafe code, FFI, macro systems, runtime internals
+
+### Learning Time Estimates
+
+**Quick Introduction** (1-3 hours per project):
+- `gcd`, `queue`, `complex`, `echo-server`, `http-get`
+- Ideal for first exposure to Rust concepts
+
+**Moderate Depth** (1.5-2.5 hours per project):
+- `actix-gcd`, `fern_sim`, `generic-queue`, `binary-tree`, `grep`, `copy`, `cheapo-request`, `many-requests`
+- Require understanding of intermediate concepts
+
+**Deep Dive** (3-4 hours per project):
+- `spawn-blocking`, `json-macro`, `gap-buffer`, `libgit2-rs`, `libgit2-rs-safe`
+- Demand careful study and experimentation
+
+### Concept Coverage Map
+
+| Concept | Beginner Projects | Intermediate Projects | Advanced Projects |
+|---------|------------------|----------------------|-------------------|
+| **Ownership & Borrowing** | gcd, queue | generic-queue, binary-tree | gap-buffer, ascii |
+| **Structs & Enums** | queue, complex | binary-tree, interval | ref-with-flag |
+| **Traits** | complex | interval, basic-router | ascii, gap-buffer |
+| **Generics** | — | generic-queue, binary-tree | — |
+| **Modules** | — | fern_sim, grep | — |
+| **Error Handling** | — | grep, copy, http-get | libgit2-rs-safe |
+| **Closures** | — | basic-router | — |
+| **Iterators** | — | binary-tree | — |
+| **I/O & Networking** | echo-server, http-get | grep, copy | — |
+| **Web Development** | — | actix-gcd | — |
+| **Async/Await** | — | cheapo-request, many-requests | spawn-blocking, block-on |
+| **Unsafe Code** | — | — | ascii, ref-with-flag, gap-buffer |
+| **FFI** | — | — | libgit2-rs, libgit2-rs-safe |
+| **Macros** | — | — | json-macro |
+
+---
+
+### Recommended Learning Sequences
+
+Choose a learning path that matches your current skill level and goals. Each path builds progressively on previous concepts.
+
+#### Path 1: Complete Beginner → Rust Mastery
+
+**Phase 1: Fundamentals** (6-8 hours)
+```
+1. gcd (30 min)
+   └─> Learn: Functions, loops, CLI arguments, cargo basics
+
+2. queue (45 min)
+   └─> Learn: Structs, methods, ownership, borrowing
+
+3. complex (1 hr)
+   └─> Learn: Operator overloading, trait implementation
+
+4. echo-server (1 hr)
+   └─> Learn: TCP networking, basic I/O, error handling
+
+5. http-get (45 min)
+   └─> Learn: External crates, HTTP clients, blocking I/O
+```
+
+**Phase 2: Intermediate Concepts** (12-15 hours)
+```
+6. generic-queue (1 hr)
+   └─> Learn: Generic types, type parameters, Vec evolution
+
+7. binary-tree (2 hrs)
+   └─> Learn: Recursive enums, pattern matching, iterators
+
+8. interval (1 hr)
+   └─> Learn: PartialOrd, comparisons, trait bounds
+
+9. fern_sim (2 hrs)
+   └─> Learn: Multi-module projects, pub/visibility, organization
+
+10. basic-router (1.5 hrs)
+    └─> Learn: Closures, function types, callbacks
+
+11. grep (2 hrs)
+    └─> Learn: CLI tools, file I/O, regex, error propagation
+
+12. copy (1.5 hrs)
+    └─> Learn: Filesystem operations, recursion, path handling
+
+13. actix-gcd (1.5 hrs)
+    └─> Learn: Web frameworks, routing, HTML forms, HTTP
+```
+
+**Phase 3: Async Programming** (6-8 hours)
+```
+14. cheapo-request (2 hrs)
+    └─> Learn: async/await basics, futures, async-std runtime
+
+15. many-requests (2 hrs)
+    └─> Learn: Concurrent async, join operations, parallelism
+
+16. many-requests-surf (1.5 hrs)
+    └─> Learn: Alternative async HTTP clients, API differences
+```
+
+**Phase 4: Advanced Topics** (12-16 hours)
+```
+17. spawn-blocking (3 hrs)
+    └─> Learn: Custom async primitives, blocking operations
+
+18. block-on (2.5 hrs)
+    └─> Learn: Executor implementation, polling, Waker
+
+19. ascii (2 hrs)
+    └─> Learn: Unsafe blocks, transmute, safety invariants
+
+20. ref-with-flag (2.5 hrs)
+    └─> Learn: Raw pointers, bit manipulation, alignment
+
+21. gap-buffer (3 hrs)
+    └─> Learn: Pointer arithmetic, manual memory management
+
+22. libgit2-rs (4 hrs)
+    └─> Learn: FFI basics, extern blocks, C interop
+
+23. libgit2-rs-safe (3 hrs)
+    └─> Learn: Safe wrapper patterns, lifetime management
+
+24. json-macro (4 hrs)
+    └─> Learn: Procedural macros, TokenStream, quote crate
+```
+
+**Total Time**: ~40-50 hours for complete mastery
+
+---
+
+#### Path 2: Experienced Developer Fast Track
+
+Skip basics, focus on Rust-specific features and advanced patterns.
+
+**Stage 1: Rust Ownership Model** (3-4 hours)
+```
+1. queue → generic-queue (Combined study: 2 hrs)
+   └─> Compare: Reference semantics vs Rust ownership
+
+2. binary-tree (2 hrs)
+   └─> Focus: Recursive ownership, enum variants
+```
+
+**Stage 2: Trait System & Abstractions** (4-5 hours)
+```
+3. complex (1 hr)
+   └─> Study: Operator overloading patterns
+
+4. interval (1 hr)
+   └─> Study: PartialOrd, comparison traits
+
+5. basic-router (1.5 hrs)
+   └─> Study: Closures vs function pointers
+
+6. binary-tree iterators (Re-visit: 1 hr)
+   └─> Study: Iterator trait, custom iteration
+```
+
+**Stage 3: Real-World Applications** (6-8 hours)
+```
+7. actix-gcd (1.5 hrs)
+   └─> Build: Web service with actix-web
+
+8. grep (2 hrs)
+   └─> Build: CLI tool with proper error handling
+
+9. fern_sim (2 hrs)
+   └─> Study: Large-scale module organization
+```
+
+**Stage 4: Async Rust** (6-8 hours)
+```
+10. cheapo-request (2 hrs)
+    └─> Learn: async/await syntax and semantics
+
+11. many-requests (2 hrs)
+    └─> Practice: Concurrent async operations
+
+12. spawn-blocking (3 hrs)
+    └─> Deep dive: Async runtime internals
+
+13. block-on (Optional: 2.5 hrs)
+    └─> Understand: Executor implementation
+```
+
+**Stage 5: Unsafe Rust & FFI** (10-12 hours)
+```
+14. ascii (2 hrs)
+    └─> Introduction: Unsafe blocks, invariants
+
+15. ref-with-flag (2.5 hrs)
+    └─> Practice: Raw pointer manipulation
+
+16. gap-buffer (3 hrs)
+    └─> Master: Pointer arithmetic, manual memory
+
+17. libgit2-rs → libgit2-rs-safe (Combined: 6-7 hrs)
+    └─> Complete: FFI and safe wrapper patterns
+```
+
+**Stage 6: Metaprogramming** (4 hours)
+```
+18. json-macro (4 hrs)
+    └─> Advanced: Procedural macro development
+```
+
+**Total Time**: ~33-41 hours for comprehensive coverage
+
+---
+
+#### Path 3: Specialization Tracks
+
+Focus on specific Rust domains based on your goals.
+
+**Track A: Async/Concurrency Expert** (14-16 hours)
+```
+Prerequisites:
+  - Basic Rust: gcd, queue, complex (2.5 hrs)
+
+Core Sequence:
+1. echo-server (1 hr)
+   └─> Foundation: Synchronous networking
+
+2. http-get (45 min)
+   └─> Foundation: Blocking HTTP
+
+3. cheapo-request (2 hrs)
+   └─> Async basics: async-std, futures
+
+4. many-requests (2 hrs)
+   └─> Concurrency: join, parallel requests
+
+5. many-requests-surf (1.5 hrs)
+   └─> Alternative: surf crate patterns
+
+6. spawn-blocking (3 hrs)
+   └─> Internals: Custom async primitives
+
+7. block-on (2.5 hrs)
+   └─> Deep dive: Executor from scratch
+
+Advanced Topics:
+  - Study tokio vs async-std differences
+  - Benchmark async vs threaded approaches
+  - Experiment with different executors
+```
+
+**Track B: Unsafe & Systems Programming Expert** (16-18 hours)
+```
+Prerequisites:
+  - Ownership model: queue, generic-queue, binary-tree (4 hrs)
+
+Core Sequence:
+1. ascii (2 hrs)
+   └─> Introduction: Transmute, safety invariants
+
+2. ref-with-flag (2.5 hrs)
+   └─> Pointers: Raw pointer manipulation
+
+3. gap-buffer (3 hrs)
+   └─> Arithmetic: Pointer math, manual memory
+
+4. libgit2-rs (4 hrs)
+   └─> FFI: C interop, extern blocks
+
+5. libgit2-rs-safe (3 hrs)
+   └─> Wrappers: Safe abstraction patterns
+
+Advanced Topics:
+  - Study std library unsafe code
+  - Read The Rustonomicon
+  - Practice unsafe optimization patterns
+  - Understand memory layout and alignment
+```
+
+**Track C: Web Development Specialist** (10-12 hours)
+```
+Prerequisites:
+  - Basics: gcd, queue, complex (2.5 hrs)
+
+Core Sequence:
+1. http-get (45 min)
+   └─> Client side: reqwest basics
+
+2. actix-gcd (1.5 hrs)
+   └─> Server side: actix-web framework
+
+3. cheapo-request (2 hrs)
+   └─> Async client: async-std HTTP
+
+4. many-requests (2 hrs)
+   └─> Concurrent: Multiple requests
+
+5. fern_sim (2 hrs)
+   └─> Architecture: Module organization for web apps
+
+Additional Practice:
+  - Extend actix-gcd with database
+  - Add authentication/authorization
+  - Implement REST API
+  - Study actix-web middleware
+```
+
+**Track D: CLI Tool Developer** (8-10 hours)
+```
+Prerequisites:
+  - Basics: gcd, queue (1.25 hrs)
+
+Core Sequence:
+1. grep (2 hrs)
+   └─> Text processing: regex, I/O
+
+2. copy (1.5 hrs)
+   └─> Filesystem: recursion, paths
+
+3. http-get (45 min)
+   └─> Network tools: HTTP client
+
+4. fern_sim (2 hrs)
+   └─> Structure: Large CLI apps
+
+Additional Tools:
+  - Study clap for argument parsing
+  - Add progress bars with indicatif
+  - Implement configuration files
+  - Error handling with anyhow/thiserror
+```
+
+**Track E: Type System & Traits Expert** (8-10 hours)
+```
+Prerequisites:
+  - Basics: gcd, queue (1.25 hrs)
+
+Core Sequence:
+1. complex (1 hr)
+   └─> Operators: Add, Sub, Mul traits
+
+2. interval (1 hr)
+   └─> Comparisons: PartialOrd, PartialEq
+
+3. generic-queue (1 hr)
+   └─> Generics: Type parameters
+
+4. binary-tree (2 hrs)
+   └─> Iterators: Iterator trait
+
+5. basic-router (1.5 hrs)
+   └─> Functions: Fn, FnMut, FnOnce
+
+Advanced Study:
+  - Experiment with trait objects
+  - Compare static vs dynamic dispatch
+  - Study From/Into conversions
+  - Explore advanced trait bounds
+```
+
+**Track F: Macro & Metaprogramming Specialist** (6-8 hours)
+```
+Prerequisites:
+  - Strong Rust foundation: Paths 1-2 fundamentals
+
+Core Sequence:
+1. json-macro (4 hrs)
+   └─> Procedural macros: Complete implementation
+
+Deep Dive:
+  - Study declarative macros (macro_rules!)
+  - Read syn crate documentation
+  - Experiment with attribute macros
+  - Build derive macros
+  - Study quote! macro
+  - Understand hygiene and span
+
+Additional Resources:
+  - The Little Book of Rust Macros
+  - syn/quote/proc-macro2 docs
+  - macro_railroad for visualization
+```
+
+---
+
+### Project Relationships & Evolution
+
+Understanding how projects build upon each other reveals the pedagogical progression of Rust concepts. This section maps the evolutionary chains and conceptual dependencies between projects.
+
+#### Concept Evolution Chains
+
+**Chain 1: Data Structures → Generics → Traits**
+```
+queue (Concrete type)
+  │
+  ├─> Demonstrates: Struct methods, ownership, basic encapsulation
+  │
+  ▼
+generic-queue (Generic version)
+  │
+  ├─> Adds: Type parameters, constraints, Vec<T> usage
+  ├─> Shows: How to make code reusable across types
+  │
+  ▼
+binary-tree (Generic + Recursive)
+  │
+  ├─> Adds: Recursive types, Box for indirection
+  ├─> Shows: Pattern matching, Option usage
+  │
+  ▼
+binary-tree iterators
+  │
+  └─> Adds: Iterator trait implementation
+      └─> Shows: Custom iteration, state management
+```
+
+**Pedagogical Insight**: Start with concrete types to understand ownership, then abstract with generics, then add behavioral traits. This mirrors how you would design real systems.
+
+**Chain 2: Unsafe → Safe Wrappers**
+```
+libgit2-rs (Raw FFI)
+  │
+  ├─> Demonstrates: extern blocks, raw pointers, C types
+  ├─> Safety: None - all functions unsafe
+  │
+  ▼
+libgit2-rs-safe (Safe wrapper)
+  │
+  ├─> Adds: Safe abstractions, lifetime management
+  ├─> Shows: How to encapsulate unsafe code
+  └─> Pattern: Zero-cost abstraction over C library
+```
+
+**Pedagogical Insight**: First understand the unsafe foundation, then learn to build safe abstractions. This teaches defensive programming and API design.
+
+**Chain 3: Synchronous → Asynchronous I/O**
+```
+echo-server (Blocking TCP)
+  │
+  ├─> Demonstrates: std::net, synchronous I/O
+  ├─> Limitation: One connection at a time
+  │
+  ▼
+http-get (Blocking HTTP)
+  │
+  ├─> Adds: reqwest (blocking), HTTP protocol
+  ├─> Limitation: Sequential requests
+  │
+  ▼
+cheapo-request (Async HTTP)
+  │
+  ├─> Adds: async/await, futures, async-std
+  ├─> Improvement: Non-blocking I/O
+  │
+  ▼
+many-requests (Concurrent async)
+  │
+  ├─> Adds: join operations, parallel async
+  ├─> Shows: True concurrency benefits
+  │
+  ▼
+spawn-blocking (Async internals)
+  │
+  └─> Adds: Custom primitives, thread pool
+      └─> Shows: How async runtime works internally
+```
+
+**Pedagogical Insight**: Understand blocking I/O limitations before appreciating async benefits. Then peek under the hood to understand the magic.
+
+**Chain 4: Operator Overloading Progression**
+```
+complex (Basic operators)
+  │
+  ├─> Implements: Add, Sub, Mul, Neg
+  ├─> Shows: Operator trait basics
+  │
+  ▼
+interval (Comparison operators)
+  │
+  ├─> Implements: PartialOrd, PartialEq
+  └─> Shows: Why Partial vs Total ordering matters
+```
+
+**Pedagogical Insight**: Start with arithmetic (familiar), then move to comparisons (nuanced with NaN, etc.).
+
+#### Cross-Project Dependencies & Patterns
+
+**Pattern Reuse Across Projects**:
+
+1. **Error Handling Evolution**
+   - `gcd`: Basic error messages, unwrap
+   - `http-get`: Result types, `?` operator
+   - `grep`: Custom error types, error propagation
+   - `libgit2-rs-safe`: Error conversion, safe failure modes
+
+2. **Module Organization**
+   - `gcd`: Single file
+   - `complex`: Single file with tests module
+   - `fern_sim`: Multi-file, src/lib.rs structure
+   - `libgit2-rs-safe`: Multiple modules, clear separation
+
+3. **Testing Strategies**
+   - `queue`: Unit tests in same file
+   - `binary-tree`: Extensive test cases, edge conditions
+   - `fern_sim`: Integration tests in tests/
+   - `gap-buffer`: Testing unsafe invariants
+
+#### Conceptual Prerequisites
+
+Some projects assume knowledge from others:
+
+| Project | Recommended Prerequisites | Why |
+|---------|-------------------------|-----|
+| `generic-queue` | `queue` | Understand concrete version first |
+| `binary-tree` | `generic-queue` | Builds on generics knowledge |
+| `interval` | `complex` | Extends trait implementation concepts |
+| `actix-gcd` | `gcd` | Same algorithm, web interface |
+| `many-requests` | `cheapo-request` | Builds on async fundamentals |
+| `spawn-blocking` | `cheapo-request` | Requires async/await understanding |
+| `block-on` | `spawn-blocking` | Executor requires async knowledge |
+| `libgit2-rs-safe` | `libgit2-rs` | Wraps the unsafe version |
+| `ref-with-flag` | `ascii` | Builds on unsafe concepts |
+| `gap-buffer` | `ref-with-flag` | More complex pointer usage |
+
+#### Thematic Groupings for Comparative Study
+
+Study these together to compare approaches:
+
+**Group 1: HTTP Clients (Compare async vs sync)**
+- `http-get` (blocking reqwest)
+- `cheapo-request` (async-std)
+- `many-requests-surf` (surf crate)
+
+**Comparison Points**: API differences, performance, error handling, ease of use
+
+**Group 2: Executors (Compare implementations)**
+- `block-on` (simple executor)
+- `spawn-blocking` (custom primitives)
+- async-std (external, study documentation)
+
+**Comparison Points**: Complexity, features, scheduling strategies
+
+**Group 3: Unsafe Code (Compare safety approaches)**
+- `ascii` (simple transmute)
+- `ref-with-flag` (bit manipulation)
+- `gap-buffer` (pointer arithmetic)
+
+**Comparison Points**: Safety invariants, documentation, testing strategies
+
+**Group 4: CLI Tools (Compare architecture)**
+- `gcd` (minimal)
+- `grep` (moderate complexity)
+- `copy` (filesystem heavy)
+
+**Comparison Points**: Argument parsing, error handling, code organization
+
+#### Evolution of Complexity
+
+Observe how similar concepts grow in sophistication:
+
+**Ownership Examples**:
+1. `queue`: Basic struct ownership
+2. `generic-queue`: Generic ownership with Vec<T>
+3. `binary-tree`: Recursive ownership with Box
+4. `gap-buffer`: Manual memory management
+
+**Trait Sophistication**:
+1. `complex`: Simple trait implementation (Add, Sub)
+2. `interval`: Conditional traits (PartialOrd)
+3. `binary-tree`: Iterator trait (stateful)
+4. `basic-router`: Function traits (Fn, FnMut)
+
+**Async Complexity**:
+1. `cheapo-request`: Basic async/await
+2. `many-requests`: Concurrent operations
+3. `spawn-blocking`: Custom async types
+4. `block-on`: Executor from scratch
+
+#### Practical Learning Strategies
+
+**Strategy 1: Diff-Based Learning**
+```bash
+# Compare concrete vs generic
+diff queue/src/main.rs generic-queue/src/main.rs
+
+# Compare unsafe vs safe wrapper
+diff libgit2-rs/src/lib.rs libgit2-rs-safe/src/lib.rs
+```
+
+**Strategy 2: Feature Addition**
+Start with simpler project, add features from complex one:
+- Add iterator to `queue` (borrowing from `binary-tree`)
+- Add async to `echo-server` (borrowing from `cheapo-request`)
+- Add safe wrapper to `ascii` (borrowing from `libgit2-rs-safe`)
+
+**Strategy 3: Reverse Engineering**
+Start with complex, strip down to basics:
+- Remove unsafe from `gap-buffer` → create safe version
+- Remove async from `many-requests` → create threaded version
+- Remove generics from `binary-tree` → create i32 tree
 
 ---
 
@@ -775,7 +1426,7 @@ cargo build --release
 
 - **Created**: December 2025
 - **Purpose**: Comprehensive guide for AI assistants working on Rust examples
-- **Scope**: All 25 projects in the repository
+- **Scope**: All 24 projects in the repository
 - **Status**: Active and maintained during development sessions
 
 ---
