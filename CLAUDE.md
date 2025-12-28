@@ -1865,6 +1865,383 @@ cargo test
 
 ---
 
+## Debugging & Development Tools
+
+### Debug Builds vs Release Builds
+
+Different optimization levels reveal different issues:
+
+```bash
+# Debug build (default) - slower runtime, detailed debugging info
+cargo build
+
+# Release build - optimized, minimal debug info
+cargo build --release
+
+# Custom optimization levels in Cargo.toml:
+[profile.dev]
+opt-level = 2  # Some optimization during development
+
+[profile.release]
+opt-level = 3  # Maximum optimization
+lto = true     # Link-time optimization
+```
+
+**When to use each**:
+- **Debug**: Daily development, debugging, testing
+- **Release**: Performance testing, final verification, production
+- **Custom**: When you need specific optimization/debugging balance
+
+### The dbg! Macro
+
+Quick debugging without println! boilerplate:
+
+```rust
+let x = vec![1, 2, 3];
+dbg!(x.len());           // Prints: [src/main.rs:4] x.len() = 3
+let y = dbg!(&x[0]);     // Prints: [src/main.rs:5] &x[0] = 1
+let z = dbg!(x);         // Prints entire vector with debug output
+```
+
+**dbg! features**:
+- Prints to `stderr` (doesn't interfere with stdout)
+- Shows file, line number, and code that was debugged
+- Prints the value AND returns it unchanged
+- Zero cost when removed
+
+### println! and eprintln! Debugging
+
+Conditional debug output:
+
+```rust
+// Debug output - only in debug builds
+#[cfg(debug_assertions)]
+eprintln!("Debug info: {:?}", some_value);
+
+// Verbose debugging with prefix
+#[cfg(debug_assertions)]
+macro_rules! debug {
+    ($($arg:tt)*) => {
+        eprintln!("[{}:{}] {}", file!(), line!(), format_args!($($arg)*))
+    }
+}
+
+debug!("State: x={}, y={}", x, y);  // Prints with file:line prefix
+```
+
+**Why eprintln! instead of println!**:
+- eprintln! goes to stderr, println! goes to stdout
+- Keep debug output separate from program output
+- Easier to redirect and filter
+
+### rust-gdb and rust-lldb
+
+Low-level debugging with GDB (Linux/macOS) or LLDB (macOS/iOS):
+
+**Installation**:
+```bash
+# macOS (LLDB is built-in)
+# Linux: sudo apt-get install gdb
+
+# Install rust-gdb/rust-lldb helpers
+rustup component add rustc-dev
+```
+
+**Basic GDB debugging**:
+```bash
+# Build with debug symbols
+cargo build
+
+# Start debugger
+rust-gdb target/debug/<binary_name>
+
+# Common commands:
+# break main              - Set breakpoint at main()
+# break src/main.rs:10    - Breakpoint at line 10
+# run [ARGS]              - Start program with arguments
+# continue                - Resume execution
+# next                    - Step over function calls
+# step                    - Step into function calls
+# print var_name          - Print variable value
+# backtrace               - Show call stack
+# quit                    - Exit debugger
+```
+
+**Example debugging session**:
+```bash
+rust-gdb target/debug/gcd
+(gdb) break gcd  # Breakpoint in gcd function
+(gdb) run 42 56
+(gcd) step        # Step into gcd
+(gcd) print x     # Print parameter x
+```
+
+**LLDB (macOS alternative to GDB)**:
+```bash
+rust-lldb target/debug/<binary_name>
+
+# Similar commands to GDB:
+# b main                  - Breakpoint
+# run [ARGS]              - Run with arguments
+# n                       - Next
+# s                       - Step into
+# p var_name              - Print variable
+# bt                      - Backtrace
+```
+
+### Backtrace Analysis
+
+When your program panics, get a full backtrace:
+
+```bash
+# Run with backtrace enabled
+RUST_BACKTRACE=1 cargo run
+
+# Full backtrace including internal Rust details
+RUST_BACKTRACE=full cargo run
+
+# Format: reads like a call stack from bottom to top
+thread 'main' panicked at 'index out of bounds: the len is 3 but the index is 10'
+stack backtrace:
+   0: rust_begin_unwind          # Panic machinery
+   1: core::panicking::panic_fmt # Formatting panic
+   2: core::slice::index::...    # Index operation
+   3: my_app::main               # Your code
+```
+
+**Reading backtraces**:
+- Start from the bottom (your code)
+- Work upward to see the call chain
+- Stack frame 0-2 are usually Rust internals
+- Look for your source file paths (src/...) to find your code
+- Frame with `at src/main.rs:X:Y` is the line that panicked
+
+### IDE Integration
+
+#### VS Code with Rust-analyzer
+
+```json
+// .vscode/launch.json for debugging
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug",
+      "cargo": {
+        "args": ["build", "--bin=myapp"],
+        "filter": {
+          "name": "myapp",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
+```
+
+#### IntelliJ IDEA
+
+- Built-in Rust debugger
+- Set breakpoints by clicking margin
+- Run → Debug or Debug icon
+- Breakpoints panel shows all active breakpoints
+
+#### Vim/Neovim with DAP
+
+```vim
+" Using nvim-dap and nvim-dap-rust
+lua require'dapui'.open()
+:DapContinue  " Start debugging
+:DapToggleBreakpoint  " Toggle breakpoint
+```
+
+### Async Debugging
+
+Debugging async code is more complex than sync code:
+
+#### Challenge 1: Futures Don't Execute Immediately
+
+```rust
+// This future is created but NEVER executed
+let future = async {
+    println!("This never prints!");
+};
+// future is dropped without being awaited
+
+// CORRECT: Await or spawn the future
+let future = async {
+    println!("This prints!");
+};
+future.await;  // Now it executes
+```
+
+#### Challenge 2: Tracing Async Execution
+
+Use the `tracing` crate for async-aware logging:
+
+```rust
+use tracing::{debug, info, span, Level};
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+
+    let span = span!(Level::DEBUG, "my_operation");
+    let _guard = span.enter();
+
+    debug!("Starting async task");
+    my_async_function().await;
+    info!("Completed");
+}
+
+async fn my_async_function() {
+    debug!("Inside async function");
+    tokio::time::sleep(Duration::from_millis(100)).await;
+}
+```
+
+Tracing output shows:
+- Which async function is executing
+- Time spent in each function
+- Async task spawning and completion
+
+#### Challenge 3: Detecting Blocking Operations
+
+Use `tokio-console` to visualize async runtime:
+
+```bash
+cargo install tokio-console
+
+# In Cargo.toml:
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+```
+
+Then run with:
+```bash
+TOKIO_CONSOLE=true cargo run --example tokio-app
+```
+
+### Unsafe Code Debugging with Miri
+
+Miri detects undefined behavior in unsafe code:
+
+```bash
+# Install miri
+rustup +nightly component add miri
+
+# Run tests under miri
+cargo +nightly miri test
+
+# Miri will catch:
+# - Out-of-bounds memory access
+# - Use-after-free bugs
+# - Uninitialized memory reads
+# - Data races (with multi-threaded code)
+
+# Example: Miri catches this error
+unsafe {
+    let x = 5;
+    let ptr = &x as *const i32;
+    // x is dropped here
+    println!("{}", *ptr);  // Use-after-free - Miri catches this!
+}
+```
+
+### FFI Code Debugging
+
+For FFI projects (libgit2-rs), add extra validation:
+
+```rust
+// Before calling C function
+unsafe {
+    // 1. Validate pointers
+    if ptr.is_null() {
+        eprintln!("ERROR: Null pointer passed to C function");
+        return Err("Null pointer".into());
+    }
+
+    // 2. Log before C call
+    #[cfg(debug_assertions)]
+    eprintln!("Calling C function with ptr={:p}", ptr);
+
+    // 3. Call C function
+    let result = c_function(ptr);
+
+    // 4. Check return value
+    if result < 0 {
+        eprintln!("ERROR: C function returned {}", result);
+        return Err("C function error".into());
+    }
+
+    result
+}
+```
+
+### Common Debugging Scenarios
+
+#### Scenario 1: "Borrow Checker is Wrong!"
+
+```rust
+let mut s = String::from("hello");
+let r1 = &s;
+let r2 = &s;
+let r3 = &mut s;  // ERROR: Can't borrow as mutable while r1, r2 exist
+
+// FIX: Drop immutable borrows before mutable borrow
+let mut s = String::from("hello");
+let r1 = &s;
+let r2 = &s;
+println!("{} {}", r1, r2);  // Last use of r1, r2
+let r3 = &mut s;  // OK: r1, r2 out of scope now
+```
+
+#### Scenario 2: "Why is this generic failing?"
+
+```rust
+// ERROR: Trait bound not satisfied
+fn process<T>(item: T) {
+    println!("{:?}", item);  // ERROR: T doesn't implement Debug
+}
+
+// FIX: Add trait bound
+fn process<T: std::fmt::Debug>(item: T) {
+    println!("{:?}", item);  // OK: T implements Debug
+}
+```
+
+#### Scenario 3: "Where is the memory leak?"
+
+```bash
+# Use valgrind (Linux) with cargo
+cargo build --release
+valgrind target/release/myapp
+
+# Look for "definitely lost" or "indirectly lost" blocks
+# Most likely: String/Vec not being dropped, circular references
+```
+
+### Debugging Checklist
+
+Before "the code doesn't work":
+
+- [ ] Does it compile? (`cargo check`)
+- [ ] Do tests pass? (`cargo test`)
+- [ ] Does release build work? (`cargo build --release`)
+- [ ] What's the exact error message?
+- [ ] Can you reproduce it with a minimal example?
+- [ ] Have you read the error message fully? (Rustc messages are detailed)
+- [ ] Have you checked the docs? (`cargo doc --open`)
+- [ ] Have you stepped through with a debugger?
+- [ ] Have you added `dbg!` statements?
+- [ ] Have you run with `RUST_BACKTRACE=1`?
+
+---
+
 ## Testing Strategy
 
 ### Testing Framework
@@ -1999,6 +2376,484 @@ Use the template:
 
 ## Related Issues
 - Fixes #<issue-number> (if applicable)
+```
+
+---
+
+## Advanced Git & DevOps
+
+### Git Worktrees: Parallel Development
+
+Work on multiple branches simultaneously without stashing or switching:
+
+```bash
+# Create a new worktree for a feature branch
+git worktree add ../feature-branch-work feature/new-feature
+
+# List active worktrees
+git worktree list
+
+# Remove worktree (clean up when done)
+git worktree remove ../feature-branch-work
+```
+
+**Use Cases**:
+- Run tests on one branch while developing on another
+- Compare two branches side-by-side
+- Avoid switching contexts constantly
+- Keep different compilation states
+
+**Example workflow**:
+```bash
+# Main development in main worktree
+cd /path/to/repo
+git checkout main
+
+# Create worktree for feature
+git worktree add ../bugfix-work feature/bugfix
+
+# In another terminal, work on bugfix
+cd ../bugfix-work
+cargo test
+# Make changes, commit...
+
+# Meanwhile, continue main development
+cd /path/to/repo
+cargo build
+```
+
+### Merge Conflicts: Resolution Strategies
+
+#### Strategy 1: Manual Resolution
+
+When `git merge` reports conflicts:
+
+```bash
+# 1. Identify conflicted files
+git status
+
+# 2. Edit conflicted files
+# Markers show what changed:
+# <<<<<<< HEAD        (current branch)
+# your changes
+# =======
+# changes from branch
+# >>>>>>> branch-name
+
+# 3. Resolve (choose what to keep)
+# Option A: Keep both changes
+your changes
+changes from branch
+
+# Option B: Keep only one
+your changes
+
+# 4. Mark as resolved
+git add <resolved-file>
+
+# 5. Complete merge
+git commit -m "Merge: resolve conflicts with feature/x"
+```
+
+#### Strategy 2: Merge Strategies
+
+Choose how git should merge:
+
+```bash
+# Recursive (default) - smart three-way merge
+git merge feature/branch
+
+# Ours - keep current branch version
+git merge -X ours feature/branch
+
+# Theirs - take incoming branch version
+git merge -X theirs feature/branch
+
+# Resolve - traditional 3-way merge
+git merge --strategy=resolve feature/branch
+```
+
+#### Strategy 3: Abort and Retry
+
+```bash
+# Conflicts too complex? Start over
+git merge --abort
+
+# Try a different strategy
+git merge -X theirs feature/branch
+
+# Or rebase instead of merge
+git rebase feature/branch
+```
+
+**Conflict Avoidance**:
+- Keep branches short-lived (merge within days)
+- Coordinate with team on files being changed
+- Use feature branches sparingly in same areas
+- Communicate about refactoring early
+
+### Merge vs Rebase vs Squash Decision Framework
+
+| Situation | Strategy | Reason |
+|-----------|----------|--------|
+| **Main branch receives feature** | Merge --no-ff | Preserves feature history |
+| **Update feature with main changes** | Rebase | Keeps linear history, cleaner |
+| **Feature has many "WIP" commits** | Squash and merge | Cleans up history |
+| **Multi-person feature branch** | Merge | Preserves individual contributions |
+| **Fix committed directly to main** | Cherry-pick | Applies specific fix |
+| **Undo recent commit** | Revert | Safe, creates new commit |
+
+**Merge** (preserves history):
+```bash
+git merge feature/branch
+# Creates merge commit, history shows both paths
+```
+
+**Rebase** (linear history):
+```bash
+git rebase feature/branch
+# Replays your commits on top of feature/branch
+# Linear, cleaner history, but rewrites history
+```
+
+**Squash** (condense commits):
+```bash
+git merge --squash feature/branch
+git commit -m "Feature: add new functionality"
+# All feature commits become single commit
+```
+
+### Cherry-Pick and Patch Workflows
+
+#### Cherry-Pick: Apply Specific Commit
+
+```bash
+# Apply one commit from another branch
+git cherry-pick <commit-hash>
+
+# Apply range of commits
+git cherry-pick <start-hash>..<end-hash>
+
+# Continue after resolving conflicts
+git add <files>
+git cherry-pick --continue
+
+# Abort if too complex
+git cherry-pick --abort
+```
+
+**Use Case**: Critical bugfix from main needs to be in release branch:
+```bash
+git checkout release/v1.0
+git cherry-pick abc1234  # Apply specific commit
+git push
+```
+
+#### Create and Apply Patches
+
+```bash
+# Create patch file from commits
+git format-patch -o patches/ main..feature/branch
+# Creates 0001-xxx.patch, 0002-yyy.patch, etc.
+
+# Apply patches in order
+git am patches/0001-*.patch
+
+# Resolve conflicts during apply
+git add <files>
+git am --continue
+```
+
+### Git Hooks: Automate Quality Checks
+
+Hooks run automatically before commits, pushes, etc:
+
+#### Pre-Commit Hook
+
+```.git/hooks/pre-commit
+#!/bin/bash
+set -e  # Exit on any error
+
+# Format code
+cargo fmt --check
+if [ $? -ne 0 ]; then
+    echo "ERROR: Code not formatted. Run 'cargo fmt'"
+    exit 1
+fi
+
+# Run clippy
+cargo clippy --all-targets -- -D warnings
+if [ $? -ne 0 ]; then
+    echo "ERROR: Clippy warnings found"
+    exit 1
+fi
+
+# Run quick tests (not full suite)
+cargo test --lib --quicktest
+if [ $? -ne 0 ]; then
+    echo "ERROR: Tests failed"
+    exit 1
+fi
+```
+
+Make executable:
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+#### Pre-Push Hook
+
+```.git/hooks/pre-push
+#!/bin/bash
+set -e
+
+# Prevent pushing to main without review
+while read local_ref local_hash remote_ref remote_hash
+do
+    if [[ $remote_ref == refs/heads/main ]]; then
+        echo "ERROR: Cannot push directly to main"
+        echo "Create a pull request instead"
+        exit 1
+    fi
+done
+```
+
+### Revert and Rollback Procedures
+
+#### Safe Rollback: Revert Commit
+
+Creates new commit that undoes changes (safe for pushed commits):
+
+```bash
+# Revert last commit
+git revert HEAD
+
+# Revert specific commit
+git revert <commit-hash>
+
+# Revert with edit
+git revert --edit <commit-hash>
+
+# Revert merge commit (need -m 1 or -m 2)
+git revert -m 1 <merge-commit>  # Keep current branch's changes
+```
+
+#### Emergency Rollback: Reset (LOCAL ONLY)
+
+Only use for commits not yet pushed:
+
+```bash
+# Soft reset - undo commit, keep changes staged
+git reset --soft HEAD~1
+
+# Mixed reset - undo commit, unstage changes
+git reset --mixed HEAD~1  # or just: git reset HEAD~1
+
+# Hard reset - undo commit, lose all changes (DANGEROUS!)
+git reset --hard HEAD~1
+```
+
+**When Pushing Goes Wrong**:
+```bash
+# Already pushed bad commit? Use revert instead
+git revert <commit-hash>
+git push
+
+# Never force push to main
+git push --force-with-lease origin feature/branch  # Only for own branch
+
+# Force push to main is dangerous - get code review first!
+```
+
+### Branch Protection Rules
+
+Configure in GitHub to enforce safety:
+
+1. **Settings → Branches → Add rule**
+2. **Pattern**: `main` or `release/*`
+3. **Protections**:
+   - ✅ Require pull request reviews (1-2)
+   - ✅ Dismiss stale reviews when new commits
+   - ✅ Require branches to be up to date before merging
+   - ✅ Require status checks (tests, clippy)
+   - ✅ Require code reviews before merging
+   - ✅ Require signed commits (optional)
+   - ✅ Lock branch (prevent deletion)
+
+### Handling Breaking Changes
+
+#### Document Breaking Changes
+
+```rust
+/// # Breaking Change in v2.0
+/// This function's signature changed from:
+/// ```ignore
+/// fn process(data: &str) -> Result<i32>
+/// ```
+/// to:
+/// ```
+/// fn process(data: &str) -> Result<ProcessResult>
+/// ```
+/// The return type now includes more context.
+#[deprecated(since = "2.0", note = "use process_v2 instead")]
+pub fn process(data: &str) -> Result<i32> {
+    // ...
+}
+
+pub fn process_v2(data: &str) -> Result<ProcessResult> {
+    // ...
+}
+```
+
+#### Version with Deprecation Period
+
+**v1.9** (prepare):
+- Introduce new function `process_v2`
+- Mark old function `process` as `#[deprecated]`
+- Document migration path
+
+**v2.0** (break):
+- Remove old function
+- Make v2 function the primary
+- Document in CHANGELOG
+
+#### CHANGELOG Format (Keepachangelog)
+
+```markdown
+## [2.0.0] - 2025-01-01
+
+### Breaking Changes
+- Removed deprecated `process()` function. Use `process_v2()` instead.
+- Changed return type of `parse_config()` from `Config` to `Result<Config>`
+
+### Added
+- New `ProcessResult` type with detailed error information
+- `process_v2()` function with improved error handling
+
+### Fixed
+- Memory leak in parser (closes #123)
+
+### Deprecated
+- `old_api()` function - will be removed in v3.0
+```
+
+### Version Tagging for Releases
+
+#### Semantic Versioning (MAJOR.MINOR.PATCH)
+
+```bash
+# Create annotated tag (recommended)
+git tag -a v1.0.0 -m "Release version 1.0.0"
+
+# Create lightweight tag (simpler)
+git tag v1.0.0
+
+# List tags
+git tag -l
+
+# Push tags to remote
+git push origin v1.0.0
+git push origin --tags  # Push all tags
+
+# Verify tag
+git show v1.0.0
+```
+
+#### Version Bumping Script
+
+```bash
+#!/bin/bash
+# Bump version in Cargo.toml and create tag
+
+version=$1
+sed -i "s/version = .*/version = \"$version\"/" Cargo.toml
+
+git add Cargo.toml
+git commit -m "chore: bump version to $version"
+git tag -a "v$version" -m "Release v$version"
+git push origin main --tags
+```
+
+### Advanced Git Workflows
+
+#### Bisect: Find Bug Introduction
+
+```bash
+# Start bisect
+git bisect start
+
+# Mark current commit as bad (has bug)
+git bisect bad
+
+# Mark known good commit
+git bisect good v1.0.0
+
+# Git checks out midpoint - test it
+cargo test  # Is bug here?
+
+# Tell git result
+git bisect good  # or git bisect bad
+
+# Git narrows down further...
+# Repeat until bug-introducing commit found
+git bisect reset  # Exit bisect
+```
+
+#### Stash: Temporary Work Storage
+
+```bash
+# Save work without committing
+git stash push -m "WIP: feature X"
+
+# List stashes
+git stash list
+
+# Get stash back
+git stash pop stash@{0}  # Latest
+git stash pop stash@{1}  # Earlier one
+
+# Discard stash
+git stash drop stash@{0}
+
+# Stash specific files only
+git stash push -- src/main.rs src/lib.rs
+```
+
+#### Reflog: Recover Lost Commits
+
+```bash
+# See all recent HEAD movements
+git reflog
+
+# Found commit you lost? Recover it
+git checkout abc1234
+
+# Or create branch from it
+git checkout -b recovered abc1234
+```
+
+### Git Troubleshooting
+
+#### "I committed to the wrong branch"
+
+```bash
+# Move commit to correct branch
+git reset --soft HEAD~1  # Undo, keep changes
+git checkout correct-branch
+git commit -m "message"
+```
+
+#### "I need to change my last commit message"
+
+```bash
+git commit --amend -m "new message"
+```
+
+#### "I accidentally deleted a branch"
+
+```bash
+git reflog  # Find the commit
+git checkout -b recovered-branch abc1234
 ```
 
 ---
