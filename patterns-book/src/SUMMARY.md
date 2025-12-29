@@ -85,3 +85,10 @@
 
 [Pattern Catalog](./pattern-catalog.md)
 [Pattern Map](./pattern-map.md)
+
+---
+
+# Appendices
+
+- [Appendix A: Extension Showcase](./appendix-extensions.md)
+- [Appendix B: mdbook Plugin Authoring](./appendix-plugin-authoring.md)

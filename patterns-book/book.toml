@@ -14,7 +14,7 @@ build-dir = "book"
 default-theme = "rust"
 preferred-dark-theme = "coal"
 git-repository-url = "https://github.com/ProgrammingRust/code-examples"
-additional-js = ["mermaid.min.js", "mermaid-init.js"]
+additional-js = ["mermaid.min.js", "mermaid-init.js", "mathjax-init.js"]
 
 [output.html.fold]
 enable = true
@@ -36,3 +36,6 @@ expand = true
 
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
+
+# Math rendering via MathJax (included in additional-js)
+# KaTeX preprocessor has compatibility issues with current mdbook
