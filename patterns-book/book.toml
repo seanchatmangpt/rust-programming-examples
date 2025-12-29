@@ -8,15 +8,13 @@ language = "en"
 build-dir = "book"
 
 # =============================================================================
-# HTML Output (default)
+# HTML Output
 # =============================================================================
 [output.html]
 default-theme = "rust"
 preferred-dark-theme = "coal"
 git-repository-url = "https://github.com/ProgrammingRust/code-examples"
-edit-url-template = "https://github.com/ProgrammingRust/code-examples/edit/main/patterns-book/{path}"
-additional-css = ["custom.css"]
-additional-js = ["custom.js"]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
 
 [output.html.fold]
 enable = true
@@ -29,117 +27,12 @@ copy-js = true
 [output.html.search]
 enable = true
 limit-results = 30
-teaser-word-count = 30
-use-hierarchical-headers = true
 boost-title = 2
-boost-hierarchy = 1
-boost-paragraph = 1
 expand = true
-heading-split-level = 3
-
-# =============================================================================
-# PDF Output (via mdbook-pdf)
-# Install: cargo install mdbook-pdf
-# Requires: Chrome, Chromium, or Edge browser
-# =============================================================================
-[output.pdf]
-# Enable PDF generation
-enable = true
-
-# PDF-specific settings
-scale = 1
-paper-width = 8.5
-paper-height = 11
-margin-top = 0.5
-margin-bottom = 0.5
-margin-left = 0.5
-margin-right = 0.5
-page-range = ""
-ignore-invalid-links = false
-print-background = true
-landscape = false
-
-# Table of contents in PDF
-generate-document-outline = true
-
-# =============================================================================
-# Pandoc Output (alternative PDF via LaTeX)
-# Install: cargo install mdbook-pandoc
-# Requires: pandoc and LaTeX (texlive-full or similar)
-# =============================================================================
-# Uncomment to enable pandoc-based PDF (higher quality, more dependencies)
-# [output.pandoc.profile.pdf]
-# output-file = "rust-patterns.pdf"
-# to = "latex"
-# pdf-engine = "xelatex"
-#
-# [output.pandoc.profile.pdf.variables]
-# documentclass = "book"
-# geometry = "margin=1in"
-# fontsize = "11pt"
-# mainfont = "DejaVu Serif"
-# sansfont = "DejaVu Sans"
-# monofont = "DejaVu Sans Mono"
-
-# =============================================================================
-# EPUB Output
-# Install: cargo install mdbook-epub
-# =============================================================================
-# [output.epub]
-# cover-image = "cover.png"
-# additional-css = ["epub.css"]
 
 # =============================================================================
 # Preprocessors
 # =============================================================================
 
-# Admonishments (callouts/alerts)
-# Install: cargo install mdbook-admonish
-# Usage: ```admonish warning
-#        This is a warning
-#        ```
-[preprocessor.admonish]
-command = "mdbook-admonish"
-assets_version = "3.0.2"
-
-# KaTeX for math equations
-# Install: cargo install mdbook-katex
-# Usage: $inline math$ or $$block math$$
-[preprocessor.katex]
-command = "mdbook-katex"
-
-# Mermaid diagrams
-# Install: cargo install mdbook-mermaid
-# Usage: ```mermaid
-#        graph TD
-#            A --> B
-#        ```
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
-
-# Link checking
-# Install: cargo install mdbook-linkcheck
-# Validates all links during build
-[output.linkcheck]
-follow-web-links = false
-traverse-parent-directories = false
-
-# =============================================================================
-# Optional Preprocessors (uncomment to enable)
-# =============================================================================
-
-# Table of Contents generator
-# Install: cargo install mdbook-toc
-# Usage: <!-- toc --> in markdown
-# [preprocessor.toc]
-# command = "mdbook-toc"
-
-# Footnotes support
-# Install: cargo install mdbook-footnote
-# [preprocessor.footnote]
-# command = "mdbook-footnote"
-
-# Index generation
-# Install: cargo install mdbook-indexing
-# [preprocessor.indexing]
-# command = "mdbook-indexing"
