@@ -1,0 +1,14 @@
+# Example 09: Error Handling
+# ===========================
+# Demonstrates custom error types, suggestions, error recovery,
+# and user-friendly error messages in CLI applications.
+
+[package]
+name = "error-handling"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }

@@ -1,0 +1,14 @@
+# Example 08: Environment and Configuration
+# ==========================================
+# Demonstrates environment variable support, config file loading,
+# and configuration layering (CLI > Env > Config > Defaults).
+
+[package]
+name = "environment-config"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }

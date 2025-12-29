@@ -1,0 +1,12 @@
+# Example 02: Basic Arguments
+# ===========================
+# Demonstrates all common argument types: integers, strings, booleans,
+# floats, paths, options, vectors, and various argument modifiers.
+
+[package]
+name = "arguments-basic"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

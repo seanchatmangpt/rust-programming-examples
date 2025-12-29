@@ -1,0 +1,12 @@
+# Example 03: Subcommands
+# =======================
+# Demonstrates nested subcommand structures like git, cargo, or kubectl.
+# Shows global args, subcommand-specific args, and command routing.
+
+[package]
+name = "subcommands"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

@@ -1,0 +1,12 @@
+# Example 06: Builder Pattern
+# ===========================
+# Demonstrates dynamic CLI construction using the builder API,
+# reusable argument components, and runtime CLI configuration.
+
+[package]
+name = "builder-pattern"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

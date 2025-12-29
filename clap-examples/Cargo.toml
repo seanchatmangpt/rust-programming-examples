@@ -1,0 +1,42 @@
+# Clap Architecture Book - Code Examples Workspace
+# ================================================
+#
+# This workspace contains 12 progressive examples demonstrating
+# Clap's features from basic to advanced usage patterns.
+#
+# Build all examples:   cargo build --workspace
+# Test all examples:    cargo test --workspace
+# Run specific example: cargo run -p hello-world
+
+[workspace]
+resolver = "2"
+
+members = [
+    "examples/01-hello-world",
+    "examples/02-arguments-basic",
+    "examples/03-subcommands",
+    "examples/04-groups-and-conflicts",
+    "examples/05-custom-parsers",
+    "examples/06-builder-pattern",
+    "examples/07-derive-macros",
+    "examples/08-environment-config",
+    "examples/09-error-handling",
+    "examples/10-plugins-architecture",
+    "examples/11-testing",
+    "examples/12-real-world-project",
+]
+
+# Shared workspace dependencies - ensures consistent versions across examples
+[workspace.dependencies]
+clap = { version = "4.5", features = ["derive", "env", "cargo", "string"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+thiserror = "1.0"
+anyhow = "1.0"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Clap Architecture Book Examples"]
+license = "MIT"

@@ -1,7 +1,7 @@
 # Code Examples for _Programming Rust_
 
 This repository contains complete code for the larger example programs from the
-book “Programming Rust”, by Jim Blandy, Jason Orendorff, and Leonora Tindall.
+book "Programming Rust", by Jim Blandy, Jason Orendorff, and Leonora Tindall.
 
 Each subdirectory is a distinct Rust project, with its own Cargo.toml file. You
 should be able to enter each directory and use `cargo build` and `cargo test`.
@@ -9,6 +9,41 @@ For those projects that define programs, `cargo run` should run them.
 
 The example code in this directory and its subdirectories is licensed under the
 terms of the MIT license. See [LICENSE-MIT](LICENSE-MIT) for details.
+
+## Clap Architecture Book
+
+This repository also includes the **Clap Systems Architecture Patterns: 2026 Edition** book,
+a comprehensive guide to building production-ready CLI applications with Clap.
+
+### Quick Start
+
+```bash
+# Install mdbook
+cargo install mdbook
+
+# Build and serve the book
+cd docs/clap-architecture-book
+mdbook serve
+```
+
+Open `http://localhost:3000` in your browser.
+
+### Code Examples
+
+```bash
+cd clap-examples
+cargo build --workspace    # Build all 12 examples
+cargo test --workspace     # Run all tests
+```
+
+### Contents
+
+- **22 Chapters** covering foundations, core patterns, advanced architecture, and real-world systems
+- **12 Code Examples** from basic hello-world to production-ready multi-binary projects
+- **6 Visual Diagrams** explaining Clap's architecture and patterns
+- **Reference Materials** including API quick reference, migration guides, and best practices
+
+See [docs/clap-architecture-book/README.md](docs/clap-architecture-book/README.md) for full details.
 
 ## Chapter 2: A Tour of Rust
 
