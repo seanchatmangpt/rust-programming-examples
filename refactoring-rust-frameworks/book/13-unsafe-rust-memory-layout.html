@@ -1,0 +1,1241 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 13: Unsafe Rust &amp; Memory Layout Deep Dive - Refactoring Rust Frameworks</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-80709b90.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a688046c.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Refactoring Rust Frameworks</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/13-unsafe-rust-memory-layout.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="unsafe-rust--memory-layout-deep-dive"><a class="header" href="#unsafe-rust--memory-layout-deep-dive">Unsafe Rust &amp; Memory Layout Deep Dive</a></h1>
+<p><strong>Target Audience</strong>: AI agents reviewing, writing, or analyzing unsafe Rust code
+<strong>Prerequisites</strong>: Understanding of Rust ownership, borrowing, and lifetimes
+<strong>Scope</strong>: Advanced unsafe patterns, memory representation, verification techniques</p>
+<hr>
+<h2 id="1-the-unsafe-boundary"><a class="header" href="#1-the-unsafe-boundary">1. The Unsafe Boundary</a></h2>
+<h3 id="11-why-unsafe-exists"><a class="header" href="#11-why-unsafe-exists">1.1 Why Unsafe Exists</a></h3>
+<p>Unsafe Rust is not “turning off the borrow checker” — it’s establishing a <strong>contract</strong> between the programmer and the compiler. The borrow checker operates on conservative assumptions. Sometimes these assumptions are too restrictive for valid operations that humans (or AI agents) can verify manually.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Safe Rust: Conservative but correct
+fn get_two_mut&lt;T&gt;(slice: &amp;mut [T], i: usize, j: usize) -&gt; Option&lt;(&amp;mut T, &amp;mut T)&gt; {
+    // Borrow checker rejects: can't have two mutable references to slice
+    // Some((&amp;mut slice[i], &amp;mut slice[j]))  // ❌ Won't compile
+    None  // We're forced to give up
+}
+
+// Unsafe Rust: Precise invariants with human verification
+fn get_two_mut_unsafe&lt;T&gt;(slice: &amp;mut [T], i: usize, j: usize) -&gt; Option&lt;(&amp;mut T, &amp;mut T)&gt; {
+    if i == j || i &gt;= slice.len() || j &gt;= slice.len() {
+        return None;
+    }
+
+    unsafe {
+        // SAFETY: We have verified:
+        // 1. i and j are distinct (i != j)
+        // 2. Both indices are in bounds (i &lt; len, j &lt; len)
+        // 3. Therefore, the mutable references don't alias
+        let ptr = slice.as_mut_ptr();
+        Some((
+            &amp;mut *ptr.add(i),
+            &amp;mut *ptr.add(j),
+        ))
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Key Insight for AI Agents</strong>: The <code>unsafe</code> keyword does not disable safety checks. It enables operations that require <strong>manual verification</strong> of invariants the compiler cannot prove automatically.</p>
+<h3 id="12-the-five-unsafe-superpowers"><a class="header" href="#12-the-five-unsafe-superpowers">1.2 The Five Unsafe Superpowers</a></h3>
+<p>Unsafe Rust grants exactly five additional capabilities:</p>
+<ol>
+<li><strong>Dereference raw pointers</strong> (<code>*const T</code>, <code>*mut T</code>)</li>
+<li><strong>Call unsafe functions</strong> (including FFI functions)</li>
+<li><strong>Implement unsafe traits</strong> (e.g., <code>Send</code>, <code>Sync</code>)</li>
+<li><strong>Access mutable statics</strong></li>
+<li><strong>Access fields of unions</strong></li>
+</ol>
+<p>Everything else remains checked. For example, you <strong>cannot</strong>:</p>
+<ul>
+<li>Violate lifetime rules (references still must be valid)</li>
+<li>Bypass type checking (transmute still requires size equality)</li>
+<li>Create undefined behavior “safely” (UB is still UB)</li>
+</ul>
+<h3 id="13-safety-comments-the-contract"><a class="header" href="#13-safety-comments-the-contract">1.3 SAFETY Comments: The Contract</a></h3>
+<p>Every unsafe block must document its safety contract in a <code>// SAFETY:</code> comment.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Ascii([u8]);
+
+impl Ascii {
+    pub unsafe fn from_bytes_unchecked(bytes: &amp;[u8]) -&gt; &amp;Ascii {
+        // SAFETY: Caller must ensure all bytes are ASCII (0x00..=0x7F).
+        // Ascii is repr(transparent) over [u8], so the transmute is layout-safe.
+        std::mem::transmute(bytes)
+    }
+
+    pub fn from_bytes(bytes: &amp;[u8]) -&gt; Option&lt;&amp;Ascii&gt; {
+        if bytes.iter().all(|&amp;b| b &lt;= 0x7F) {
+            // SAFETY: We just verified all bytes are valid ASCII.
+            Some(unsafe { Self::from_bytes_unchecked(bytes) })
+        } else {
+            None
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>AI Agent Checklist for SAFETY Comments</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Does the comment state <strong>what</strong> invariants must hold?</li>
+<li><input disabled="" type="checkbox"> Does the comment state <strong>why</strong> those invariants make the code safe?</li>
+<li><input disabled="" type="checkbox"> Can the invariants be verified by examining the calling context?</li>
+<li><input disabled="" type="checkbox"> Are there any implicit assumptions (alignment, initialization, etc.)?</li>
+</ul>
+<h3 id="14-invariants-ai-agents-must-verify"><a class="header" href="#14-invariants-ai-agents-must-verify">1.4 Invariants AI Agents Must Verify</a></h3>
+<p>When reviewing unsafe code, verify these invariants:</p>
+<p><strong>Memory Safety</strong>:</p>
+<ul>
+<li>Pointers are valid (non-null, aligned, pointing to allocated memory)</li>
+<li>Pointers are initialized before dereferencing</li>
+<li>Lifetimes are respected (data outlives all references)</li>
+<li>No aliasing violations (mutable references are exclusive)</li>
+</ul>
+<p><strong>Type Safety</strong>:</p>
+<ul>
+<li>Transmutes preserve size and alignment</li>
+<li>Bit patterns are valid for the target type</li>
+<li>No invalid enum discriminants</li>
+<li>No dangling references</li>
+</ul>
+<p><strong>Thread Safety</strong>:</p>
+<ul>
+<li>Types sent across threads are <code>Send</code></li>
+<li>Types shared across threads are <code>Sync</code></li>
+<li>No data races (conflicting access without synchronization)</li>
+</ul>
+<hr>
+<h2 id="2-memory-layout--representation"><a class="header" href="#2-memory-layout--representation">2. Memory Layout &amp; Representation</a></h2>
+<h3 id="21-default-layout-unspecified-and-optimized"><a class="header" href="#21-default-layout-unspecified-and-optimized">2.1 Default Layout: Unspecified and Optimized</a></h3>
+<p>Rust <strong>does not guarantee</strong> struct field order or padding by default. The compiler may reorder fields for optimization.</p>
+<pre class="playground"><code class="language-rust">use std::mem::{size_of, align_of};
+
+#[derive(Debug)]
+struct Example {
+    a: u8,   // 1 byte, 1-byte aligned
+    b: u32,  // 4 bytes, 4-byte aligned
+    c: u16,  // 2 bytes, 2-byte aligned
+}
+
+fn main() {
+    println!("Size: {}", size_of::&lt;Example&gt;());      // Likely 8, NOT 7
+    println!("Align: {}", align_of::&lt;Example&gt;());    // Likely 4
+
+    // Field order in memory is UNSPECIFIED
+    // Compiler might reorder to: b, c, a (then pad to alignment)
+}</code></pre>
+<p><strong>Why This Matters</strong>: If you write unsafe code that assumes field order, it will break when the compiler changes optimizations.</p>
+<h3 id="22-reprc-c-compatible-layout"><a class="header" href="#22-reprc-c-compatible-layout">2.2 repr(C): C-Compatible Layout</a></h3>
+<p>Use <code>#[repr(C)]</code> for FFI or when layout must be predictable.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct CStruct {
+    a: u8,   // Offset 0
+    // 3 bytes padding
+    b: u32,  // Offset 4
+    c: u16,  // Offset 8
+    // 2 bytes padding to align to 4-byte boundary
+}
+
+// Size: 12 (not 7)
+// Alignment: 4 (alignment of largest field)
+<span class="boring">}</span></code></pre>
+<p><strong>Field Ordering with repr(C)</strong>:</p>
+<ul>
+<li>Fields appear in declaration order</li>
+<li>Padding added to satisfy alignment</li>
+<li>Struct’s alignment = max alignment of fields</li>
+<li>Size rounded up to multiple of alignment</li>
+</ul>
+<h3 id="23-reprpacked-remove-padding"><a class="header" href="#23-reprpacked-remove-padding">2.3 repr(packed): Remove Padding</a></h3>
+<p><code>#[repr(packed)]</code> removes all padding, aligning fields to 1-byte boundaries.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(packed)]
+struct Packed {
+    a: u8,   // Offset 0
+    b: u32,  // Offset 1 (UNALIGNED!)
+    c: u16,  // Offset 5
+}
+// Size: 7 (exactly sum of field sizes)
+<span class="boring">}</span></code></pre>
+<p><strong>⚠️ DANGER</strong>: Accessing unaligned fields is <strong>undefined behavior</strong> on many architectures.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(packed)]
+struct Packed {
+    a: u8,
+    b: u32,
+}
+
+fn bad_access(p: &amp;Packed) {
+    let x = p.b;  // ❌ UB: Creates reference to unaligned u32
+}
+
+fn safe_access(p: &amp;Packed) {
+    let x = unsafe { std::ptr::addr_of!(p.b).read_unaligned() };  // ✅ OK
+}
+<span class="boring">}</span></code></pre>
+<p><strong>AI Agent Rule</strong>: When you see <code>#[repr(packed)]</code>, verify that all field accesses use <code>addr_of!</code> or <code>read_unaligned</code>, never direct field references.</p>
+<h3 id="24-repralignn-increase-alignment"><a class="header" href="#24-repralignn-increase-alignment">2.4 repr(align(N)): Increase Alignment</a></h3>
+<p>Force a type to have minimum alignment:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(align(64))]  // Cache line alignment
+struct CacheLine {
+    data: [u8; 64],
+}
+
+// Ensures this struct starts on a 64-byte boundary
+// Prevents false sharing in multi-threaded code
+<span class="boring">}</span></code></pre>
+<h3 id="25-zero-copy-serialization-implications"><a class="header" href="#25-zero-copy-serialization-implications">2.5 Zero-Copy Serialization Implications</a></h3>
+<p>Unsafe code often aims for zero-copy deserialization. This requires:</p>
+<ol>
+<li><strong>Known layout</strong> (<code>#[repr(C)]</code>)</li>
+<li><strong>No invalid bit patterns</strong> (all bit patterns valid for type)</li>
+<li><strong>No references</strong> (pointers are not portable across processes)</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct Header {
+    magic: u32,
+    version: u16,
+    flags: u16,
+}
+
+unsafe fn parse_header(bytes: &amp;[u8]) -&gt; Option&lt;&amp;Header&gt; {
+    if bytes.len() &lt; std::mem::size_of::&lt;Header&gt;() {
+        return None;
+    }
+
+    // SAFETY:
+    // 1. Header is repr(C), so layout is known
+    // 2. All bit patterns are valid for u32/u16 fields
+    // 3. bytes.len() &gt;= size_of::&lt;Header&gt;()
+    // 4. Alignment: we must verify bytes.as_ptr() is aligned
+    if (bytes.as_ptr() as usize) % std::mem::align_of::&lt;Header&gt;() != 0 {
+        return None;  // Not aligned, would be UB
+    }
+
+    Some(&amp;*(bytes.as_ptr() as *const Header))
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="3-transmute-semantics--type-safety"><a class="header" href="#3-transmute-semantics--type-safety">3. Transmute Semantics &amp; Type Safety</a></h2>
+<h3 id="31-what-transmute-does"><a class="header" href="#31-what-transmute-does">3.1 What Transmute Does</a></h3>
+<p><code>std::mem::transmute&lt;T, U&gt;(value: T) -&gt; U</code> reinterprets the bits of <code>T</code> as type <code>U</code>. It is the ultimate escape hatch and extremely dangerous.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let x: u32 = 0x3f800000;
+let f: f32 = unsafe { std::mem::transmute(x) };
+println!("{}", f);  // 1.0 (IEEE 754 representation of 1.0)
+<span class="boring">}</span></code></pre>
+<p><strong>Compiler Guarantees</strong>:</p>
+<ul>
+<li><code>size_of::&lt;T&gt;() == size_of::&lt;U&gt;()</code> (enforced at compile time)</li>
+</ul>
+<p><strong>Programmer Responsibilities</strong>:</p>
+<ul>
+<li>Bit pattern of <code>T</code> must be valid for <code>U</code></li>
+<li>Alignment requirements must be compatible</li>
+<li>Lifetimes must be preserved</li>
+</ul>
+<h3 id="32-safe-transmute-patterns"><a class="header" href="#32-safe-transmute-patterns">3.2 Safe Transmute Patterns</a></h3>
+<p><strong>Pattern 1: Primitive Casts</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ SAFE: All bit patterns of u32 are valid f32 (NaN is valid)
+let bits: u32 = 0x3f800000;
+let float: f32 = unsafe { std::mem::transmute(bits) };
+
+// ✅ SAFE: Pointer to usize (same size on target platform)
+let ptr = &amp;value as *const i32;
+let addr: usize = unsafe { std::mem::transmute(ptr) };
+<span class="boring">}</span></code></pre>
+<p><strong>Pattern 2: Array to Array</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ SAFE: [u8; 4] and u32 have same size, all bit patterns valid
+let bytes: [u8; 4] = [0x00, 0x00, 0x80, 0x3f];
+let value: u32 = unsafe { std::mem::transmute(bytes) };
+<span class="boring">}</span></code></pre>
+<p><strong>Pattern 3: repr(transparent) Wrappers</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(transparent)]
+struct Ascii([u8]);
+
+// ✅ SAFE: Ascii is repr(transparent), identical layout to [u8]
+unsafe fn cast_to_ascii(bytes: &amp;[u8]) -&gt; &amp;Ascii {
+    std::mem::transmute(bytes)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="33-dangerous-transmute-patterns"><a class="header" href="#33-dangerous-transmute-patterns">3.3 Dangerous Transmute Patterns</a></h3>
+<p><strong>Anti-Pattern 1: Lifetime Extension</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ UB: Extends lifetime artificially
+fn evil_lifetime&lt;'a&gt;(s: &amp;str) -&gt; &amp;'a str {
+    unsafe { std::mem::transmute(s) }
+}
+// This creates a dangling reference when the original data is freed
+<span class="boring">}</span></code></pre>
+<p><strong>Anti-Pattern 2: Invalid Enum Discriminants</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>enum Bool {
+    False = 0,
+    True = 1,
+}
+
+let x: u8 = 2;
+let b: Bool = unsafe { std::mem::transmute(x) };  // ❌ UB: 2 is not a valid Bool
+<span class="boring">}</span></code></pre>
+<p><strong>Anti-Pattern 3: Uninitialized Memory</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ UB: Transmuting uninitialized memory
+let x: i32 = unsafe { std::mem::transmute([0u8; 4]) };  // OK (0 is valid)
+let x: bool = unsafe { std::mem::transmute(2u8) };      // ❌ UB (only 0 or 1 valid)
+<span class="boring">}</span></code></pre>
+<h3 id="34-size-and-alignment-verification"><a class="header" href="#34-size-and-alignment-verification">3.4 Size and Alignment Verification</a></h3>
+<p>Always verify size equality before transmute:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn safe_transmute&lt;T, U&gt;(value: T) -&gt; Result&lt;U, T&gt; {
+    if std::mem::size_of::&lt;T&gt;() != std::mem::size_of::&lt;U&gt;() {
+        return Err(value);
+    }
+
+    // SAFETY: Sizes are equal. Caller must verify bit patterns are valid.
+    Ok(unsafe { std::mem::transmute_copy(&amp;value) })
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Note</strong>: Use <code>transmute_copy</code> to avoid move semantics issues.</p>
+<h3 id="35-endianness-considerations"><a class="header" href="#35-endianness-considerations">3.5 Endianness Considerations</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct NetworkHeader {
+    value: u32,
+}
+
+fn parse_network(bytes: &amp;[u8; 4]) -&gt; u32 {
+    // ❌ WRONG: Endianness-dependent
+    let header: NetworkHeader = unsafe { std::mem::transmute(*bytes) };
+    header.value
+
+    // ✅ CORRECT: Explicit endianness handling
+    u32::from_be_bytes(*bytes)
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="4-pointer-semantics--aliasing-rules"><a class="header" href="#4-pointer-semantics--aliasing-rules">4. Pointer Semantics &amp; Aliasing Rules</a></h2>
+<h3 id="41-rusts-aliasing-model"><a class="header" href="#41-rusts-aliasing-model">4.1 Rust’s Aliasing Model</a></h3>
+<p>Rust enforces <strong>XOR aliasing</strong>: at any given time, you can have <strong>either</strong>:</p>
+<ul>
+<li><strong>One mutable reference</strong> (<code>&amp;mut T</code>), <strong>OR</strong></li>
+<li><strong>Any number of immutable references</strong> (<code>&amp;T</code>)</li>
+</ul>
+<p>This prevents data races and enables optimizations.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn aliasing_violation() {
+    let mut x = 42;
+    let r1 = &amp;x;
+    let r2 = &amp;x;        // OK: Multiple immutable
+    let r3 = &amp;mut x;    // ❌ ERROR: Can't have &amp;mut while &amp; exists
+}
+<span class="boring">}</span></code></pre>
+<h3 id="42-stacked-borrows-model"><a class="header" href="#42-stacked-borrows-model">4.2 Stacked Borrows Model</a></h3>
+<p>Rust’s memory model (formalized as <strong>Stacked Borrows</strong>) treats references like a stack:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut x = 10;
+let r1 = &amp;mut x;     // Push mutable tag
+*r1 += 1;            // Use r1 (valid)
+let r2 = &amp;*r1;       // Push immutable tag (r1 becomes inactive)
+println!("{}", r2);  // Use r2 (valid)
+// *r1 += 1;         // ❌ UB: r1 was invalidated by creating r2
+<span class="boring">}</span></code></pre>
+<p><strong>Stacked Borrows Rules</strong>:</p>
+<ol>
+<li>Creating a reference <strong>pushes</strong> a tag onto the stack</li>
+<li>Using a reference <strong>validates</strong> its tag is still on the stack</li>
+<li>Creating a conflicting reference <strong>pops</strong> older conflicting tags</li>
+</ol>
+<p><strong>AI Agent Insight</strong>: When reviewing unsafe code, trace the “borrow stack” to ensure no invalidated references are used.</p>
+<h3 id="43-raw-pointers-and-aliasing"><a class="header" href="#43-raw-pointers-and-aliasing">4.3 Raw Pointers and Aliasing</a></h3>
+<p>Raw pointers (<code>*const T</code>, <code>*mut T</code>) <strong>opt out</strong> of aliasing rules:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut x = 42;
+let p1: *mut i32 = &amp;mut x;
+let p2: *mut i32 = &amp;mut x;
+
+unsafe {
+    *p1 += 1;  // ✅ OK with raw pointers (but risky!)
+    *p2 += 1;  // ✅ OK with raw pointers
+}
+// x is now 44
+<span class="boring">}</span></code></pre>
+<p><strong>⚠️ WARNING</strong>: While raw pointers allow aliasing, <strong>dereferencing aliased mutable pointers</strong> in a way that causes conflicting access is still UB.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>unsafe {
+    let p1 = &amp;mut x as *mut i32;
+    let p2 = p1;
+
+    *p1 = 1;   // ✅ OK
+    *p2 = 2;   // ✅ OK
+
+    let val = *p1 + *p2;  // ❓ Potentially UB depending on compiler optimizations
+}
+<span class="boring">}</span></code></pre>
+<h3 id="44-creation-use-and-invalidation-of-pointers"><a class="header" href="#44-creation-use-and-invalidation-of-pointers">4.4 Creation, Use, and Invalidation of Pointers</a></h3>
+<p><strong>Creating Pointers</strong> (always safe):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let x = 42;
+let ptr: *const i32 = &amp;x;  // ✅ Creating pointer is always safe
+<span class="boring">}</span></code></pre>
+<p><strong>Dereferencing Pointers</strong> (requires unsafe):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>unsafe {
+    let value = *ptr;  // Must verify: non-null, aligned, initialized, valid lifetime
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pointer Invalidation</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn dangling_pointer() -&gt; *const i32 {
+    let x = 42;
+    &amp;x as *const i32  // ✅ Creating pointer is safe
+}  // x is dropped here
+
+fn use_dangling() {
+    let ptr = dangling_pointer();
+    unsafe {
+        let value = *ptr;  // ❌ UB: Pointer is dangling
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="45-provenance-and-pointer-to-integer-casts"><a class="header" href="#45-provenance-and-pointer-to-integer-casts">4.5 Provenance and Pointer-to-Integer Casts</a></h3>
+<p>Recent Rust models introduce <strong>provenance</strong>: pointers carry metadata about what memory they’re allowed to access.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let x = 42;
+let y = 42;
+
+let px = &amp;x as *const i32 as usize;
+let py = &amp;y as *const i32 as usize;
+
+// Even if px == py (same address by coincidence), the pointers
+// have different provenance and can't be used interchangeably
+<span class="boring">}</span></code></pre>
+<p><strong>AI Agent Rule</strong>: Assume pointer-to-integer-to-pointer casts lose provenance. Use <code>std::ptr::addr_of!</code> and keep pointers as pointers.</p>
+<hr>
+<h2 id="5-data-races--race-conditions"><a class="header" href="#5-data-races--race-conditions">5. Data Races &amp; Race Conditions</a></h2>
+<h3 id="51-data-race-vs-race-condition"><a class="header" href="#51-data-race-vs-race-condition">5.1 Data Race vs Race Condition</a></h3>
+<p><strong>Data Race</strong> (undefined behavior in Rust):</p>
+<ul>
+<li>Two threads access the same memory</li>
+<li>At least one access is a write</li>
+<li>Accesses are not synchronized</li>
+</ul>
+<p><strong>Race Condition</strong> (not UB, but often a bug):</p>
+<ul>
+<li>Program behavior depends on timing</li>
+<li>Results are non-deterministic but all outcomes are defined</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+// ❌ DATA RACE: Undefined behavior
+fn data_race() {
+    let mut x = 0;
+    let x_ref = &amp;mut x as *mut i32;
+
+    std::thread::scope(|s| {
+        s.spawn(|| unsafe { *x_ref = 1; });  // Write without synchronization
+        s.spawn(|| unsafe { *x_ref = 2; });  // Concurrent write = DATA RACE
+    });
+}
+
+// ✅ RACE CONDITION: Defined behavior, non-deterministic result
+fn race_condition() {
+    let counter = Arc::new(AtomicUsize::new(0));
+    let c1 = counter.clone();
+    let c2 = counter.clone();
+
+    std::thread::scope(|s| {
+        s.spawn(move || { c1.fetch_add(1, Ordering::SeqCst); });
+        s.spawn(move || { c2.fetch_add(1, Ordering::SeqCst); });
+    });
+
+    // counter is now 2, but order of increments is non-deterministic
+    // This is a RACE CONDITION but NOT a data race
+}
+<span class="boring">}</span></code></pre>
+<h3 id="52-send-and-sync"><a class="header" href="#52-send-and-sync">5.2 Send and Sync</a></h3>
+<p><strong>Send</strong>: Type can be transferred across thread boundaries</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// T: Send means ownership of T can move to another thread
+fn send_example&lt;T: Send&gt;(value: T) {
+    std::thread::spawn(move || {
+        drop(value);  // value used in another thread
+    });
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Sync</strong>: Type can be shared across threads via <code>&amp;T</code></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// T: Sync means &amp;T can be shared across threads
+// Equivalent to: T: Sync ⟺ &amp;T: Send
+fn sync_example&lt;T: Sync&gt;(value: &amp;'static T) {
+    std::thread::spawn(move || {
+        let _ = value;  // Immutable reference used in another thread
+    });
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Key Relationships</strong>:</p>
+<ul>
+<li><code>T: Sync</code> ⟺ <code>&amp;T: Send</code></li>
+<li><code>&amp;mut T: Send</code> if <code>T: Send</code></li>
+<li>Most types are <code>Send + Sync</code> (primitives, <code>Vec</code>, <code>String</code>, etc.)</li>
+<li><code>Rc&lt;T&gt;</code> is <strong>not</strong> <code>Send</code> or <code>Sync</code> (use <code>Arc&lt;T&gt;</code> instead)</li>
+<li><code>Cell&lt;T&gt;</code> is <code>Send</code> but <strong>not</strong> <code>Sync</code> (interior mutability without synchronization)</li>
+</ul>
+<h3 id="53-atomic-operations-and-memory-ordering"><a class="header" href="#53-atomic-operations-and-memory-ordering">5.3 Atomic Operations and Memory Ordering</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicUsize, Ordering};
+
+static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+fn increment() {
+    COUNTER.fetch_add(1, Ordering::SeqCst);  // Sequentially consistent
+}
+
+fn relaxed_increment() {
+    COUNTER.fetch_add(1, Ordering::Relaxed);  // No ordering guarantees
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Memory Orderings</strong> (from strongest to weakest):</p>
+<ul>
+<li><strong>SeqCst</strong>: Sequential consistency (total order across all threads)</li>
+<li><strong>AcqRel</strong>: Acquire on load, Release on store</li>
+<li><strong>Acquire</strong>: Synchronizes with Release stores</li>
+<li><strong>Release</strong>: Synchronizes with Acquire loads</li>
+<li><strong>Relaxed</strong>: No ordering guarantees (atomicity only)</li>
+</ul>
+<p><strong>AI Agent Rule</strong>: Unless you have a specific reason, use <code>Ordering::SeqCst</code>. Weaker orderings are optimization opportunities but require expert understanding.</p>
+<h3 id="54-when-to-use-arcmutex-vs-arc"><a class="header" href="#54-when-to-use-arcmutex-vs-arc">5.4 When to Use Arc&lt;Mutex<t>&gt; vs Arc<t></t></t></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+// Arc&lt;Mutex&lt;T&gt;&gt;: Shared mutable state
+let data = Arc::new(Mutex::new(vec![1, 2, 3]));
+let data_clone = data.clone();
+
+std::thread::spawn(move || {
+    data_clone.lock().unwrap().push(4);  // Mutable access
+});
+
+// Arc&lt;T&gt; where T: Sync: Shared immutable state
+let data = Arc::new(vec![1, 2, 3]);
+let data_clone = data.clone();
+
+std::thread::spawn(move || {
+    println!("{:?}", data_clone);  // Immutable access only
+});
+<span class="boring">}</span></code></pre>
+<p><strong>Decision Tree</strong>:</p>
+<ul>
+<li>Need to mutate? → <code>Arc&lt;Mutex&lt;T&gt;&gt;</code></li>
+<li>Only read? → <code>Arc&lt;T&gt;</code> (if <code>T: Sync</code>)</li>
+<li>Frequent writes, rare reads? → <code>Arc&lt;RwLock&lt;T&gt;&gt;</code></li>
+<li>Lock-free required? → Atomic types or custom concurrent data structures</li>
+</ul>
+<hr>
+<h2 id="6-common-unsafe-patterns--pitfalls"><a class="header" href="#6-common-unsafe-patterns--pitfalls">6. Common Unsafe Patterns &amp; Pitfalls</a></h2>
+<h3 id="61-self-referential-structs-the-pin-problem"><a class="header" href="#61-self-referential-structs-the-pin-problem">6.1 Self-Referential Structs (The Pin Problem)</a></h3>
+<p>Self-referential structs are a major pitfall:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct SelfRef {
+    data: String,
+    ptr: *const String,  // Points to self.data
+}
+
+impl SelfRef {
+    fn new(s: String) -&gt; Self {
+        let mut sr = SelfRef {
+            data: s,
+            ptr: std::ptr::null(),
+        };
+        sr.ptr = &amp;sr.data;  // ❌ PROBLEM: Moving sr invalidates this pointer!
+        sr
+    }
+}
+
+fn break_it() {
+    let sr = SelfRef::new("hello".into());
+    let sr2 = sr;  // ❌ sr.ptr now points to freed memory (sr.data moved)
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Why This Fails</strong>: Moving <code>sr</code> to <code>sr2</code> moves <code>sr.data</code> to a new memory location, but <code>sr.ptr</code> still points to the old location.</p>
+<h3 id="62-pin-and-unpin"><a class="header" href="#62-pin-and-unpin">6.2 Pin and Unpin</a></h3>
+<p><code>Pin&lt;P&gt;</code> prevents moving the pointed-to value:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+struct SelfRefSafe {
+    data: String,
+    ptr: *const String,
+    _pin: PhantomPinned,  // Marks type as !Unpin
+}
+
+impl SelfRefSafe {
+    fn new(s: String) -&gt; Pin&lt;Box&lt;Self&gt;&gt; {
+        let mut boxed = Box::pin(SelfRefSafe {
+            data: s,
+            ptr: std::ptr::null(),
+            _pin: PhantomPinned,
+        });
+
+        // SAFETY: We never move this after pinning
+        let ptr = &amp;boxed.data as *const String;
+        unsafe {
+            let mut_ref = Pin::as_mut(&amp;mut boxed);
+            Pin::get_unchecked_mut(mut_ref).ptr = ptr;
+        }
+
+        boxed
+    }
+
+    fn get_data(self: Pin&lt;&amp;Self&gt;) -&gt; &amp;str {
+        &amp;self.data
+    }
+
+    fn get_via_ptr(self: Pin&lt;&amp;Self&gt;) -&gt; &amp;str {
+        // SAFETY: Pin guarantees the data hasn't moved
+        unsafe { &amp;*self.ptr }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pin Guarantees</strong>:</p>
+<ul>
+<li><code>Pin&lt;P&gt;</code> where <code>P: Deref&lt;Target = T&gt;</code> and <code>T: !Unpin</code> prevents moving <code>T</code></li>
+<li>Most types implement <code>Unpin</code> (can be moved even when pinned)</li>
+<li><code>PhantomPinned</code> opts out of <code>Unpin</code></li>
+</ul>
+<h3 id="63-unsafe-trait-implementations"><a class="header" href="#63-unsafe-trait-implementations">6.3 Unsafe Trait Implementations</a></h3>
+<p>Implementing <code>Send</code> and <code>Sync</code> is unsafe because you’re making a contract:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::cell::UnsafeCell;
+
+struct MyCell {
+    value: UnsafeCell&lt;i32&gt;,
+}
+
+// SAFETY: MyCell can be sent across threads because i32 is Send
+unsafe impl Send for MyCell {}
+
+// NOT SAFE: MyCell uses interior mutability without synchronization
+// unsafe impl Sync for MyCell {}  // ❌ Would be UB
+<span class="boring">}</span></code></pre>
+<p><strong>AI Agent Checklist for Unsafe Trait Impls</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> <code>Send</code>: Can all fields be safely sent across threads?</li>
+<li><input disabled="" type="checkbox"> <code>Sync</code>: Can <code>&amp;Self</code> be safely shared across threads?</li>
+<li><input disabled="" type="checkbox"> Are there any raw pointers or interior mutability that break assumptions?</li>
+</ul>
+<h3 id="64-custom-allocators-and-drop-implementations"><a class="header" href="#64-custom-allocators-and-drop-implementations">6.4 Custom Allocators and Drop Implementations</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::alloc::{alloc, dealloc, Layout};
+use std::ptr;
+
+struct RawVec&lt;T&gt; {
+    ptr: *mut T,
+    cap: usize,
+}
+
+impl&lt;T&gt; RawVec&lt;T&gt; {
+    fn new() -&gt; Self {
+        RawVec {
+            ptr: std::ptr::NonNull::dangling().as_ptr(),
+            cap: 0,
+        }
+    }
+
+    fn grow(&amp;mut self) {
+        let new_cap = if self.cap == 0 { 1 } else { self.cap * 2 };
+        let new_layout = Layout::array::&lt;T&gt;(new_cap).unwrap();
+
+        let new_ptr = if self.cap == 0 {
+            unsafe { alloc(new_layout) as *mut T }
+        } else {
+            let old_layout = Layout::array::&lt;T&gt;(self.cap).unwrap();
+            unsafe {
+                std::alloc::realloc(self.ptr as *mut u8, old_layout, new_layout.size()) as *mut T
+            }
+        };
+
+        self.ptr = new_ptr;
+        self.cap = new_cap;
+    }
+}
+
+impl&lt;T&gt; Drop for RawVec&lt;T&gt; {
+    fn drop(&amp;mut self) {
+        if self.cap &gt; 0 {
+            let layout = Layout::array::&lt;T&gt;(self.cap).unwrap();
+            unsafe {
+                dealloc(self.ptr as *mut u8, layout);
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Drop Safety Rules</strong>:</p>
+<ul>
+<li>Drop must not panic (will abort if it does during unwinding)</li>
+<li>Drop must not access moved-from fields</li>
+<li>Drop must handle partial initialization</li>
+</ul>
+<h3 id="65-pattern-matching-in-unsafe-code"><a class="header" href="#65-pattern-matching-in-unsafe-code">6.5 Pattern Matching in Unsafe Code</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>enum Message {
+    Quit,
+    Move { x: i32, y: i32 },
+}
+
+fn unsafe_match(msg_ptr: *const Message) {
+    unsafe {
+        match *msg_ptr {
+            Message::Quit =&gt; {
+                // SAFETY: Just read the discriminant, no issues
+            }
+            Message::Move { x, y } =&gt; {
+                // SAFETY: Copies x and y, which are Copy types
+                println!("{}, {}", x, y);
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pitfall</strong>: Matching on <code>!Copy</code> types moves them:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>enum Container {
+    Data(String),
+}
+
+fn unsafe_match_move(ptr: *const Container) {
+    unsafe {
+        match *ptr {
+            Container::Data(s) =&gt; {
+                // ❌ MOVES the String out of *ptr, leaving it uninitialized!
+                println!("{}", s);
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Fix</strong>: Use <code>ref</code> or match on references:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>unsafe {
+    match &amp;*ptr {
+        Container::Data(s) =&gt; {
+            println!("{}", s);  // ✅ Borrows, doesn't move
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="7-verification-techniques-for-ai-agents"><a class="header" href="#7-verification-techniques-for-ai-agents">7. Verification Techniques for AI Agents</a></h2>
+<h3 id="71-miri-the-interpreter-that-catches-ub"><a class="header" href="#71-miri-the-interpreter-that-catches-ub">7.1 Miri: The Interpreter That Catches UB</a></h3>
+<p>Miri is a Rust interpreter that detects undefined behavior at runtime:</p>
+<pre><code class="language-bash"># Install Miri
+rustup +nightly component add miri
+
+# Run tests under Miri
+cargo +nightly miri test
+
+# Run specific binary
+cargo +nightly miri run
+</code></pre>
+<p><strong>What Miri Catches</strong>:</p>
+<ul>
+<li>Out-of-bounds memory access</li>
+<li>Use-after-free</li>
+<li>Using uninitialized memory</li>
+<li>Violating aliasing rules (Stacked Borrows violations)</li>
+<li>Data races (with <code>-Zmiri-disable-isolation</code>)</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_undefined_behavior() {
+    let x = 5;
+    let ptr = &amp;x as *const i32;
+
+    // Miri will catch this use-after-free
+    drop(x);
+    unsafe {
+        let value = *ptr;  // ❌ Miri error: pointer is dangling
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="72-addresssanitizer-asan-and-leaksanitizer-lsan"><a class="header" href="#72-addresssanitizer-asan-and-leaksanitizer-lsan">7.2 AddressSanitizer (ASAN) and LeakSanitizer (LSAN)</a></h3>
+<p>For native code and FFI, use sanitizers:</p>
+<pre><code class="language-bash"># Build with AddressSanitizer
+RUSTFLAGS="-Z sanitizer=address" cargo +nightly build
+
+# Run with AddressSanitizer
+RUSTFLAGS="-Z sanitizer=address" cargo +nightly test
+
+# LeakSanitizer (memory leaks)
+RUSTFLAGS="-Z sanitizer=leak" cargo +nightly test
+</code></pre>
+<p><strong>What ASAN Catches</strong>:</p>
+<ul>
+<li>Heap buffer overflow</li>
+<li>Stack buffer overflow</li>
+<li>Use-after-free</li>
+<li>Use-after-return</li>
+<li>Double-free</li>
+</ul>
+<h3 id="73-proof-techniques-for-unsafe-blocks"><a class="header" href="#73-proof-techniques-for-unsafe-blocks">7.3 Proof Techniques for Unsafe Blocks</a></h3>
+<p><strong>Technique 1: Invariant Documentation</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Invariant: `len &lt;= cap` always holds
+/// Invariant: `ptr` points to an allocation of `cap * size_of::&lt;T&gt;()` bytes
+/// Invariant: Elements `[0..len)` are initialized, `[len..cap)` are uninitialized
+struct Vec&lt;T&gt; {
+    ptr: *mut T,
+    len: usize,
+    cap: usize,
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Technique 2: State Machine Proof</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>enum State {
+    Empty,           // len == 0, cap == 0
+    Reserved,        // len == 0, cap &gt; 0
+    PartiallyFilled, // 0 &lt; len &lt; cap
+    Full,            // len == cap
+}
+
+// Prove each operation maintains valid transitions
+impl&lt;T&gt; Vec&lt;T&gt; {
+    fn push(&amp;mut self, value: T) {
+        // Pre-condition: len &lt;= cap
+        // Post-condition: len &lt;= cap (grows capacity if needed)
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Technique 3: Lifetime Proofs</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn split_at_mut&lt;T&gt;(slice: &amp;mut [T], mid: usize) -&gt; (&amp;mut [T], &amp;mut [T]) {
+    // Proof:
+    // 1. Input lifetime: 'a (lifetime of slice)
+    // 2. Output lifetimes: both 'a (tied to input)
+    // 3. No aliasing: [0..mid) and [mid..len) don't overlap
+    // 4. Soundness: Both outputs have lifetime 'a and don't alias
+
+    assert!(mid &lt;= slice.len());
+    unsafe {
+        (
+            std::slice::from_raw_parts_mut(slice.as_mut_ptr(), mid),
+            std::slice::from_raw_parts_mut(slice.as_mut_ptr().add(mid), slice.len() - mid),
+        )
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="74-code-structure-for-auditing"><a class="header" href="#74-code-structure-for-auditing">7.4 Code Structure for Auditing</a></h3>
+<p><strong>Pattern: Unsafe Core, Safe Shell</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod unsafe_core {
+    /// SAFETY: Caller must ensure idx &lt; len
+    pub unsafe fn get_unchecked&lt;T&gt;(slice: &amp;[T], idx: usize) -&gt; &amp;T {
+        &amp;*slice.as_ptr().add(idx)
+    }
+}
+
+pub mod safe_api {
+    use super::unsafe_core;
+
+    pub fn get&lt;T&gt;(slice: &amp;[T], idx: usize) -&gt; Option&lt;&amp;T&gt; {
+        if idx &lt; slice.len() {
+            // SAFETY: We just verified idx &lt; len
+            Some(unsafe { unsafe_core::get_unchecked(slice, idx) })
+        } else {
+            None
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pattern: Capability-Based Safety</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Token proving that index is in bounds
+struct ValidIndex {
+    idx: usize,
+}
+
+impl ValidIndex {
+    fn new(idx: usize, len: usize) -&gt; Option&lt;Self&gt; {
+        if idx &lt; len {
+            Some(ValidIndex { idx })
+        } else {
+            None
+        }
+    }
+}
+
+fn get_unchecked&lt;T&gt;(slice: &amp;[T], valid_idx: ValidIndex) -&gt; &amp;T {
+    // SAFETY: ValidIndex can only be constructed if idx &lt; len
+    unsafe { &amp;*slice.as_ptr().add(valid_idx.idx) }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="75-documentation-patterns-for-auditable-unsafe-code"><a class="header" href="#75-documentation-patterns-for-auditable-unsafe-code">7.5 Documentation Patterns for Auditable Unsafe Code</a></h3>
+<p><strong>Complete SAFETY Comment Template</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// # Safety
+///
+/// This function is unsafe because [reason].
+///
+/// ## Requirements
+/// The caller must ensure:
+/// - [Requirement 1]
+/// - [Requirement 2]
+///
+/// ## Guarantees
+/// If the requirements are met, this function:
+/// - [Guarantee 1]
+/// - [Guarantee 2]
+///
+/// ## Examples
+/// ```
+/// # use crate::example;
+/// let x = 42;
+/// // SAFETY: [explanation why this call is safe]
+/// let result = unsafe { example(&amp;x) };
+/// ```
+pub unsafe fn example&lt;T&gt;(ptr: *const T) -&gt; T {
+    std::ptr::read(ptr)
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="summary-ai-agent-unsafe-code-review-checklist"><a class="header" href="#summary-ai-agent-unsafe-code-review-checklist">Summary: AI Agent Unsafe Code Review Checklist</a></h2>
+<p>When reviewing or writing unsafe code, verify:</p>
+<p><strong>Memory Safety</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> All pointers are valid (non-null, aligned, within allocation)</li>
+<li><input disabled="" type="checkbox"> No use-after-free (lifetimes respected)</li>
+<li><input disabled="" type="checkbox"> No buffer overflows (bounds checked)</li>
+<li><input disabled="" type="checkbox"> No uninitialized memory reads</li>
+</ul>
+<p><strong>Aliasing</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> No mutable aliasing (unique access via <code>&amp;mut</code>)</li>
+<li><input disabled="" type="checkbox"> Stacked Borrows not violated (no use-after-invalidation)</li>
+<li><input disabled="" type="checkbox"> Raw pointers don’t create illegal references</li>
+</ul>
+<p><strong>Type Safety</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Transmutes preserve size and alignment</li>
+<li><input disabled="" type="checkbox"> Bit patterns are valid for target type</li>
+<li><input disabled="" type="checkbox"> No invalid enum discriminants</li>
+</ul>
+<p><strong>Thread Safety</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Send/Sync bounds are correct</li>
+<li><input disabled="" type="checkbox"> No data races (atomics or locks for shared mutable state)</li>
+<li><input disabled="" type="checkbox"> Memory ordering is appropriate</li>
+</ul>
+<p><strong>Documentation</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Every unsafe block has a SAFETY comment</li>
+<li><input disabled="" type="checkbox"> Invariants are documented</li>
+<li><input disabled="" type="checkbox"> API contracts are clear</li>
+</ul>
+<p><strong>Testing</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Tests run under Miri without errors</li>
+<li><input disabled="" type="checkbox"> Edge cases are tested (null, alignment, bounds)</li>
+<li><input disabled="" type="checkbox"> Concurrent tests for thread-safety</li>
+</ul>
+<hr>
+<h2 id="further-reading"><a class="header" href="#further-reading">Further Reading</a></h2>
+<ul>
+<li><strong>The Rustonomicon</strong>: https://doc.rust-lang.org/nomicon/</li>
+<li><strong>Unsafe Code Guidelines</strong>: https://rust-lang.github.io/unsafe-code-guidelines/</li>
+<li><strong>Stacked Borrows</strong>: https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md</li>
+<li><strong>Miri Documentation</strong>: https://github.com/rust-lang/miri</li>
+</ul>
+<hr>
+<p><strong>End of Chapter: Unsafe Rust &amp; Memory Layout Deep Dive</strong></p>
+<p><em>This chapter is part of the comprehensive Rust programming guide for AI agents working with the rust-programming-examples repository.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="12-memory-model-concurrent-access.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="14-drop-semantics-resource-management.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="12-memory-model-concurrent-access.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="14-drop-semantics-resource-management.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

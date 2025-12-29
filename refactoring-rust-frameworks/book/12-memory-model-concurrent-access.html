@@ -1,0 +1,2204 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 12: Memory Model &amp; Concurrent Access Patterns - Refactoring Rust Frameworks</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-80709b90.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a688046c.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Refactoring Rust Frameworks</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/12-memory-model-concurrent-access.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="memory-model--concurrent-access-patterns"><a class="header" href="#memory-model--concurrent-access-patterns">Memory Model &amp; Concurrent Access Patterns</a></h1>
+<h2 id="introduction-understanding-the-foundation"><a class="header" href="#introduction-understanding-the-foundation">Introduction: Understanding the Foundation</a></h2>
+<p>AI agents working with Rust concurrent code must understand the memory model at a deep level. Unlike higher-level concurrency abstractions, the memory model defines the fundamental rules governing how multiple threads interact with shared memory. This chapter provides the technical foundation necessary for verifying concurrent code correctness, detecting subtle bugs, and building lock-free data structures.</p>
+<p>The Rust memory model builds upon C++20’s memory model while leveraging Rust’s ownership system to provide additional safety guarantees. Understanding this model is essential for:</p>
+<ul>
+<li>Verifying that concurrent algorithms are correct</li>
+<li>Choosing appropriate atomic operations and orderings</li>
+<li>Detecting data races and race conditions</li>
+<li>Building performant concurrent data structures</li>
+<li>Analyzing existing concurrent code for correctness</li>
+</ul>
+<h2 id="1-the-rust-memory-model"><a class="header" href="#1-the-rust-memory-model">1. The Rust Memory Model</a></h2>
+<h3 id="load-and-store-semantics"><a class="header" href="#load-and-store-semantics">Load and Store Semantics</a></h3>
+<p>At the hardware level, memory operations are not instantaneous or atomic by default. Modern processors reorder instructions, cache values, and perform speculative execution. The memory model defines what behaviors programs can observe.</p>
+<p><strong>Basic Memory Operations:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Non-atomic load and store (UNSAFE in concurrent context)
+let x: i32 = 42;
+let y = x;  // Load
+x = 10;     // Store
+<span class="boring">}</span></code></pre>
+<p>These operations appear sequential in single-threaded code, but in multi-threaded contexts without synchronization, they exhibit undefined behavior:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>static mut X: i32 = 0;
+
+// Thread 1
+unsafe { X = 42; }  // UNDEFINED BEHAVIOR: Data race
+
+// Thread 2
+unsafe { let y = X; }  // UNDEFINED BEHAVIOR: Data race
+<span class="boring">}</span></code></pre>
+<p>The Rust compiler (correctly) rejects most such code at compile time through the type system.</p>
+<h3 id="happens-before-relationships"><a class="header" href="#happens-before-relationships">Happens-Before Relationships</a></h3>
+<p>The <strong>happens-before</strong> relation defines ordering guarantees between operations in different threads. If operation A happens-before operation B, then:</p>
+<ol>
+<li>A’s effects are visible to B</li>
+<li>A is sequenced before B in program order</li>
+<li>No reordering can place B before A</li>
+</ol>
+<p><strong>Establishing Happens-Before:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+let flag = Arc::new(AtomicBool::new(false));
+let data = Arc::new(AtomicBool::new(false));
+
+// Thread 1
+data.store(true, Ordering::Relaxed);  // A
+flag.store(true, Ordering::Release);   // B (establishes happens-before)
+
+// Thread 2
+if flag.load(Ordering::Acquire) {      // C (synchronizes with B)
+    assert!(data.load(Ordering::Relaxed));  // D (sees A's effects)
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>Release</code> store at B happens-before the <code>Acquire</code> load at C, which means all operations before B (including A) are visible after C.</p>
+<h3 id="sequential-consistency"><a class="header" href="#sequential-consistency">Sequential Consistency</a></h3>
+<p><strong>Sequential consistency</strong> (SeqCst) is the strongest memory ordering, providing a total global order of all SeqCst operations across all threads. This matches intuitive expectations but has performance costs.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, Ordering};
+
+static X: AtomicI32 = AtomicI32::new(0);
+static Y: AtomicI32 = AtomicI32::new(0);
+
+// With SeqCst, this cannot print "00"
+// Thread 1
+X.store(1, Ordering::SeqCst);
+println!("{}", Y.load(Ordering::SeqCst));
+
+// Thread 2
+Y.store(1, Ordering::SeqCst);
+println!("{}", X.load(Ordering::SeqCst));
+<span class="boring">}</span></code></pre>
+<p>With <code>SeqCst</code>, at least one thread will observe the other’s write, preventing “00” output. With weaker orderings, “00” is possible due to reordering.</p>
+<h3 id="weak-memory-ordering"><a class="header" href="#weak-memory-ordering">Weak Memory Ordering</a></h3>
+<p><strong>Weak memory models</strong> allow more reordering, enabling better performance on modern CPUs. Different platforms have different levels of “weakness”:</p>
+<p><strong>x86/x64 (Strong Ordering):</strong></p>
+<ul>
+<li>Loads are not reordered with loads</li>
+<li>Stores are not reordered with stores</li>
+<li>Stores are not reordered with prior loads</li>
+<li>Loads may be reordered with prior stores (store buffer)</li>
+</ul>
+<p><strong>ARM/POWER (Weak Ordering):</strong></p>
+<ul>
+<li>Almost all reorderings are possible without barriers</li>
+<li>Requires explicit memory barriers for synchronization</li>
+<li>Much larger performance gap between orderings</li>
+</ul>
+<p><strong>Example showing platform differences:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Dekker's algorithm (requires sequential consistency)
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static FLAG1: AtomicBool = AtomicBool::new(false);
+static FLAG2: AtomicBool = AtomicBool::new(false);
+
+// Thread 1
+FLAG1.store(true, Ordering::Relaxed);
+if !FLAG2.load(Ordering::Relaxed) {
+    // Critical section - BROKEN with Relaxed!
+}
+
+// Thread 2
+FLAG2.store(true, Ordering::Relaxed);
+if !FLAG1.load(Ordering::Relaxed) {
+    // Critical section - both threads can enter!
+}
+<span class="boring">}</span></code></pre>
+<p>On ARM, both threads can enter the critical section with <code>Relaxed</code> ordering due to reordering. This requires <code>SeqCst</code> or explicit acquire/release pairs.</p>
+<h3 id="platform-memory-models"><a class="header" href="#platform-memory-models">Platform Memory Models</a></h3>
+<p>Understanding platform differences is crucial for performance:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Efficient on x86 (TSO model), expensive on ARM
+fn increment_counter(counter: &amp;AtomicI32) {
+    counter.fetch_add(1, Ordering::SeqCst);
+    // On ARM: full memory barrier (dmb ish)
+    // On x86: just lock prefix (much cheaper)
+}
+
+// Better: Use Release/Acquire when sufficient
+fn increment_with_visibility(counter: &amp;AtomicI32) {
+    counter.fetch_add(1, Ordering::Release);
+    // On ARM: dmb ish (store barrier only)
+    // On x86: lock prefix (same as SeqCst, but documents intent)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="2-data-races-vs-race-conditions"><a class="header" href="#2-data-races-vs-race-conditions">2. Data Races vs Race Conditions</a></h2>
+<h3 id="formal-definition-of-data-races"><a class="header" href="#formal-definition-of-data-races">Formal Definition of Data Races</a></h3>
+<p>A <strong>data race</strong> occurs when:</p>
+<ol>
+<li>Two or more threads access the same memory location</li>
+<li>At least one access is a write</li>
+<li>The accesses are not synchronized (no happens-before relationship)</li>
+<li>At least one access is non-atomic</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Data race example (doesn't compile)
+let mut x = 0;
+std::thread::scope(|s| {
+    s.spawn(|| x = 1);  // Write
+    s.spawn(|| x = 2);  // Write - DATA RACE
+});
+<span class="boring">}</span></code></pre>
+<p>The Rust compiler prevents this:</p>
+<pre><code>error[E0499]: cannot borrow `x` as mutable more than once at a time
+</code></pre>
+<h3 id="why-rust-prevents-data-races"><a class="header" href="#why-rust-prevents-data-races">Why Rust Prevents Data Races</a></h3>
+<p>Rust’s type system enforces exclusivity for mutable access:</p>
+<p><strong>The Rule:</strong> <code>&amp;mut T</code> grants exclusive access; multiple <code>&amp;T</code> allow shared access.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Safe: Exclusive mutable access
+let mut x = 0;
+let r = &amp;mut x;
+*r = 42;  // Only one writer
+
+// Safe: Shared immutable access
+let x = 0;
+let r1 = &amp;x;
+let r2 = &amp;x;  // Multiple readers OK
+
+// Prevents data races at compile time!
+<span class="boring">}</span></code></pre>
+<p>For concurrent code, Rust requires either:</p>
+<ul>
+<li>Atomics (<code>AtomicT</code>) for lock-free synchronization</li>
+<li>Mutexes (<code>Mutex&lt;T&gt;</code>) for exclusive access</li>
+<li>Channels for message passing</li>
+</ul>
+<h3 id="race-conditions-non-deterministic-behavior"><a class="header" href="#race-conditions-non-deterministic-behavior">Race Conditions (Non-Deterministic Behavior)</a></h3>
+<p>A <strong>race condition</strong> is different from a data race:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+use std::sync::atomic::{AtomicI32, Ordering};
+
+let balance = Arc::new(AtomicI32::new(100));
+
+// Thread 1
+let b = balance.clone();
+std::thread::spawn(move || {
+    let current = b.load(Ordering::SeqCst);
+    if current &gt;= 50 {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        b.fetch_sub(50, Ordering::SeqCst);  // RACE CONDITION!
+    }
+});
+
+// Thread 2
+let b = balance.clone();
+std::thread::spawn(move || {
+    let current = b.load(Ordering::SeqCst);
+    if current &gt;= 50 {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        b.fetch_sub(50, Ordering::SeqCst);  // RACE CONDITION!
+    }
+});
+
+// Balance can go negative! Not a data race, but still a bug.
+<span class="boring">}</span></code></pre>
+<p><strong>No data race:</strong> All accesses are atomic with proper synchronization.
+<strong>Race condition exists:</strong> The check-then-act pattern creates a window where both threads see sufficient balance and both withdraw, overdrawing the account.</p>
+<h3 id="preventing-both-races-and-race-conditions"><a class="header" href="#preventing-both-races-and-race-conditions">Preventing Both Races and Race Conditions</a></h3>
+<p><strong>For data races:</strong> Use Rust’s type system (it’s automatic)</p>
+<p><strong>For race conditions:</strong> Use atomic compare-and-swap:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, Ordering};
+
+fn withdraw(balance: &amp;AtomicI32, amount: i32) -&gt; Result&lt;(), &amp;'static str&gt; {
+    loop {
+        let current = balance.load(Ordering::Acquire);
+        if current &lt; amount {
+            return Err("Insufficient funds");
+        }
+
+        let new_balance = current - amount;
+
+        // Atomic check-and-set
+        match balance.compare_exchange_weak(
+            current,
+            new_balance,
+            Ordering::Release,
+            Ordering::Acquire,
+        ) {
+            Ok(_) =&gt; return Ok(()),
+            Err(_) =&gt; continue,  // Retry if concurrent modification
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="rusts-guarantees-dont-include-race-condition-prevention"><a class="header" href="#rusts-guarantees-dont-include-race-condition-prevention">Rust’s Guarantees Don’t Include Race Condition Prevention</a></h3>
+<p><strong>Rust guarantees:</strong> No data races (memory safety)
+<strong>Rust does NOT guarantee:</strong> Correct concurrent algorithms (logical correctness)</p>
+<p>AI agents must verify:</p>
+<ul>
+<li>Atomicity of compound operations</li>
+<li>Lock ordering to prevent deadlocks</li>
+<li>Absence of TOCTOU (time-of-check-time-of-use) bugs</li>
+<li>Correct use of memory orderings</li>
+</ul>
+<h2 id="3-atomic-types--operations"><a class="header" href="#3-atomic-types--operations">3. Atomic Types &amp; Operations</a></h2>
+<h3 id="atomic-types-available"><a class="header" href="#atomic-types-available">Atomic Types Available</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::*;
+
+// Primitive atomics
+AtomicBool      // 1 byte
+AtomicI8, AtomicU8
+AtomicI16, AtomicU16
+AtomicI32, AtomicU32
+AtomicI64, AtomicU64
+AtomicIsize, AtomicUsize
+AtomicPtr&lt;T&gt;    // Pointer-sized
+
+// Example usage
+let flag = AtomicBool::new(false);
+let counter = AtomicI32::new(0);
+let ptr: AtomicPtr&lt;i32&gt; = AtomicPtr::new(std::ptr::null_mut());
+<span class="boring">}</span></code></pre>
+<h3 id="load-and-store-operations"><a class="header" href="#load-and-store-operations">Load and Store Operations</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, Ordering};
+
+let value = AtomicI32::new(42);
+
+// Load
+let x = value.load(Ordering::Acquire);
+// Store
+value.store(100, Ordering::Release);
+
+// Swap (atomic exchange)
+let old = value.swap(200, Ordering::AcqRel);
+<span class="boring">}</span></code></pre>
+<p><strong>Key insight:</strong> Every atomic operation requires an <code>Ordering</code> parameter, making synchronization explicit.</p>
+<h3 id="compare-and-swap-cas"><a class="header" href="#compare-and-swap-cas">Compare-and-Swap (CAS)</a></h3>
+<p>The fundamental primitive for lock-free algorithms:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, Ordering};
+
+let value = AtomicI32::new(10);
+
+// Strong CAS: Never spuriously fails
+match value.compare_exchange(
+    10,      // Expected current value
+    20,      // New value to set
+    Ordering::Release,  // Success ordering
+    Ordering::Acquire,  // Failure ordering
+) {
+    Ok(prev) =&gt; println!("Swapped, previous: {}", prev),
+    Err(current) =&gt; println!("Failed, current: {}", current),
+}
+
+// Weak CAS: May spuriously fail (use in loops)
+loop {
+    let current = value.load(Ordering::Relaxed);
+    let new = current + 1;
+
+    match value.compare_exchange_weak(
+        current,
+        new,
+        Ordering::Release,
+        Ordering::Acquire,
+    ) {
+        Ok(_) =&gt; break,
+        Err(_) =&gt; continue,  // Retry on spurious failure
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>When to use weak vs strong:</strong></p>
+<ul>
+<li><code>compare_exchange_weak</code>: In loops (LL/SC architectures benefit)</li>
+<li><code>compare_exchange</code>: Single attempts or non-looping contexts</li>
+</ul>
+<h3 id="fetch-operations"><a class="header" href="#fetch-operations">Fetch Operations</a></h3>
+<p>Atomic read-modify-write operations:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, Ordering};
+
+let counter = AtomicI32::new(0);
+
+// Fetch and add
+let prev = counter.fetch_add(5, Ordering::Relaxed);  // Returns old value
+
+// Fetch and subtract
+counter.fetch_sub(2, Ordering::Relaxed);
+
+// Fetch and bitwise operations
+counter.fetch_and(0xFF, Ordering::Relaxed);
+counter.fetch_or(0x01, Ordering::Relaxed);
+counter.fetch_xor(0x02, Ordering::Relaxed);
+
+// Fetch max/min
+counter.fetch_max(10, Ordering::Relaxed);
+counter.fetch_min(5, Ordering::Relaxed);
+<span class="boring">}</span></code></pre>
+<h2 id="4-memory-ordering-explained"><a class="header" href="#4-memory-ordering-explained">4. Memory Ordering Explained</a></h2>
+<h3 id="relaxed-ordering-no-synchronization"><a class="header" href="#relaxed-ordering-no-synchronization">Relaxed Ordering (No Synchronization)</a></h3>
+<p><strong>Use case:</strong> Counters where only the final value matters, no coordination needed.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+
+let counter = Arc::new(AtomicU64::new(0));
+
+// Multiple threads increment
+for _ in 0..10 {
+    let c = counter.clone();
+    std::thread::spawn(move || {
+        for _ in 0..1000 {
+            c.fetch_add(1, Ordering::Relaxed);  // No synchronization overhead
+        }
+    });
+}
+
+// Relaxed is sufficient: only final count matters
+<span class="boring">}</span></code></pre>
+<p><strong>Guarantees:</strong></p>
+<ul>
+<li>Atomic modifications (no data race)</li>
+<li>No ordering guarantees between threads</li>
+<li>Can be reordered freely by compiler/CPU</li>
+</ul>
+<p><strong>Does NOT guarantee:</strong></p>
+<ul>
+<li>Visibility of other operations</li>
+<li>Happens-before relationships</li>
+</ul>
+<h3 id="release-semantics-establish-happens-before"><a class="header" href="#release-semantics-establish-happens-before">Release Semantics (Establish Happens-Before)</a></h3>
+<p><strong>Use case:</strong> Publishing data to other threads.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+let data = Arc::new(AtomicBool::new(false));
+let ready = Arc::new(AtomicBool::new(false));
+
+// Publisher thread
+let d = data.clone();
+let r = ready.clone();
+std::thread::spawn(move || {
+    d.store(true, Ordering::Relaxed);  // Prepare data
+    r.store(true, Ordering::Release);   // Publish (release barrier)
+});
+
+// Consumer thread
+let d = data.clone();
+let r = ready.clone();
+std::thread::spawn(move || {
+    while !r.load(Ordering::Acquire) {}  // Wait (acquire barrier)
+    assert!(d.load(Ordering::Relaxed));   // See published data
+});
+<span class="boring">}</span></code></pre>
+<p><strong>Release guarantees:</strong></p>
+<ul>
+<li>All writes before Release are visible after corresponding Acquire</li>
+<li>Creates happens-before relationship</li>
+</ul>
+<h3 id="acquire-semantics-synchronize-with-prior-releases"><a class="header" href="#acquire-semantics-synchronize-with-prior-releases">Acquire Semantics (Synchronize with Prior Releases)</a></h3>
+<p><strong>Use case:</strong> Consuming data published by another thread.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Acquire load pairs with Release store
+// All writes before Release store are visible after Acquire load
+
+let flag = AtomicBool::new(false);
+
+// Thread 1 (publisher)
+expensive_initialization();
+flag.store(true, Ordering::Release);
+
+// Thread 2 (consumer)
+if flag.load(Ordering::Acquire) {
+    use_initialized_data();  // Safe: initialization happened-before
+}
+<span class="boring">}</span></code></pre>
+<h3 id="acqrel-and-seqcst-for-full-synchronization"><a class="header" href="#acqrel-and-seqcst-for-full-synchronization">AcqRel and SeqCst for Full Synchronization</a></h3>
+<p><strong>AcqRel (Acquire-Release):</strong>
+Combines both semantics for read-modify-write operations:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, Ordering};
+
+let value = AtomicI32::new(0);
+
+// Fetch-add with AcqRel:
+// - Acquire: See all writes before prior Release
+// - Release: Make this write visible to future Acquire
+value.fetch_add(1, Ordering::AcqRel);
+<span class="boring">}</span></code></pre>
+<p><strong>SeqCst (Sequentially Consistent):</strong>
+Strongest ordering, provides total order:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Global sequential order across all threads
+value.store(1, Ordering::SeqCst);
+value.store(2, Ordering::SeqCst);
+
+// All threads observe these in same order: 1 then 2
+<span class="boring">}</span></code></pre>
+<h3 id="performance-implications-of-each-ordering"><a class="header" href="#performance-implications-of-each-ordering">Performance Implications of Each Ordering</a></h3>
+<p><strong>Relative costs (approximate):</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Ordering</th><th>x86 Cost</th><th>ARM Cost</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td>Relaxed</td><td>~1x</td><td>~1x</td><td>Counters, no coordination</td></tr>
+<tr><td>Acquire</td><td>~1x</td><td>~3x</td><td>Load with synchronization</td></tr>
+<tr><td>Release</td><td>~1x</td><td>~3x</td><td>Store with synchronization</td></tr>
+<tr><td>AcqRel</td><td>~1x</td><td>~5x</td><td>RMW with synchronization</td></tr>
+<tr><td>SeqCst</td><td>~1-2x</td><td>~10x</td><td>Total ordering required</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Rule of thumb:</strong> Use weakest ordering that provides required guarantees.</p>
+<h2 id="5-lock-free-patterns"><a class="header" href="#5-lock-free-patterns">5. Lock-Free Patterns</a></h2>
+<h3 id="simple-atomic-operations"><a class="header" href="#simple-atomic-operations">Simple Atomic Operations</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Thread-safe counter (most common pattern)
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+struct Metrics {
+    requests: AtomicUsize,
+    errors: AtomicUsize,
+}
+
+impl Metrics {
+    fn record_request(&amp;self) {
+        self.requests.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn record_error(&amp;self) {
+        self.errors.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn get_stats(&amp;self) -&gt; (usize, usize) {
+        (
+            self.requests.load(Ordering::Relaxed),
+            self.errors.load(Ordering::Relaxed),
+        )
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="compare-and-swap-loops"><a class="header" href="#compare-and-swap-loops">Compare-and-Swap Loops</a></h3>
+<p>The foundation of lock-free data structures:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicPtr, Ordering};
+
+struct Node&lt;T&gt; {
+    value: T,
+    next: AtomicPtr&lt;Node&lt;T&gt;&gt;,
+}
+
+// Lock-free stack push
+unsafe fn push&lt;T&gt;(head: &amp;AtomicPtr&lt;Node&lt;T&gt;&gt;, node: *mut Node&lt;T&gt;) {
+    loop {
+        let current_head = head.load(Ordering::Relaxed);
+        (*node).next.store(current_head, Ordering::Relaxed);
+
+        // Try to swing head pointer
+        match head.compare_exchange_weak(
+            current_head,
+            node,
+            Ordering::Release,  // Success: publish new head
+            Ordering::Relaxed,  // Failure: retry
+        ) {
+            Ok(_) =&gt; return,
+            Err(_) =&gt; continue,
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="atomic-references-with-shared-ownership"><a class="header" href="#atomic-references-with-shared-ownership">Atomic References with Shared Ownership</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+use std::sync::atomic::{AtomicPtr, Ordering};
+
+struct AtomicArc&lt;T&gt; {
+    ptr: AtomicPtr&lt;T&gt;,
+}
+
+impl&lt;T&gt; AtomicArc&lt;T&gt; {
+    fn new(value: Arc&lt;T&gt;) -&gt; Self {
+        let ptr = Arc::into_raw(value) as *mut T;
+        Self {
+            ptr: AtomicPtr::new(ptr),
+        }
+    }
+
+    fn load(&amp;self) -&gt; Arc&lt;T&gt; {
+        let ptr = self.ptr.load(Ordering::Acquire);
+        unsafe {
+            Arc::increment_strong_count(ptr);
+            Arc::from_raw(ptr)
+        }
+    }
+
+    fn store(&amp;self, new: Arc&lt;T&gt;) {
+        let new_ptr = Arc::into_raw(new) as *mut T;
+        let old_ptr = self.ptr.swap(new_ptr, Ordering::Release);
+        unsafe {
+            Arc::from_raw(old_ptr);  // Decrement old ref count
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="building-lock-free-data-structures"><a class="header" href="#building-lock-free-data-structures">Building Lock-Free Data Structures</a></h3>
+<p><strong>Key challenges:</strong></p>
+<ol>
+<li><strong>ABA problem:</strong> Value changes from A to B and back to A, CAS succeeds incorrectly</li>
+<li><strong>Memory reclamation:</strong> When is it safe to free memory?</li>
+<li><strong>Progress guarantees:</strong> Lock-free (some thread makes progress) vs wait-free (all threads make progress)</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ABA-safe using epoch-based reclamation (conceptual)
+use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering};
+
+struct Epoch {
+    counter: AtomicUsize,
+}
+
+impl Epoch {
+    fn pin(&amp;self) -&gt; EpochGuard {
+        let epoch = self.counter.load(Ordering::Acquire);
+        EpochGuard { epoch }
+    }
+
+    fn try_advance(&amp;self) {
+        // Only advance if no threads in old epochs
+        self.counter.fetch_add(1, Ordering::Release);
+    }
+}
+
+struct EpochGuard {
+    epoch: usize,
+}
+
+// Memory is only reclaimed when epoch advances
+<span class="boring">}</span></code></pre>
+<h3 id="when-lock-free-is-actually-better"><a class="header" href="#when-lock-free-is-actually-better">When Lock-Free is Actually Better</a></h3>
+<p><strong>Lock-free is NOT always faster:</strong></p>
+<p>✅ <strong>Use lock-free when:</strong></p>
+<ul>
+<li>Very low contention (&lt; 10% conflicts)</li>
+<li>Readers vastly outnumber writers</li>
+<li>Latency critical (avoid blocking)</li>
+<li>Simple operations (increment, swap)</li>
+</ul>
+<p>❌ <strong>Avoid lock-free when:</strong></p>
+<ul>
+<li>High contention (locks amortize overhead)</li>
+<li>Complex operations (error-prone)</li>
+<li>Need mutual exclusion anyway</li>
+<li>Simplicity matters more than performance</li>
+</ul>
+<p><strong>Example: When locks win:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Mutex;
+
+// Complex operation benefits from locking
+struct Database {
+    data: Mutex&lt;HashMap&lt;String, Value&gt;&gt;,
+}
+
+impl Database {
+    fn transaction(&amp;self) -&gt; Result&lt;(), Error&gt; {
+        let mut data = self.data.lock().unwrap();
+        // Multiple operations under single lock acquisition
+        let value = data.get("key1")?.clone();
+        let new_value = expensive_computation(value)?;
+        data.insert("key2".into(), new_value);
+        Ok(())
+    }
+}
+
+// Lock-free version would require many CAS loops and be error-prone
+<span class="boring">}</span></code></pre>
+<h2 id="6-mutual-exclusion-strategies"><a class="header" href="#6-mutual-exclusion-strategies">6. Mutual Exclusion Strategies</a></h2>
+<h3 id="mutex-and-synchronization"><a class="header" href="#mutex-and-synchronization">Mutex<t> and Synchronization</t></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+let data = Arc::new(Mutex::new(vec![1, 2, 3]));
+
+// Clone Arc for each thread
+let data_clone = data.clone();
+std::thread::spawn(move || {
+    let mut vec = data_clone.lock().unwrap();
+    vec.push(4);
+    // Lock automatically released when `vec` goes out of scope (RAII)
+});
+
+// Safe: Mutex ensures exclusive access
+let vec = data.lock().unwrap();
+println!("{:?}", *vec);
+<span class="boring">}</span></code></pre>
+<p><strong>Mutex guarantees:</strong></p>
+<ul>
+<li>Mutual exclusion (only one thread holds lock)</li>
+<li>Happens-before from unlock to next lock</li>
+<li>Interior mutability (access through <code>&amp;Mutex&lt;T&gt;</code>)</li>
+</ul>
+<h3 id="rwlock-for-multiple-readers"><a class="header" href="#rwlock-for-multiple-readers">RwLock for Multiple Readers</a></h3>
+<p>When reads vastly outnumber writes:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::RwLock;
+
+let cache = RwLock::new(HashMap::new());
+
+// Many readers can proceed concurrently
+let data = cache.read().unwrap();
+println!("{:?}", data.get("key"));
+
+// Writer gets exclusive access
+let mut data = cache.write().unwrap();
+data.insert("key".into(), "value".into());
+<span class="boring">}</span></code></pre>
+<p><strong>RwLock costs:</strong></p>
+<ul>
+<li>Reader acquisition: Check writer count (cheap)</li>
+<li>Writer acquisition: Wait for all readers to finish (expensive)</li>
+<li>Read-biased by default (writers can starve)</li>
+</ul>
+<p><strong>Performance considerations:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Good: Long read critical section
+{
+    let data = cache.read().unwrap();
+    expensive_search(&amp;data);  // Amortize lock overhead
+}
+
+// Bad: Short read critical section
+for key in keys {
+    let data = cache.read().unwrap();  // Reacquire each iteration!
+    println!("{:?}", data.get(key));
+}
+
+// Better:
+{
+    let data = cache.read().unwrap();
+    for key in keys {
+        println!("{:?}", data.get(key));
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="parking-lot-for-advanced-strategies"><a class="header" href="#parking-lot-for-advanced-strategies">Parking Lot for Advanced Strategies</a></h3>
+<p>The <code>parking_lot</code> crate provides more efficient primitives:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use parking_lot::{Mutex, RwLock};
+
+// Smaller size (no poisoning)
+let mutex = Mutex::new(42);
+// No .unwrap() needed - never returns Err
+let mut guard = mutex.lock();
+*guard = 100;
+
+// Fair RwLock (prevents writer starvation)
+let rw = RwLock::new(Vec::new());
+let reader = rw.read();
+let writer = rw.write();  // Will acquire despite concurrent readers
+<span class="boring">}</span></code></pre>
+<h3 id="deadlock-prevention"><a class="header" href="#deadlock-prevention">Deadlock Prevention</a></h3>
+<p><strong>Strategies to prevent deadlock:</strong></p>
+<ol>
+<li><strong>Lock ordering:</strong> Always acquire locks in same order</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Mutex;
+
+struct Account {
+    id: u64,
+    balance: Mutex&lt;i32&gt;,
+}
+
+fn transfer(from: &amp;Account, to: &amp;Account, amount: i32) {
+    // Always lock lower ID first
+    let (first, second) = if from.id &lt; to.id {
+        (&amp;from.balance, &amp;to.balance)
+    } else {
+        (&amp;to.balance, &amp;from.balance)
+    };
+
+    let mut f = first.lock().unwrap();
+    let mut s = second.lock().unwrap();
+    *f -= amount;
+    *s += amount;
+}
+<span class="boring">}</span></code></pre>
+<ol start="2">
+<li><strong>Try-lock with backoff:</strong></li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Mutex;
+use std::time::Duration;
+
+fn try_both(lock1: &amp;Mutex&lt;i32&gt;, lock2: &amp;Mutex&lt;i32&gt;) {
+    loop {
+        let guard1 = lock1.lock().unwrap();
+
+        // Try second lock with timeout
+        if let Ok(guard2) = lock2.try_lock() {
+            // Got both locks!
+            break;
+        }
+
+        // Release first lock and retry
+        drop(guard1);
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+<span class="boring">}</span></code></pre>
+<ol start="3">
+<li><strong>Lock hierarchy:</strong> Document lock levels, never acquire lower-level lock while holding higher-level</li>
+</ol>
+<h3 id="lock-ordering-and-reentrance"><a class="header" href="#lock-ordering-and-reentrance">Lock Ordering and Reentrance</a></h3>
+<p><strong>Rust mutexes are NOT reentrant:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Mutex;
+
+let mutex = Mutex::new(42);
+
+let _guard1 = mutex.lock().unwrap();
+let _guard2 = mutex.lock().unwrap();  // DEADLOCK! Same thread blocks itself
+<span class="boring">}</span></code></pre>
+<p><strong>Alternative: Use refcounting:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+struct Reentrant&lt;T&gt; {
+    data: Arc&lt;Mutex&lt;T&gt;&gt;,
+    owner: AtomicUsize,
+    count: AtomicUsize,
+}
+
+// Manual reentrant mutex (complex, usually avoid)
+<span class="boring">}</span></code></pre>
+<p><strong>Better: Restructure to avoid reentrance:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Instead of recursive locking:
+fn process(&amp;self) {
+    let mut data = self.data.lock().unwrap();
+    self.helper(&amp;mut data);  // Pass guard
+}
+
+fn helper(&amp;self, data: &amp;mut GuardedData) {
+    // Work with data without re-locking
+}
+<span class="boring">}</span></code></pre>
+<h2 id="7-synchronization-primitives"><a class="header" href="#7-synchronization-primitives">7. Synchronization Primitives</a></h2>
+<h3 id="barrier-for-thread-synchronization"><a class="header" href="#barrier-for-thread-synchronization">Barrier for Thread Synchronization</a></h3>
+<p>Coordinate multiple threads to reach a synchronization point:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Barrier};
+use std::thread;
+
+let barrier = Arc::new(Barrier::new(5));
+
+for i in 0..5 {
+    let b = barrier.clone();
+    thread::spawn(move || {
+        println!("Thread {} preparing...", i);
+        // Simulate work
+        thread::sleep(Duration::from_millis(i * 100));
+
+        println!("Thread {} waiting at barrier", i);
+        b.wait();  // Block until all 5 threads arrive
+
+        println!("Thread {} proceeding", i);
+    });
+}
+<span class="boring">}</span></code></pre>
+<h3 id="condvar-for-wait-notify-patterns"><a class="header" href="#condvar-for-wait-notify-patterns">Condvar for Wait-Notify Patterns</a></h3>
+<p>Condition variables enable efficient waiting for conditions:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex, Condvar};
+
+let pair = Arc::new((Mutex::new(false), Condvar::new()));
+
+// Waiting thread
+let pair_clone = pair.clone();
+thread::spawn(move || {
+    let (lock, cvar) = &amp;*pair_clone;
+    let mut ready = lock.lock().unwrap();
+
+    // Wait until condition becomes true
+    while !*ready {
+        ready = cvar.wait(ready).unwrap();
+    }
+
+    println!("Condition satisfied!");
+});
+
+// Notifying thread
+thread::sleep(Duration::from_secs(1));
+let (lock, cvar) = &amp;*pair;
+let mut ready = lock.lock().unwrap();
+*ready = true;
+cvar.notify_one();  // Wake one waiter
+// cvar.notify_all();  // Wake all waiters
+<span class="boring">}</span></code></pre>
+<p><strong>Key pattern: Always check condition in loop:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG: Single check (spurious wakeups possible)
+let mut ready = lock.lock().unwrap();
+if !*ready {
+    ready = cvar.wait(ready).unwrap();
+}
+
+// CORRECT: Loop (handles spurious wakeups)
+let mut ready = lock.lock().unwrap();
+while !*ready {
+    ready = cvar.wait(ready).unwrap();
+}
+<span class="boring">}</span></code></pre>
+<h3 id="channel-based-communication"><a class="header" href="#channel-based-communication">Channel-Based Communication</a></h3>
+<p>Prefer channels over shared memory:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::mpsc;
+
+let (tx, rx) = mpsc::channel();
+
+// Sender thread
+thread::spawn(move || {
+    tx.send(42).unwrap();
+});
+
+// Receiver thread
+let value = rx.recv().unwrap();
+println!("Received: {}", value);
+<span class="boring">}</span></code></pre>
+<p><strong>Channel types:</strong></p>
+<ul>
+<li><code>mpsc::channel()</code>: Unbounded, multiple producers, single consumer</li>
+<li><code>mpsc::sync_channel(n)</code>: Bounded, blocks when full</li>
+<li><code>crossbeam::channel</code>: More flexible, multiple consumers</li>
+</ul>
+<h3 id="once-for-one-time-initialization"><a class="header" href="#once-for-one-time-initialization">Once for One-Time Initialization</a></h3>
+<p>Thread-safe lazy initialization:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Once;
+
+static INIT: Once = Once::new();
+static mut CONFIG: Option&lt;Config&gt; = None;
+
+fn get_config() -&gt; &amp;'static Config {
+    INIT.call_once(|| {
+        unsafe {
+            CONFIG = Some(load_config());
+        }
+    });
+
+    unsafe { CONFIG.as_ref().unwrap() }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Modern alternative with <code>OnceCell</code>:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::OnceLock;
+
+static CONFIG: OnceLock&lt;Config&gt; = OnceLock::new();
+
+fn get_config() -&gt; &amp;'static Config {
+    CONFIG.get_or_init(|| load_config())
+}
+<span class="boring">}</span></code></pre>
+<h3 id="parking-lot-alternatives"><a class="header" href="#parking-lot-alternatives">Parking Lot Alternatives</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use parking_lot::{Mutex, RwLock, Condvar, Once};
+
+// Faster Mutex (no poisoning)
+let mutex = Mutex::new(vec![1, 2, 3]);
+
+// Fair RwLock
+let rw = RwLock::new(HashMap::new());
+
+// More efficient Condvar
+let condvar = Condvar::new();
+<span class="boring">}</span></code></pre>
+<h2 id="8-arc--shared-ownership"><a class="header" href="#8-arc--shared-ownership">8. Arc &amp; Shared Ownership</a></h2>
+<h3 id="arc-for-reference-counting"><a class="header" href="#arc-for-reference-counting">Arc<t> for Reference Counting</t></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+
+let data = Arc::new(vec![1, 2, 3]);
+
+// Clone Arc (increments reference count)
+let data_clone = Arc::clone(&amp;data);
+
+thread::spawn(move || {
+    println!("{:?}", data_clone);
+    // Reference count decrements when dropped
+});
+
+println!("{:?}", data);  // Still valid
+<span class="boring">}</span></code></pre>
+<p><strong>Arc internals:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Conceptual structure
+struct Arc&lt;T&gt; {
+    ptr: *const ArcInner&lt;T&gt;,
+}
+
+struct ArcInner&lt;T&gt; {
+    strong: AtomicUsize,  // Strong reference count
+    weak: AtomicUsize,    // Weak reference count
+    data: T,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="arcmutex-pattern"><a class="header" href="#arcmutex-pattern">Arc&lt;Mutex<t>&gt; Pattern</t></a></h3>
+<p>The most common concurrent sharing pattern:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+let shared_state = Arc::new(Mutex::new(HashMap::new()));
+
+for i in 0..10 {
+    let state = shared_state.clone();
+    thread::spawn(move || {
+        let mut map = state.lock().unwrap();
+        map.insert(i, i * 2);
+    });
+}
+<span class="boring">}</span></code></pre>
+<h3 id="arc-overhead-and-performance"><a class="header" href="#arc-overhead-and-performance">Arc Overhead and Performance</a></h3>
+<p><strong>Costs of Arc:</strong></p>
+<ol>
+<li><strong>Atomic operations:</strong> Increment/decrement on clone/drop</li>
+<li><strong>Cache line contention:</strong> Reference counts share cache line</li>
+<li><strong>Indirection:</strong> Extra pointer dereference</li>
+<li><strong>Heap allocation:</strong> Data stored on heap</li>
+</ol>
+<p><strong>Benchmarks (approximate):</strong></p>
+<ul>
+<li><code>Arc::clone()</code>: ~5-10ns (atomic increment)</li>
+<li><code>Arc::drop()</code>: ~5-10ns (atomic decrement + conditional free)</li>
+<li>Compared to <code>&amp;T</code>: ~0ns (zero cost)</li>
+</ul>
+<p><strong>Optimization:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Expensive: Clone Arc in hot loop
+for _ in 0..1000 {
+    let data = arc.clone();
+    process(&amp;data);
+}
+
+// Better: Borrow Arc's contents
+for _ in 0..1000 {
+    process(&amp;*arc);  // Deref to &amp;T
+}
+<span class="boring">}</span></code></pre>
+<h3 id="compare-to-static-lifetime"><a class="header" href="#compare-to-static-lifetime">Compare to Static Lifetime</a></h3>
+<p>When data truly lives forever, prefer <code>'static</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Runtime overhead: Arc clone/drop
+fn with_arc(data: Arc&lt;Config&gt;) {
+    spawn(move || use_config(&amp;data));
+}
+
+// Zero overhead: Direct reference
+fn with_static(data: &amp;'static Config) {
+    spawn(move || use_config(data));
+}
+
+// Creating static data
+static CONFIG: Config = Config { /* ... */ };
+fn get_config() -&gt; &amp;'static Config {
+    &amp;CONFIG
+}
+<span class="boring">}</span></code></pre>
+<h3 id="weak-for-preventing-cycles"><a class="header" href="#weak-for-preventing-cycles">Weak<t> for Preventing Cycles</t></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Weak};
+
+struct Node {
+    value: i32,
+    parent: Option&lt;Weak&lt;Node&gt;&gt;,  // Doesn't prevent deallocation
+    children: Vec&lt;Arc&lt;Node&gt;&gt;,     // Strong references
+}
+
+// Create tree
+let root = Arc::new(Node {
+    value: 1,
+    parent: None,
+    children: vec![],
+});
+
+let child = Arc::new(Node {
+    value: 2,
+    parent: Some(Arc::downgrade(&amp;root)),  // Weak reference to parent
+    children: vec![],
+});
+<span class="boring">}</span></code></pre>
+<p><strong>Weak usage:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn use_weak(weak: &amp;Weak&lt;Config&gt;) {
+    if let Some(config) = weak.upgrade() {
+        // Got Arc&lt;Config&gt;, data still alive
+        use_config(&amp;config);
+    } else {
+        // Data was deallocated
+        println!("Config dropped");
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="9-send--sync-traits"><a class="header" href="#9-send--sync-traits">9. Send &amp; Sync Traits</a></h2>
+<h3 id="send-safe-to-move-between-threads"><a class="header" href="#send-safe-to-move-between-threads">Send: Safe to Move Between Threads</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub unsafe auto trait Send {}
+<span class="boring">}</span></code></pre>
+<p><strong>Types that are <code>Send</code>:</strong></p>
+<ul>
+<li>Most types: <code>i32</code>, <code>String</code>, <code>Vec&lt;T&gt;</code> (if <code>T: Send</code>)</li>
+<li><code>Arc&lt;T&gt;</code> (if <code>T: Send + Sync</code>)</li>
+<li><code>Mutex&lt;T&gt;</code>, <code>RwLock&lt;T&gt;</code></li>
+</ul>
+<p><strong>Types that are NOT <code>Send</code>:</strong></p>
+<ul>
+<li><code>Rc&lt;T&gt;</code>: Not thread-safe reference counting</li>
+<li><code>*const T</code>, <code>*mut T</code>: Raw pointers (unsafe, no guarantees)</li>
+<li><code>&amp;mut T</code> without <code>T: Send</code></li>
+</ul>
+<h3 id="sync-safe-to-share-between-threads"><a class="header" href="#sync-safe-to-share-between-threads">Sync: Safe to Share Between Threads</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub unsafe auto trait Sync {}
+
+// T is Sync if &amp;T is Send
+<span class="boring">}</span></code></pre>
+<p><strong>Types that are <code>Sync</code>:</strong></p>
+<ul>
+<li>Immutable types: <code>i32</code>, <code>&amp;str</code>, <code>String</code> (if not mutated)</li>
+<li><code>Arc&lt;T&gt;</code> (if <code>T: Sync</code>)</li>
+<li><code>Mutex&lt;T&gt;</code>, <code>RwLock&lt;T&gt;</code> (provide interior mutability safely)</li>
+</ul>
+<p><strong>Types that are NOT <code>Sync</code>:</strong></p>
+<ul>
+<li><code>Cell&lt;T&gt;</code>, <code>RefCell&lt;T&gt;</code>: Interior mutability without synchronization</li>
+<li><code>Rc&lt;T&gt;</code>: Not thread-safe</li>
+</ul>
+<h3 id="auto-trait-implementations"><a class="header" href="#auto-trait-implementations">Auto Trait Implementations</a></h3>
+<p>The compiler automatically implements <code>Send</code> and <code>Sync</code> when safe:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct MyStruct {
+    data: Vec&lt;i32&gt;,
+    flag: AtomicBool,
+}
+
+// Automatically Send + Sync because:
+// - Vec&lt;i32&gt; is Send + Sync
+// - AtomicBool is Send + Sync
+<span class="boring">}</span></code></pre>
+<p><strong>Compiler derives:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Automatically generated
+unsafe impl Send for MyStruct {}
+unsafe impl Sync for MyStruct {}
+<span class="boring">}</span></code></pre>
+<h3 id="negative-trait-bounds-send"><a class="header" href="#negative-trait-bounds-send">Negative Trait Bounds (!Send)</a></h3>
+<p>Explicitly opt out:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::marker::PhantomData;
+
+struct NotSendable {
+    data: i32,
+    _marker: PhantomData&lt;*const ()&gt;,  // *const () is !Send
+}
+
+// Compiler will NOT generate Send impl
+<span class="boring">}</span></code></pre>
+<p><strong>Use cases:</strong></p>
+<ul>
+<li>FFI types tied to specific threads</li>
+<li>Types with platform-specific constraints</li>
+<li>RAII types managing thread-local resources</li>
+</ul>
+<h3 id="compiler-verification-of-sendness"><a class="header" href="#compiler-verification-of-sendness">Compiler Verification of Sendness</a></h3>
+<p>The compiler checks Send/Sync at API boundaries:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn spawn_thread&lt;F&gt;(f: F)
+where
+    F: FnOnce() + Send + 'static,  // Explicit Send bound
+{
+    std::thread::spawn(f);
+}
+
+let rc = Rc::new(42);
+spawn_thread(move || {
+    println!("{}", rc);  // ERROR: Rc is not Send
+});
+<span class="boring">}</span></code></pre>
+<p><strong>Verification algorithm:</strong></p>
+<ol>
+<li>Function signature requires <code>Send</code></li>
+<li>Closure captures <code>Rc&lt;i32&gt;</code></li>
+<li><code>Rc&lt;i32&gt;</code> does not implement <code>Send</code></li>
+<li>Compilation error with helpful message</li>
+</ol>
+<h2 id="10-thread-local-storage"><a class="header" href="#10-thread-local-storage">10. Thread-Local Storage</a></h2>
+<h3 id="thread_local-macro"><a class="header" href="#thread_local-macro">thread_local! Macro</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::cell::RefCell;
+
+thread_local! {
+    static COUNTER: RefCell&lt;u32&gt; = RefCell::new(0);
+}
+
+fn increment() {
+    COUNTER.with(|c| {
+        *c.borrow_mut() += 1;
+    });
+}
+
+// Each thread has its own COUNTER
+thread::spawn(|| {
+    increment();
+    COUNTER.with(|c| {
+        println!("Thread 1: {}", c.borrow());  // Prints 1
+    });
+});
+
+thread::spawn(|| {
+    increment();
+    increment();
+    COUNTER.with(|c| {
+        println!("Thread 2: {}", c.borrow());  // Prints 2
+    });
+});
+<span class="boring">}</span></code></pre>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance Characteristics</a></h3>
+<p><strong>TLS costs:</strong></p>
+<ul>
+<li><strong>Access time:</strong> Platform-dependent (native TLS is fast)</li>
+<li><strong>Initialization:</strong> Lazy, per-thread</li>
+<li><strong>Memory:</strong> Per-thread copy of data</li>
+</ul>
+<p><strong>Benchmarks:</strong></p>
+<ul>
+<li>Native TLS access: ~1-2ns (inlined to FS/GS segment access on x86)</li>
+<li>Global atomic: ~5-10ns (cross-core synchronization)</li>
+</ul>
+<h3 id="access-patterns"><a class="header" href="#access-patterns">Access Patterns</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>thread_local! {
+    static BUFFER: RefCell&lt;Vec&lt;u8&gt;&gt; = RefCell::new(Vec::with_capacity(1024));
+}
+
+fn process(data: &amp;[u8]) -&gt; Vec&lt;u8&gt; {
+    BUFFER.with(|buf| {
+        let mut buf = buf.borrow_mut();
+        buf.clear();
+
+        // Reuse thread-local buffer (avoid allocation)
+        buf.extend_from_slice(data);
+        process_in_place(&amp;mut buf);
+
+        buf.clone()  // Return copy
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="initialization"><a class="header" href="#initialization">Initialization</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::cell::RefCell;
+
+thread_local! {
+    static EXPENSIVE: RefCell&lt;Database&gt; = RefCell::new({
+        // This runs once per thread, lazily
+        println!("Initializing database for thread {:?}", std::thread::current().id());
+        Database::connect()
+    });
+}
+<span class="boring">}</span></code></pre>
+<h3 id="when-to-use-tls"><a class="header" href="#when-to-use-tls">When to Use TLS</a></h3>
+<p><strong>Good use cases:</strong></p>
+<ul>
+<li>Thread-local caches/buffers</li>
+<li>Random number generators</li>
+<li>Profiling/metrics per thread</li>
+<li>Avoiding contention on shared state</li>
+</ul>
+<p><strong>Bad use cases:</strong></p>
+<ul>
+<li>Large data structures (multiplied by thread count)</li>
+<li>Data that must be shared</li>
+<li>Short-lived threads (initialization overhead)</li>
+</ul>
+<h2 id="11-happens-before-relationships-formal-treatment"><a class="header" href="#11-happens-before-relationships-formal-treatment">11. Happens-Before Relationships (Formal Treatment)</a></h2>
+<h3 id="establishing-happens-before"><a class="header" href="#establishing-happens-before">Establishing Happens-Before</a></h3>
+<p>The happens-before relation (→) is defined recursively:</p>
+<ol>
+<li><strong>Sequenced-before:</strong> Within a single thread, <code>A</code> → <code>B</code> if <code>A</code> is sequenced before <code>B</code></li>
+<li><strong>Synchronizes-with:</strong> Release store synchronizes-with Acquire load of same location</li>
+<li><strong>Transitivity:</strong> If <code>A</code> → <code>B</code> and <code>B</code> → <code>C</code>, then <code>A</code> → <code>C</code></li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Formal example
+let x = AtomicI32::new(0);
+let y = AtomicI32::new(0);
+
+// Thread 1
+x.store(1, Ordering::Relaxed);        // A
+y.store(1, Ordering::Release);         // B
+
+// Thread 2
+if y.load(Ordering::Acquire) == 1 {    // C
+    assert_eq!(x.load(Ordering::Relaxed), 1);  // D
+}
+
+// Happens-before chain:
+// A →(sequenced) B →(synchronizes-with) C →(sequenced) D
+// Therefore A → D, so D sees A's write
+<span class="boring">}</span></code></pre>
+<h3 id="visibility-across-threads"><a class="header" href="#visibility-across-threads">Visibility Across Threads</a></h3>
+<p>Without happens-before, operations can be reordered:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// EXAMPLE: No synchronization
+let x = AtomicI32::new(0);
+let y = AtomicI32::new(0);
+
+// Thread 1
+x.store(1, Ordering::Relaxed);  // A
+y.store(1, Ordering::Relaxed);  // B
+
+// Thread 2
+let ry = y.load(Ordering::Relaxed);  // C
+let rx = x.load(Ordering::Relaxed);  // D
+
+// Possible outcomes:
+// rx=0, ry=0  ✓
+// rx=1, ry=0  ✓
+// rx=0, ry=1  ✓ (even though A before B!)
+// rx=1, ry=1  ✓
+<span class="boring">}</span></code></pre>
+<p>With Relaxed ordering, all four outcomes are legal. The CPU can reorder stores/loads.</p>
+<h3 id="compiler-reordering-within-thread"><a class="header" href="#compiler-reordering-within-thread">Compiler Reordering Within Thread</a></h3>
+<p>The compiler can reorder operations that don’t affect single-threaded behavior:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Source code
+let x = 1;
+let y = 2;
+let z = x + y;
+
+// Compiler might generate
+let y = 2;
+let x = 1;
+let z = x + y;  // Same result, reordered
+<span class="boring">}</span></code></pre>
+<p><strong>Atomic operations prevent reordering:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let x = AtomicI32::new(0);
+
+x.store(1, Ordering::Release);
+let y = expensive_computation();
+
+// Compiler cannot move expensive_computation before store
+// Release acts as a compiler barrier
+<span class="boring">}</span></code></pre>
+<h3 id="platform-reordering-weak-memory"><a class="header" href="#platform-reordering-weak-memory">Platform Reordering (Weak Memory)</a></h3>
+<p>On ARM/POWER, hardware can reorder:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Thread 1
+x.store(1, Ordering::Relaxed);
+y.store(1, Ordering::Relaxed);
+
+// Thread 2 may observe y=1, x=0 due to store buffer
+<span class="boring">}</span></code></pre>
+<p><strong>Solution: Use appropriate ordering:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Thread 1
+x.store(1, Ordering::Relaxed);
+y.store(1, Ordering::Release);  // Barrier ensures x visible before y
+
+// Thread 2
+if y.load(Ordering::Acquire) == 1 {
+    assert_eq!(x.load(Ordering::Relaxed), 1);  // Guaranteed
+}
+<span class="boring">}</span></code></pre>
+<h3 id="formal-verification-of-orderings"><a class="header" href="#formal-verification-of-orderings">Formal Verification of Orderings</a></h3>
+<p>AI agents can use model checking to verify orderings:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Tool: loom (state space explorer)
+#[cfg(loom)]
+use loom::sync::atomic::{AtomicBool, Ordering};
+
+#[test]
+#[cfg(loom)]
+fn check_ordering() {
+    loom::model(|| {
+        let flag = Arc::new(AtomicBool::new(false));
+        let data = Arc::new(AtomicI32::new(0));
+
+        let f = flag.clone();
+        let d = data.clone();
+        loom::thread::spawn(move || {
+            d.store(42, Ordering::Relaxed);
+            f.store(true, Ordering::Release);
+        });
+
+        let f = flag.clone();
+        let d = data.clone();
+        loom::thread::spawn(move || {
+            if f.load(Ordering::Acquire) {
+                let value = d.load(Ordering::Relaxed);
+                assert_eq!(value, 42);  // Loom verifies all interleavings
+            }
+        });
+    });
+}
+<span class="boring">}</span></code></pre>
+<h2 id="12-cache-coherency"><a class="header" href="#12-cache-coherency">12. Cache Coherency</a></h2>
+<h3 id="false-sharing-performance-pitfall"><a class="header" href="#false-sharing-performance-pitfall">False Sharing (Performance Pitfall)</a></h3>
+<p>When two threads access different variables on the same cache line:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD: False sharing
+struct Counters {
+    thread1_count: AtomicUsize,  // Offset 0
+    thread2_count: AtomicUsize,  // Offset 8 (same cache line!)
+}
+
+// Cache line size typically 64 bytes
+// Both atomics in same line → contention
+<span class="boring">}</span></code></pre>
+<p><strong>Impact:</strong></p>
+<ul>
+<li>Thread 1 modifies <code>thread1_count</code></li>
+<li>Cache line invalidated on Thread 2’s core</li>
+<li>Thread 2 must reload entire cache line</li>
+<li>Ping-ponging between cores (expensive)</li>
+</ul>
+<p><strong>Solution: Padding</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::AtomicUsize;
+
+#[repr(align(64))]  // Force 64-byte alignment
+struct PaddedCounter {
+    count: AtomicUsize,
+}
+
+struct Counters {
+    thread1: PaddedCounter,  // Own cache line
+    thread2: PaddedCounter,  // Different cache line
+}
+<span class="boring">}</span></code></pre>
+<h3 id="cache-line-size-implications"><a class="header" href="#cache-line-size-implications">Cache Line Size Implications</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const CACHE_LINE_SIZE: usize = 64;
+
+#[repr(C)]
+struct CacheAligned&lt;T&gt; {
+    value: T,
+    _padding: [u8; CACHE_LINE_SIZE - std::mem::size_of::&lt;T&gt;()],
+}
+
+// Usage
+struct Metrics {
+    reads: CacheAligned&lt;AtomicUsize&gt;,
+    writes: CacheAligned&lt;AtomicUsize&gt;,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="padding-for-performance"><a class="header" href="#padding-for-performance">Padding for Performance</a></h3>
+<p><strong>When to pad:</strong></p>
+<ul>
+<li>High-contention atomic variables</li>
+<li>Per-thread counters</li>
+<li>Frequently modified data in different threads</li>
+</ul>
+<p><strong>When NOT to pad:</strong></p>
+<ul>
+<li>Low-contention scenarios</li>
+<li>Memory-constrained environments</li>
+<li>Rarely accessed data</li>
+</ul>
+<h3 id="numa-awareness"><a class="header" href="#numa-awareness">NUMA Awareness</a></h3>
+<p>On NUMA systems, memory locality matters:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Allocate on local NUMA node
+#[cfg(target_os = "linux")]
+fn allocate_local&lt;T&gt;(value: T) -&gt; Box&lt;T&gt; {
+    // Platform-specific: numa_alloc_local
+    Box::new(value)
+}
+
+// Cross-NUMA access is 2-3x slower than local
+<span class="boring">}</span></code></pre>
+<h3 id="contention-patterns"><a class="header" href="#contention-patterns">Contention Patterns</a></h3>
+<p><strong>Identifying contention:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
+
+fn benchmark_contention() {
+    let counter = Arc::new(AtomicUsize::new(0));
+    let threads: Vec&lt;_&gt; = (0..8).map(|_| {
+        let c = counter.clone();
+        thread::spawn(move || {
+            let start = Instant::now();
+            for _ in 0..1_000_000 {
+                c.fetch_add(1, Ordering::Relaxed);
+            }
+            start.elapsed()
+        })
+    }).collect();
+
+    for (i, handle) in threads.into_iter().enumerate() {
+        let elapsed = handle.join().unwrap();
+        println!("Thread {}: {:?}", i, elapsed);
+    }
+    // High variance in times indicates contention
+}
+<span class="boring">}</span></code></pre>
+<h2 id="13-async--concurrency"><a class="header" href="#13-async--concurrency">13. Async &amp; Concurrency</a></h2>
+<h3 id="futures-and-concurrency"><a class="header" href="#futures-and-concurrency">Futures and Concurrency</a></h3>
+<p>Futures enable concurrency without threads:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use futures::future::join_all;
+
+async fn concurrent_requests() {
+    let futures = (0..100).map(|i| async move {
+        fetch_url(&amp;format!("https://example.com/api/{}", i)).await
+    });
+
+    let results = join_all(futures).await;  // 100 concurrent requests
+}
+<span class="boring">}</span></code></pre>
+<h3 id="executor-and-fair-scheduling"><a class="header" href="#executor-and-fair-scheduling">Executor and Fair Scheduling</a></h3>
+<pre class="playground"><code class="language-rust">// Tokio's work-stealing scheduler
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
+async fn main() {
+    // Tasks distributed across 4 worker threads
+    for i in 0..1000 {
+        tokio::spawn(async move {
+            process_task(i).await;
+        });
+    }
+}</code></pre>
+<h3 id="cancellation-safety"><a class="header" href="#cancellation-safety">Cancellation Safety</a></h3>
+<p>A future is cancellation-safe if dropping it mid-execution is safe:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// CANCELLATION-SAFE
+async fn safe_operation() {
+    let data = fetch_data().await;
+    // If cancelled here, data is dropped cleanly
+    process(data).await;
+}
+
+// NOT CANCELLATION-SAFE
+async fn unsafe_operation() {
+    let mut file = File::create("output.txt").await?;
+    file.write_all(b"partial").await?;
+    // If cancelled here, file may be corrupt
+    file.write_all(b" data").await?;
+}
+
+// FIX: Use select_biased with guard
+async fn safe_with_guard() {
+    let _guard = FileGuard::new("output.txt");
+    // Guard ensures cleanup on drop
+}
+<span class="boring">}</span></code></pre>
+<h3 id="drop-during-async-execution"><a class="header" href="#drop-during-async-execution">Drop During Async Execution</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn demo_drop() {
+    let resource = ExpensiveResource::new();
+
+    async_operation().await;
+
+    // Resource dropped here (Drop called)
+}
+
+impl Drop for ExpensiveResource {
+    fn drop(&amp;mut self) {
+        // IMPORTANT: Drop cannot be async!
+        // Must use blocking cleanup or spawn background task
+        cleanup_sync();
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="move-semantics-in-async-blocks"><a class="header" href="#move-semantics-in-async-blocks">Move Semantics in Async Blocks</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let data = vec![1, 2, 3];
+
+let future = async move {
+    println!("{:?}", data);  // data moved into future
+};
+
+// println!("{:?}", data);  // ERROR: value moved
+
+future.await;
+<span class="boring">}</span></code></pre>
+<h2 id="14-common-concurrency-bugs"><a class="header" href="#14-common-concurrency-bugs">14. Common Concurrency Bugs</a></h2>
+<h3 id="using-mutex-with-wrong-ordering"><a class="header" href="#using-mutex-with-wrong-ordering">Using Mutex with Wrong Ordering</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG: Relaxed with Mutex can cause issues
+let flag = AtomicBool::new(false);
+let data = Mutex::new(vec![]);
+
+// Thread 1
+data.lock().unwrap().push(42);
+flag.store(true, Ordering::Relaxed);  // WRONG
+
+// Thread 2
+if flag.load(Ordering::Relaxed) {     // WRONG
+    let vec = data.lock().unwrap();
+    // May not see push(42)!
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Mutex provides synchronization, but atomic flag does not!</strong></p>
+<p><strong>Fix: Use Acquire/Release or just rely on Mutex:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Better: Let Mutex handle synchronization
+let ready = Mutex::new(false);
+let data = Mutex::new(vec![]);
+
+// Thread 1
+data.lock().unwrap().push(42);
+*ready.lock().unwrap() = true;  // Mutex provides synchronization
+
+// Thread 2
+if *ready.lock().unwrap() {
+    let vec = data.lock().unwrap();
+    // Guaranteed to see push(42)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="aba-problem-in-cas-loops"><a class="header" href="#aba-problem-in-cas-loops">ABA Problem in CAS Loops</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// VULNERABLE to ABA
+let head = AtomicPtr::new(ptr_a);
+
+// Thread 1
+let current = head.load(Ordering::Acquire);  // Sees A
+// ... context switch ...
+// Thread 2 changes A→B→A
+// ... context switch ...
+head.compare_exchange(current, new_ptr, ...);  // Succeeds but wrong!
+<span class="boring">}</span></code></pre>
+<p><strong>Solution: Tagged pointers or epoch-based reclamation:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Tagged pointer (uses upper bits)
+struct TaggedPtr&lt;T&gt; {
+    ptr: usize,  // Lower bits: pointer, upper bits: tag
+}
+
+impl&lt;T&gt; TaggedPtr&lt;T&gt; {
+    fn new(ptr: *mut T, tag: usize) -&gt; Self {
+        let addr = ptr as usize;
+        Self {
+            ptr: addr | (tag &lt;&lt; 48),  // Tag in upper 16 bits
+        }
+    }
+
+    fn compare_exchange(&amp;self, current: TaggedPtr&lt;T&gt;, new: TaggedPtr&lt;T&gt;) {
+        // Tag changes prevent ABA
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="deadlocks-and-how-to-avoid"><a class="header" href="#deadlocks-and-how-to-avoid">Deadlocks and How to Avoid</a></h3>
+<p>See section 6 (Deadlock Prevention) for detailed strategies.</p>
+<h3 id="use-after-free-in-concurrent-code"><a class="header" href="#use-after-free-in-concurrent-code">Use-After-Free in Concurrent Code</a></h3>
+<p>Rust’s type system prevents most use-after-free, but unsafe code can still have issues:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// UNSAFE: Incorrect lifetime management
+unsafe fn bad_concurrent_access() {
+    let data = Box::new(42);
+    let ptr = &amp;*data as *const i32;
+
+    thread::spawn(move || {
+        // data moved and dropped in this thread
+    });
+
+    println!("{}", *ptr);  // Use-after-free!
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Fix: Use Arc for shared ownership:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn safe_concurrent_access() {
+    let data = Arc::new(42);
+    let data_clone = data.clone();
+
+    thread::spawn(move || {
+        println!("{}", data_clone);  // Safe: Arc keeps data alive
+    });
+
+    println!("{}", data);  // Safe
+}
+<span class="boring">}</span></code></pre>
+<h2 id="15-testing-concurrent-code"><a class="header" href="#15-testing-concurrent-code">15. Testing Concurrent Code</a></h2>
+<h3 id="deterministic-testing"><a class="header" href="#deterministic-testing">Deterministic Testing</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+#[test]
+fn test_concurrent_counter() {
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+
+    for _ in 0..10 {
+        let c = counter.clone();
+        handles.push(thread::spawn(move || {
+            for _ in 0..1000 {
+                *c.lock().unwrap() += 1;
+            }
+        }));
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    assert_eq!(*counter.lock().unwrap(), 10_000);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="loom-for-state-space-exploration"><a class="header" href="#loom-for-state-space-exploration">Loom for State Space Exploration</a></h3>
+<p>Loom exhaustively explores all possible thread interleavings:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(loom)]
+use loom::sync::atomic::{AtomicUsize, Ordering};
+#[cfg(loom)]
+use loom::sync::Arc;
+#[cfg(loom)]
+use loom::thread;
+
+#[test]
+#[cfg(loom)]
+fn test_all_interleavings() {
+    loom::model(|| {
+        let v1 = Arc::new(AtomicUsize::new(0));
+        let v2 = Arc::new(AtomicUsize::new(0));
+
+        let t1 = {
+            let v1 = v1.clone();
+            let v2 = v2.clone();
+            thread::spawn(move || {
+                v1.store(1, Ordering::Release);
+                v2.load(Ordering::Acquire)
+            })
+        };
+
+        let t2 = {
+            let v1 = v1.clone();
+            let v2 = v2.clone();
+            thread::spawn(move || {
+                v2.store(1, Ordering::Release);
+                v1.load(Ordering::Acquire)
+            })
+        };
+
+        let a = t1.join().unwrap();
+        let b = t2.join().unwrap();
+
+        // Loom verifies: !(a == 0 &amp;&amp; b == 0) for all interleavings
+        assert!(a == 1 || b == 1);
+    });
+}
+<span class="boring">}</span></code></pre>
+<h3 id="threadsanitizer-for-race-detection"><a class="header" href="#threadsanitizer-for-race-detection">ThreadSanitizer for Race Detection</a></h3>
+<pre><code class="language-bash"># Run with ThreadSanitizer
+RUSTFLAGS="-Z sanitizer=thread" cargo +nightly test
+
+# Output shows data races:
+# WARNING: ThreadSanitizer: data race
+#   Write of size 4 at 0x7b0400000000 by thread T1:
+#     #0 increment src/main.rs:42
+#   Previous read of size 4 at 0x7b0400000000 by thread T2:
+#     #0 read_value src/main.rs:38
+</code></pre>
+<h3 id="property-based-testing-concurrently"><a class="header" href="#property-based-testing-concurrently">Property-Based Testing Concurrently</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use proptest::prelude::*;
+use std::sync::{Arc, Mutex};
+
+proptest! {
+    #[test]
+    fn concurrent_insert_preserve_count(values in prop::collection::vec(0i32..100, 0..1000)) {
+        let set = Arc::new(Mutex::new(HashSet::new()));
+        let mut handles = vec![];
+
+        for value in values.clone() {
+            let s = set.clone();
+            handles.push(thread::spawn(move || {
+                s.lock().unwrap().insert(value);
+            }));
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let unique_count = values.iter().collect::&lt;HashSet&lt;_&gt;&gt;().len();
+        assert_eq!(set.lock().unwrap().len(), unique_count);
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="stress-testing-patterns"><a class="header" href="#stress-testing-patterns">Stress Testing Patterns</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn stress_test_lock_free_stack() {
+    let stack = Arc::new(LockFreeStack::new());
+    let iterations = 1_000_000;
+    let threads = 8;
+
+    let handles: Vec&lt;_&gt; = (0..threads).map(|i| {
+        let s = stack.clone();
+        thread::spawn(move || {
+            for j in 0..iterations {
+                s.push(i * iterations + j);
+            }
+            for _ in 0..iterations {
+                s.pop();
+            }
+        })
+    }).collect();
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    // Verify final state
+    assert!(stack.is_empty());
+}
+<span class="boring">}</span></code></pre>
+<h2 id="16-ai-agent-concurrency-analysis"><a class="header" href="#16-ai-agent-concurrency-analysis">16. AI Agent Concurrency Analysis</a></h2>
+<h3 id="verifying-sendsync-bounds"><a class="header" href="#verifying-sendsync-bounds">Verifying Send/Sync Bounds</a></h3>
+<p>AI agents should check:</p>
+<ol>
+<li>
+<p><strong>Does type need Send?</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Check: Will values cross thread boundaries?
+fn analyze_send&lt;T&gt;() {
+    if contains_thread_spawn::&lt;T&gt;() || contains_channel_send::&lt;T&gt;() {
+        assert_impl!(T: Send);
+    }
+}
+<span class="boring">}</span></code></pre>
+</li>
+<li>
+<p><strong>Does type need Sync?</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Check: Will references be shared?
+fn analyze_sync&lt;T&gt;() {
+    if contains_arc_wrapping::&lt;T&gt;() {
+        assert_impl!(T: Sync);
+    }
+}
+<span class="boring">}</span></code></pre>
+</li>
+</ol>
+<h3 id="checking-synchronization"><a class="header" href="#checking-synchronization">Checking Synchronization</a></h3>
+<p>Look for these patterns:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✓ SYNCHRONIZED
+let data = Mutex::new(vec![]);
+data.lock().unwrap().push(42);
+
+// ✗ NOT SYNCHRONIZED
+static mut DATA: Vec&lt;i32&gt; = Vec::new();
+unsafe { DATA.push(42); }  // Data race!
+
+// ✓ SYNCHRONIZED (atomic)
+let counter = AtomicUsize::new(0);
+counter.fetch_add(1, Ordering::Relaxed);
+<span class="boring">}</span></code></pre>
+<h3 id="detecting-potential-race-conditions"><a class="header" href="#detecting-potential-race-conditions">Detecting Potential Race Conditions</a></h3>
+<p>Pattern matching for common bugs:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// PATTERN: Check-then-act (race condition)
+if map.contains_key(&amp;key) {
+    let value = map.get(&amp;key).unwrap();  // Key might be removed!
+}
+
+// FIX: Atomic operation
+if let Some(value) = map.get(&amp;key) {
+    // Use value
+}
+<span class="boring">}</span></code></pre>
+<h3 id="understanding-happens-before"><a class="header" href="#understanding-happens-before">Understanding Happens-Before</a></h3>
+<p>Verify synchronization chains:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Analyze this code:
+data.store(42, Ordering::Relaxed);  // A
+flag.store(true, Ordering::Release); // B (happens-after A)
+
+if flag.load(Ordering::Acquire) {    // C (synchronizes-with B)
+    let x = data.load(Ordering::Relaxed);  // D (happens-after C)
+}
+
+// Conclusion: A → B →(sync) C → D
+// Therefore: D is guaranteed to see A's write
+<span class="boring">}</span></code></pre>
+<h3 id="analyzing-lock-contention"><a class="header" href="#analyzing-lock-contention">Analyzing Lock Contention</a></h3>
+<p>AI agents can identify hotspots:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// HIGH CONTENTION: Global lock
+static GLOBAL: Mutex&lt;HashMap&lt;String, Value&gt;&gt; = Mutex::new(HashMap::new());
+
+fn high_contention() {
+    // All threads contend for same lock
+    GLOBAL.lock().unwrap().insert(key, value);
+}
+
+// LOWER CONTENTION: Sharded locks
+const SHARDS: usize = 16;
+static SHARDED: [Mutex&lt;HashMap&lt;String, Value&gt;&gt;; SHARDS] = /* ... */;
+
+fn lower_contention(key: &amp;str) {
+    let shard = hash(key) % SHARDS;
+    SHARDED[shard].lock().unwrap().insert(key, value);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>Understanding Rust’s memory model and concurrent access patterns requires deep knowledge of:</p>
+<ol>
+<li><strong>Memory ordering semantics</strong> and their performance implications</li>
+<li><strong>Happens-before relationships</strong> that establish visibility guarantees</li>
+<li><strong>Atomic operations</strong> and when to use each ordering</li>
+<li><strong>Synchronization primitives</strong> and their correct usage</li>
+<li><strong>Send/Sync traits</strong> and the safety guarantees they provide</li>
+<li><strong>Common concurrency bugs</strong> and how to prevent them</li>
+<li><strong>Testing strategies</strong> for verifying concurrent code</li>
+</ol>
+<p>AI agents working with concurrent Rust code must:</p>
+<ul>
+<li>Verify Send/Sync bounds are correct</li>
+<li>Check that synchronization establishes proper happens-before relationships</li>
+<li>Identify race conditions (not just data races)</li>
+<li>Understand memory ordering choices and their correctness</li>
+<li>Use tools like Loom and ThreadSanitizer for verification</li>
+</ul>
+<p>The combination of Rust’s type system (preventing data races) and understanding of memory ordering (ensuring correct synchronization) enables building correct, high-performance concurrent systems. However, the responsibility for logical correctness—preventing race conditions, deadlocks, and ensuring proper algorithm design—still rests with the developer (or AI agent).</p>
+<p><strong>Key Takeaways for AI Agents:</strong></p>
+<ol>
+<li>Data race freedom is guaranteed by Rust’s type system</li>
+<li>Race condition freedom requires algorithmic correctness</li>
+<li>Memory ordering is about visibility and performance</li>
+<li>Always use weakest ordering that provides required guarantees</li>
+<li>Test concurrent code with Loom and ThreadSanitizer</li>
+<li>Document synchronization invariants clearly</li>
+<li>Prefer message passing over shared memory when possible</li>
+<li>Use atomic operations correctly or not at all</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="11-ffi-deep-dive-c-interoperability.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="13-unsafe-rust-memory-layout.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="11-ffi-deep-dive-c-interoperability.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="13-unsafe-rust-memory-layout.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

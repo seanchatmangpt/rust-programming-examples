@@ -1,0 +1,1926 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 11: FFI Deep Dive &amp; C Interoperability Internals - Refactoring Rust Frameworks</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-80709b90.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a688046c.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Refactoring Rust Frameworks</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/11-ffi-deep-dive-c-interoperability.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="ffi-deep-dive--c-interoperability-internals"><a class="header" href="#ffi-deep-dive--c-interoperability-internals">FFI Deep Dive &amp; C Interoperability Internals</a></h1>
+<p>Foreign Function Interface (FFI) represents one of Rust’s most powerful yet dangerous capabilities. When done correctly, FFI enables seamless integration with decades of existing C libraries while maintaining Rust’s safety guarantees at the boundary. When done incorrectly, it becomes a vector for undefined behavior, memory corruption, and security vulnerabilities.</p>
+<h2 id="1-ffi-fundamentals"><a class="header" href="#1-ffi-fundamentals">1. FFI Fundamentals</a></h2>
+<h3 id="extern-blocks-and-function-declarations"><a class="header" href="#extern-blocks-and-function-declarations">Extern Blocks and Function Declarations</a></h3>
+<p>The <code>extern</code> block declares foreign functions available from dynamically or statically linked libraries. Every function declared in an <code>extern</code> block is inherently <code>unsafe</code> to call, as Rust cannot verify the C code’s correctness.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::os::raw::{c_int, c_char};
+
+#[link(name = "git2")]
+extern {
+    pub fn git_libgit2_init() -&gt; c_int;
+    pub fn git_repository_open(
+        out: *mut *mut git_repository,
+        path: *const c_char
+    ) -&gt; c_int;
+    pub fn git_repository_free(repo: *mut git_repository);
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Critical Details:</strong></p>
+<ol>
+<li><strong><code>#[link(name = "git2")]</code></strong>: Instructs the linker to link against <code>libgit2.so</code> (Linux), <code>libgit2.dylib</code> (macOS), or <code>git2.dll</code> (Windows)</li>
+<li><strong>Function signatures must exactly match C</strong>: Incorrect signatures lead to undefined behavior, not compile errors</li>
+<li><strong>All calls require <code>unsafe</code></strong>: The compiler cannot verify C code maintains Rust’s invariants</li>
+</ol>
+<h3 id="calling-conventions"><a class="header" href="#calling-conventions">Calling Conventions</a></h3>
+<p>Different platforms and compilers use different calling conventions that determine how arguments are passed and stack frames are managed:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Default C calling convention (platform-dependent)
+extern "C" fn callback(data: *mut c_void) -&gt; c_int {
+    // Function body
+    0
+}
+
+// Explicit calling conventions
+extern "cdecl" fn cdecl_func() {}      // C default on many platforms
+extern "stdcall" fn stdcall_func() {}  // Windows API standard
+extern "fastcall" fn fastcall_func() {} // Register-based args
+extern "system" fn system_func() {}    // Platform's system ABI
+<span class="boring">}</span></code></pre>
+<p><strong>When to specify:</strong></p>
+<ul>
+<li>Use <code>extern "C"</code> for maximum portability</li>
+<li>Use <code>extern "system"</code> for Windows API functions</li>
+<li>Incorrect convention causes stack corruption (hard to debug)</li>
+</ul>
+<h3 id="abi-compatibility-and-platform-specifics"><a class="header" href="#abi-compatibility-and-platform-specifics">ABI Compatibility and Platform Specifics</a></h3>
+<p>The Application Binary Interface (ABI) defines low-level details like struct layout, calling conventions, and name mangling. Rust’s ABI is <strong>unstable</strong> and <strong>incompatible</strong> with C unless explicitly specified.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// INCOMPATIBLE with C - Rust's internal layout
+pub struct RustStruct {
+    field1: i32,
+    field2: u64,
+}
+
+// COMPATIBLE with C - guaranteed layout
+#[repr(C)]
+pub struct CCompatibleStruct {
+    field1: i32,
+    field2: u64,
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Platform-specific considerations from libgit2-rs-safe:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(unix)]
+fn path_to_cstring(path: &amp;Path) -&gt; Result&lt;CString&gt; {
+    use std::os::unix::ffi::OsStrExt;
+    Ok(CString::new(path.as_os_str().as_bytes())?)
+}
+
+#[cfg(windows)]
+fn path_to_cstring(path: &amp;Path) -&gt; Result&lt;CString&gt; {
+    // Windows paths may contain non-UTF-8 characters
+    match path.to_str() {
+        Some(s) =&gt; Ok(CString::new(s)?),
+        None =&gt; Err("Path not UTF-8".into()),
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="unsafe-ffi-calls-and-preconditions"><a class="header" href="#unsafe-ffi-calls-and-preconditions">Unsafe FFI Calls and Preconditions</a></h3>
+<p>Every FFI call has preconditions that must be maintained by the caller. The <code>SAFETY</code> comment documents these invariants:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn check(activity: &amp;'static str, status: c_int) -&gt; c_int {
+    if status &lt; 0 {
+        unsafe {
+            // SAFETY: libgit2 guarantees giterr_last() returns a valid pointer
+            // to a git_error struct with a non-null, null-terminated message.
+            // This pointer is valid until the next libgit2 call.
+            let error = &amp;*raw::giterr_last();
+            println!("error while {}: {} ({})",
+                     activity,
+                     CStr::from_ptr(error.message).to_string_lossy(),
+                     error.klass);
+            std::process::exit(1);
+        }
+    }
+    status
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Key preconditions:</strong></p>
+<ul>
+<li>Pointer validity (not null, properly aligned, points to valid memory)</li>
+<li>Lifetime constraints (pointer valid for duration of access)</li>
+<li>Thread safety (function is reentrant/thread-safe)</li>
+<li>Initialization requirements (library initialized before use)</li>
+</ul>
+<h3 id="return-value-handling"><a class="header" href="#return-value-handling">Return Value Handling</a></h3>
+<p>C functions typically return error codes or null pointers. Rust should convert these to idiomatic <code>Result</code> types:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::os::raw::c_int;
+use std::ffi::CStr;
+
+fn check(code: c_int) -&gt; Result&lt;c_int&gt; {
+    if code &gt;= 0 {
+        return Ok(code);
+    }
+
+    unsafe {
+        let error = raw::giterr_last();
+
+        // SAFETY: libgit2 ensures (*error).message is always non-null
+        // and null-terminated
+        let message = CStr::from_ptr((*error).message)
+            .to_string_lossy()
+            .into_owned();
+
+        Err(Error {
+            code: code as i32,
+            message,
+            class: (*error).klass as i32
+        })
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="2-type-mapping-rust-to-c"><a class="header" href="#2-type-mapping-rust-to-c">2. Type Mapping: Rust to C</a></h2>
+<h3 id="primitive-type-equivalences"><a class="header" href="#primitive-type-equivalences">Primitive Type Equivalences</a></h3>
+<p>Never assume Rust primitives match C types directly. Use <code>std::os::raw</code> for guaranteed compatibility:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::os::raw::{
+    c_char,    // char in C (usually i8 or u8)
+    c_int,     // int in C (usually i32, but not guaranteed)
+    c_uint,    // unsigned int
+    c_long,    // long (i32 on Windows, i64 on Unix 64-bit)
+    c_uchar,   // unsigned char
+    c_void,    // void (opaque type)
+};
+
+// WRONG - assumes platform details
+fn bad_binding(x: i32) -&gt; i32 { /* ... */ }
+
+// CORRECT - uses guaranteed C types
+fn good_binding(x: c_int) -&gt; c_int { /* ... */ }
+<span class="boring">}</span></code></pre>
+<p><strong>Size guarantees:</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Rust Type</th><th>C Equivalent</th><th>Guaranteed Size</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>i8</code> / <code>u8</code></td><td><code>int8_t</code> / <code>uint8_t</code></td><td>1 byte</td><td>Safe to use directly</td></tr>
+<tr><td><code>i16</code> / <code>u16</code></td><td><code>int16_t</code> / <code>uint16_t</code></td><td>2 bytes</td><td>Safe to use directly</td></tr>
+<tr><td><code>i32</code> / <code>u32</code></td><td><code>int32_t</code> / <code>uint32_t</code></td><td>4 bytes</td><td>Safe to use directly</td></tr>
+<tr><td><code>i64</code> / <code>u64</code></td><td><code>int64_t</code> / <code>uint64_t</code></td><td>8 bytes</td><td>Safe to use directly</td></tr>
+<tr><td><code>c_int</code></td><td><code>int</code></td><td><strong>Platform-dependent</strong></td><td>Use for C <code>int</code></td></tr>
+<tr><td><code>c_long</code></td><td><code>long</code></td><td><strong>Platform-dependent</strong></td><td>Use for C <code>long</code></td></tr>
+<tr><td><code>usize</code></td><td><code>size_t</code></td><td><strong>Platform-dependent</strong></td><td>Match pointer size</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="pointer-equivalences-and-differences"><a class="header" href="#pointer-equivalences-and-differences">Pointer Equivalences and Differences</a></h3>
+<p>Rust pointers have strict aliasing rules that C pointers do not:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Immutable pointer: *const T
+// - Can create multiple *const T to same data
+// - Cannot mutate through *const T (even if T is not const)
+let x: i32 = 42;
+let ptr: *const i32 = &amp;x;
+
+// Mutable pointer: *mut T
+// - Only one *mut T should exist to same data (aliasing UB)
+// - Can mutate through *mut T
+let mut y: i32 = 10;
+let ptr_mut: *mut i32 = &amp;mut y;
+
+unsafe {
+    *ptr_mut = 20;  // OK - mutation through *mut
+    // let val = *ptr;  // OK - read through *const
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Critical difference from C:</strong></p>
+<ul>
+<li>C allows arbitrary pointer aliasing</li>
+<li>Rust assumes <code>*mut T</code> pointers don’t alias (for optimization)</li>
+<li>Violating this assumption is undefined behavior</li>
+</ul>
+<h3 id="string-representation"><a class="header" href="#string-representation">String Representation</a></h3>
+<p>C strings are null-terminated byte arrays. Rust strings are UTF-8 with explicit length:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::ffi::{CString, CStr};
+use std::os::raw::c_char;
+
+// Rust → C: CString owns the data
+let path = std::env::args().skip(1).next()
+    .expect("usage: program PATH");
+let path_c = CString::new(path)
+    .expect("path contains null bytes");
+
+unsafe {
+    // path_c.as_ptr() returns *const c_char valid while path_c lives
+    some_c_function(path_c.as_ptr());
+}
+// path_c dropped here - C must not retain pointer!
+
+// C → Rust: CStr borrows the data
+unsafe {
+    let c_message: *const c_char = git_commit_message(commit);
+
+    // SAFETY: libgit2 ensures c_message is null-terminated and
+    // valid for the lifetime of `commit`
+    let message: &amp;str = CStr::from_ptr(c_message)
+        .to_str()
+        .expect("message not UTF-8");
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Common pitfalls:</strong></p>
+<ol>
+<li><strong>Interior nulls</strong>: <code>CString::new("hello\0world")</code> fails - C strings can’t contain embedded nulls</li>
+<li><strong>Dangling pointers</strong>: C code retaining <code>as_ptr()</code> after <code>CString</code> drops</li>
+<li><strong>Encoding mismatch</strong>: C strings may not be UTF-8 (use <code>to_string_lossy()</code>)</li>
+</ol>
+<h3 id="array-handling"><a class="header" href="#array-handling">Array Handling</a></h3>
+<p>C arrays decay to pointers. Rust arrays have known size:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust fixed-size array
+let rust_array: [u8; 20] = [0; 20];
+
+// C expects pointer + length
+extern "C" {
+    fn process_array(data: *const u8, len: usize);
+}
+
+unsafe {
+    process_array(rust_array.as_ptr(), rust_array.len());
+}
+
+// From libgit2-rs: git_oid is exactly 20 bytes
+pub const GIT_OID_RAWSZ: usize = 20;
+
+#[repr(C)]
+pub struct git_oid {
+    pub id: [c_uchar; GIT_OID_RAWSZ]
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Slices vs pointers:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust slice: fat pointer (pointer + length)
+fn process_slice(data: &amp;[u8]) {
+    // data.len() and data.as_ptr() available
+}
+
+// C array: thin pointer only
+extern "C" {
+    fn process_c_array(data: *const u8, len: usize);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="struct-and-union-mapping"><a class="header" href="#struct-and-union-mapping">Struct and Union Mapping</a></h3>
+<p>Without <code>#[repr(C)]</code>, Rust reorders fields for optimization:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust layout: compiler may reorder fields
+struct RustLayout {
+    a: u8,   // Compiler might place at offset 4
+    b: u32,  // Compiler might place at offset 0
+    c: u8,   // Compiler might place at offset 5
+}
+// Size: 6 bytes (optimized), but layout unpredictable
+
+// C-compatible layout: fields in declaration order
+#[repr(C)]
+struct CLayout {
+    a: u8,   // Offset 0
+    // 3 bytes padding
+    b: u32,  // Offset 4 (aligned to 4 bytes)
+    c: u8,   // Offset 8
+    // 3 bytes padding
+}
+// Size: 12 bytes (with padding for alignment)
+<span class="boring">}</span></code></pre>
+<p><strong>Real-world example from libgit2-rs:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+pub struct git_signature {
+    pub name: *const c_char,
+    pub email: *const c_char,
+    pub when: git_time
+}
+
+#[repr(C)]
+pub struct git_time {
+    pub time: git_time_t,
+    pub offset: c_int
+}
+<span class="boring">}</span></code></pre>
+<h3 id="using-libc-crate-for-c-type-definitions"><a class="header" href="#using-libc-crate-for-c-type-definitions">Using libc Crate for C Type Definitions</a></h3>
+<p>The <code>libc</code> crate provides portable type definitions:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use libc::{size_t, ssize_t, c_void, pthread_t, FILE};
+
+extern "C" {
+    fn read(fd: c_int, buf: *mut c_void, count: size_t) -&gt; ssize_t;
+    fn atexit(callback: extern "C" fn()) -&gt; c_int;
+}
+
+// From libgit2-rs-safe: using libc::atexit for cleanup
+fn ensure_initialized() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        unsafe {
+            check(raw::git_libgit2_init())
+                .expect("initializing libgit2 failed");
+            assert_eq!(libc::atexit(shutdown), 0);
+        }
+    });
+}
+
+extern "C" fn shutdown() {
+    unsafe {
+        if let Err(e) = check(raw::git_libgit2_shutdown()) {
+            eprintln!("shutting down libgit2 failed: {}", e);
+            std::process::abort();
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="3-pointer-safety-in-ffi"><a class="header" href="#3-pointer-safety-in-ffi">3. Pointer Safety in FFI</a></h2>
+<h3 id="null-pointer-checks-before-dereferencing"><a class="header" href="#null-pointer-checks-before-dereferencing">Null Pointer Checks Before Dereferencing</a></h3>
+<p>Always check for null before dereferencing C pointers:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>unsafe fn char_ptr_to_str&lt;T&gt;(_owner: &amp;T, ptr: *const c_char) -&gt; Option&lt;&amp;str&gt; {
+    if ptr.is_null() {
+        return None;
+    }
+
+    // SAFETY: Caller guarantees non-null ptr is valid, null-terminated
+    CStr::from_ptr(ptr).to_str().ok()
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li>C functions often return null on error</li>
+<li>Dereferencing null is undefined behavior</li>
+<li>UB can lead to security vulnerabilities (CVE-level)</li>
+</ul>
+<h3 id="lifetime-requirements-for-c-pointers"><a class="header" href="#lifetime-requirements-for-c-pointers">Lifetime Requirements for C Pointers</a></h3>
+<p>C pointers have no lifetime tracking. Rust wrappers must encode lifetime relationships:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Signature&lt;'text&gt; {
+    raw: *const raw::git_signature,
+    _marker: PhantomData&lt;&amp;'text str&gt;
+}
+
+impl&lt;'text&gt; Signature&lt;'text&gt; {
+    pub fn name(&amp;self) -&gt; Option&lt;&amp;str&gt; {
+        unsafe {
+            // SAFETY: Signature borrows from commit, so this pointer
+            // is valid for 'text lifetime
+            char_ptr_to_str(self, (*self.raw).name)
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>PhantomData enforces:</strong></p>
+<ul>
+<li><code>Signature</code> cannot outlive the data it references</li>
+<li>Compiler tracks lifetime ’text automatically</li>
+<li>No runtime cost (zero-sized type)</li>
+</ul>
+<h3 id="memory-ownership-across-ffi-boundary"><a class="header" href="#memory-ownership-across-ffi-boundary">Memory Ownership Across FFI Boundary</a></h3>
+<p>Critical question: <strong>Who owns the memory?</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Pattern 1: C owns memory, Rust borrows
+pub struct Commit&lt;'repo&gt; {
+    raw: *mut raw::git_commit,
+    _marker: PhantomData&lt;&amp;'repo Repository&gt;
+}
+
+impl&lt;'repo&gt; Commit&lt;'repo&gt; {
+    // Returns borrowed data - C still owns it
+    pub fn author(&amp;self) -&gt; Signature {
+        unsafe {
+            Signature {
+                raw: raw::git_commit_author(self.raw),
+                _marker: PhantomData
+            }
+        }
+    }
+}
+
+// Pattern 2: Rust owns memory, must free via C function
+impl&lt;'repo&gt; Drop for Commit&lt;'repo&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            // SAFETY: self.raw is a valid git_commit pointer
+            // that we own, and we must free it via git_commit_free
+            raw::git_commit_free(self.raw);
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="dangling-pointer-prevention"><a class="header" href="#dangling-pointer-prevention">Dangling Pointer Prevention</a></h3>
+<p>The borrow checker prevents most dangling pointers, but FFI can bypass it:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DANGEROUS: C function might retain pointer
+let path = CString::new("/tmp/repo")?;
+unsafe {
+    git_repository_open(&amp;mut repo, path.as_ptr());
+}
+// path dropped here - if C retained the pointer, it's now dangling!
+
+// SAFE: Ensure C copies the data
+let path = CString::new("/tmp/repo")?;
+unsafe {
+    // libgit2 copies path internally, doesn't retain pointer
+    git_repository_open(&amp;mut repo, path.as_ptr());
+}
+// Safe to drop path
+<span class="boring">}</span></code></pre>
+<p><strong>Verification strategy:</strong></p>
+<ol>
+<li>Read C library documentation</li>
+<li>Check if function copies or retains pointers</li>
+<li>If retains, keep Rust owner alive (move into struct, use Box::leak, etc.)</li>
+</ol>
+<h3 id="using-box-to-transfer-ownership"><a class="header" href="#using-box-to-transfer-ownership">Using Box to Transfer Ownership</a></h3>
+<p><code>Box</code> allocates on heap and can transfer ownership to C:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct CallbackData {
+    counter: i32,
+    name: *const c_char,
+}
+
+extern "C" fn callback(data: *mut c_void) -&gt; c_int {
+    unsafe {
+        let data = &amp;mut *(data as *mut CallbackData);
+        data.counter += 1;
+        println!("Callback called {} times", data.counter);
+        0
+    }
+}
+
+fn register_callback() {
+    let data = Box::new(CallbackData {
+        counter: 0,
+        name: std::ptr::null(),
+    });
+
+    let data_ptr = Box::into_raw(data);  // Transfer ownership to C
+
+    unsafe {
+        register_c_callback(callback, data_ptr as *mut c_void);
+    }
+}
+
+// Later, in cleanup callback:
+extern "C" fn cleanup(data: *mut c_void) {
+    unsafe {
+        // SAFETY: Take back ownership and drop
+        let _data = Box::from_raw(data as *mut CallbackData);
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="4-string-handling-across-ffi"><a class="header" href="#4-string-handling-across-ffi">4. String Handling Across FFI</a></h2>
+<h3 id="cstr-and-cstring-wrapper-types"><a class="header" href="#cstr-and-cstring-wrapper-types">CStr and CString Wrapper Types</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::ffi::{CStr, CString};
+
+// CString: Owned, heap-allocated, null-terminated
+let owned = CString::new("hello").unwrap();
+let ptr: *const c_char = owned.as_ptr();  // Valid while owned lives
+
+// CStr: Borrowed, null-terminated
+let borrowed: &amp;CStr = &amp;owned;
+let str_slice: &amp;str = borrowed.to_str().unwrap();
+<span class="boring">}</span></code></pre>
+<h3 id="null-terminator-requirements"><a class="header" href="#null-terminator-requirements">Null Terminator Requirements</a></h3>
+<p>C strings <strong>require</strong> null terminator. Rust strings <strong>forbid</strong> interior nulls:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Valid Rust string, invalid C string
+let rust_str = "hello\0world";
+let result = CString::new(rust_str);
+assert!(result.is_err());  // NulError: interior null byte
+
+// Remove nulls before converting
+let sanitized = rust_str.replace('\0', "");
+let c_string = CString::new(sanitized).unwrap();
+<span class="boring">}</span></code></pre>
+<h3 id="encoding-assumptions"><a class="header" href="#encoding-assumptions">Encoding Assumptions</a></h3>
+<p>C strings have <strong>no encoding</strong>. They’re byte arrays. Rust strings are <strong>UTF-8</strong>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Safe conversion (validates UTF-8)
+let c_str: &amp;CStr = unsafe { CStr::from_ptr(c_ptr) };
+match c_str.to_str() {
+    Ok(s) =&gt; println!("Valid UTF-8: {}", s),
+    Err(_) =&gt; println!("Not UTF-8"),
+}
+
+// Lossy conversion (replaces invalid UTF-8 with �)
+let string = c_str.to_string_lossy();
+println!("Lossy: {}", string);  // May contain �
+
+// From libgit2-rs-safe:
+let message = CStr::from_ptr((*error).message)
+    .to_string_lossy()
+    .into_owned();
+<span class="boring">}</span></code></pre>
+<h3 id="c-string-to-rust-string-conversions"><a class="header" href="#c-string-to-rust-string-conversions">C String to Rust String Conversions</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Owned conversion (allocates new String)
+let owned: String = c_str.to_string_lossy().into_owned();
+
+// Borrowed conversion (zero-copy if valid UTF-8)
+let borrowed: &amp;str = c_str.to_str()?;
+
+// Manual conversion (maximum control)
+let bytes: &amp;[u8] = c_str.to_bytes();
+let string = std::str::from_utf8(bytes)?;
+<span class="boring">}</span></code></pre>
+<h3 id="performance-implications"><a class="header" href="#performance-implications">Performance Implications</a></h3>
+<p><strong>CString creation</strong>: Allocates and copies
+<strong>CStr::from_ptr</strong>: Zero-cost (just wraps pointer)
+<strong>to_str()</strong>: Validates UTF-8 (O(n) scan)
+<strong>to_string_lossy()</strong>: May allocate replacement String</p>
+<p><strong>Optimization:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// SLOW: Validates UTF-8 every call
+fn get_name(&amp;self) -&gt; Option&lt;&amp;str&gt; {
+    unsafe {
+        let ptr = self.get_name_ptr();
+        if ptr.is_null() { return None; }
+        CStr::from_ptr(ptr).to_str().ok()
+    }
+}
+
+// FAST: Cache validated result
+pub struct CachedName {
+    ptr: *const c_char,
+    cached: Option&lt;String&gt;,
+}
+
+impl CachedName {
+    fn get(&amp;mut self) -&gt; Option&lt;&amp;str&gt; {
+        if self.cached.is_none() &amp;&amp; !self.ptr.is_null() {
+            unsafe {
+                self.cached = Some(
+                    CStr::from_ptr(self.ptr).to_string_lossy().into_owned()
+                );
+            }
+        }
+        self.cached.as_deref()
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="5-memory-layout--reprc"><a class="header" href="#5-memory-layout--reprc">5. Memory Layout &amp; repr(C)</a></h2>
+<h3 id="c-struct-layout-rules"><a class="header" href="#c-struct-layout-rules">C Struct Layout Rules</a></h3>
+<p>C compilers insert padding to satisfy alignment requirements:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Example C struct
+struct Example {
+    char a;      // 1 byte at offset 0
+    // 3 bytes padding
+    int b;       // 4 bytes at offset 4
+    char c;      // 1 byte at offset 8
+    // 3 bytes padding
+};  // Total size: 12 bytes
+
+// Rust equivalent
+#[repr(C)]
+struct Example {
+    a: u8,
+    b: i32,
+    c: u8,
+}
+assert_eq!(std::mem::size_of::&lt;Example&gt;(), 12);
+<span class="boring">}</span></code></pre>
+<h3 id="rust-struct-layout-differences"><a class="header" href="#rust-struct-layout-differences">Rust Struct Layout Differences</a></h3>
+<p>Without <code>#[repr(C)]</code>, Rust optimizes layout:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Optimized {
+    a: u8,   // Might be at offset 8
+    b: i32,  // Might be at offset 0
+    c: u8,   // Might be at offset 4
+}
+// Rust might pack this to 6 bytes with clever ordering
+assert_eq!(std::mem::size_of::&lt;Optimized&gt;(), 8);  // Or 6, or 12!
+<span class="boring">}</span></code></pre>
+<h3 id="field-ordering-and-padding-implications"><a class="header" href="#field-ordering-and-padding-implications">Field Ordering and Padding Implications</a></h3>
+<p>Order matters for cache performance and size:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD: 24 bytes due to padding
+#[repr(C)]
+struct BadOrder {
+    a: u8,    // 1 byte
+    // 7 bytes padding
+    b: u64,   // 8 bytes
+    c: u8,    // 1 byte
+    // 7 bytes padding
+}
+
+// GOOD: 16 bytes (optimal packing)
+#[repr(C)]
+struct GoodOrder {
+    b: u64,   // 8 bytes
+    a: u8,    // 1 byte
+    c: u8,    // 1 byte
+    // 6 bytes padding
+}
+<span class="boring">}</span></code></pre>
+<h3 id="union-handling-in-ffi"><a class="header" href="#union-handling-in-ffi">Union Handling in FFI</a></h3>
+<p>Rust unions require <code>Copy</code> types and manual initialization tracking:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+union CUnion {
+    int_val: c_int,
+    float_val: f32,
+    ptr_val: *mut c_void,
+}
+
+// C API might use tag for discriminant
+#[repr(C)]
+struct TaggedUnion {
+    tag: c_int,
+    data: CUnion,
+}
+
+impl TaggedUnion {
+    fn get_int(&amp;self) -&gt; Option&lt;c_int&gt; {
+        if self.tag == TAG_INT {
+            Some(unsafe { self.data.int_val })
+        } else {
+            None
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="size-mismatches-between-rust-and-c"><a class="header" href="#size-mismatches-between-rust-and-c">Size Mismatches Between Rust and C</a></h3>
+<p>Always verify sizes match:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct GitOid {
+    id: [u8; 20],
+}
+
+// At compile time
+const _: () = assert!(std::mem::size_of::&lt;GitOid&gt;() == 20);
+
+// Or use build.rs for runtime verification
+#[cfg(test)]
+mod ffi_tests {
+    use super::*;
+
+    #[test]
+    fn verify_layout() {
+        assert_eq!(
+            std::mem::size_of::&lt;git_signature&gt;(),
+            std::mem::size_of::&lt;usize&gt;() * 2 + 16
+        );
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="6-callbacks--function-pointers"><a class="header" href="#6-callbacks--function-pointers">6. Callbacks &amp; Function Pointers</a></h2>
+<h3 id="function-pointers-as-c-callbacks"><a class="header" href="#function-pointers-as-c-callbacks">Function Pointers as C Callbacks</a></h3>
+<p>Only <code>extern "C" fn</code> can be passed to C:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Correct: extern "C" fn
+extern "C" fn my_callback(data: *mut c_void) -&gt; c_int {
+    println!("Callback invoked");
+    0
+}
+
+// Wrong: regular fn (different ABI)
+fn wrong_callback(data: *mut c_void) -&gt; c_int {
+    0
+}
+
+extern "C" {
+    fn register_callback(cb: extern "C" fn(*mut c_void) -&gt; c_int);
+}
+
+unsafe {
+    register_callback(my_callback);  // OK
+    // register_callback(wrong_callback);  // Compilation error
+}
+<span class="boring">}</span></code></pre>
+<h3 id="extern-fn-types-and-their-properties"><a class="header" href="#extern-fn-types-and-their-properties">Extern fn Types and Their Properties</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>type Callback = extern "C" fn(*mut c_void) -&gt; c_int;
+
+// Properties:
+// 1. Can be null (use Option&lt;Callback&gt;)
+// 2. Cannot capture environment (no closures)
+// 3. Must have explicit lifetime if returns references
+// 4. Panic across FFI is undefined behavior
+
+extern "C" fn safe_callback(data: *mut c_void) -&gt; c_int {
+    // Catch panics to prevent unwinding into C
+    let result = std::panic::catch_unwind(|| {
+        // Callback logic here
+        0
+    });
+
+    match result {
+        Ok(val) =&gt; val,
+        Err(_) =&gt; {
+            eprintln!("Panic in callback!");
+            -1  // Return error code to C
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="closures-vs-function-pointers"><a class="header" href="#closures-vs-function-pointers">Closures vs Function Pointers</a></h3>
+<p>Closures <strong>cannot</strong> be passed to C directly:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let captured = 42;
+
+// WRONG: Closure captures environment
+let closure = |data: *mut c_void| -&gt; c_int {
+    println!("Captured: {}", captured);
+    0
+};
+// Cannot pass closure to C function
+
+// WORKAROUND: Use void* to pass data
+extern "C" fn trampoline(data: *mut c_void) -&gt; c_int {
+    unsafe {
+        let captured = &amp;*(data as *const i32);
+        println!("Captured: {}", captured);
+        0
+    }
+}
+
+let captured = Box::new(42);
+unsafe {
+    register_callback_with_data(
+        trampoline,
+        Box::into_raw(captured) as *mut c_void
+    );
+}
+<span class="boring">}</span></code></pre>
+<h3 id="lifetime-requirements-in-callbacks"><a class="header" href="#lifetime-requirements-in-callbacks">Lifetime Requirements in Callbacks</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Callback returns reference - needs lifetime bound
+extern "C" fn get_name&lt;'a&gt;(
+    ctx: *mut c_void
+) -&gt; *const c_char {
+    unsafe {
+        let ctx = &amp;*(ctx as *const Context);
+        ctx.name.as_ptr()
+    }
+}
+
+// Context must outlive all callback invocations
+struct Context {
+    name: CString,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="state-passing-in-callbacks"><a class="header" href="#state-passing-in-callbacks">State Passing in Callbacks</a></h3>
+<p>The <code>void*</code> pattern for passing state:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct CallbackContext {
+    counter: i32,
+    results: Vec&lt;String&gt;,
+}
+
+extern "C" fn process_item(
+    item: *const c_char,
+    user_data: *mut c_void
+) -&gt; c_int {
+    unsafe {
+        let ctx = &amp;mut *(user_data as *mut CallbackContext);
+        ctx.counter += 1;
+
+        if !item.is_null() {
+            let item_str = CStr::from_ptr(item).to_string_lossy();
+            ctx.results.push(item_str.into_owned());
+        }
+
+        0  // Continue iteration
+    }
+}
+
+fn iterate_with_callback() {
+    let mut ctx = CallbackContext {
+        counter: 0,
+        results: Vec::new(),
+    };
+
+    unsafe {
+        c_iterate_items(
+            process_item,
+            &amp;mut ctx as *mut _ as *mut c_void
+        );
+    }
+
+    println!("Processed {} items", ctx.counter);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="7-ownership--cleanup"><a class="header" href="#7-ownership--cleanup">7. Ownership &amp; Cleanup</a></h2>
+<h3 id="who-owns-memory-returned-from-c"><a class="header" href="#who-owns-memory-returned-from-c">Who Owns Memory Returned from C</a></h3>
+<p><strong>Rule 1: Check documentation</strong>
+<strong>Rule 2: If unclear, assume C owns it (don’t free)</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// libgit2 owns this - don't free
+let author: *const git_signature = git_commit_author(commit);
+
+// Caller owns this - must free
+let repo: *mut git_repository = /* allocated by git_repository_open */;
+// Must later call git_repository_free(repo)
+<span class="boring">}</span></code></pre>
+<h3 id="allocation-in-rust-deallocation-in-c-danger"><a class="header" href="#allocation-in-rust-deallocation-in-c-danger">Allocation in Rust, Deallocation in C (Danger)</a></h3>
+<p><strong>Never</strong> allocate in Rust and free in C (or vice versa) - different allocators!</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG - undefined behavior
+let data = Box::new([0u8; 100]);
+let ptr = Box::into_raw(data);
+unsafe {
+    c_function_that_calls_free(ptr as *mut c_void);  // UB!
+}
+
+// CORRECT - use C allocator
+unsafe {
+    let ptr = libc::malloc(100) as *mut u8;
+    c_function_that_calls_free(ptr as *mut c_void);  // OK
+}
+<span class="boring">}</span></code></pre>
+<h3 id="allocation-in-c-deallocation-in-rust"><a class="header" href="#allocation-in-c-deallocation-in-rust">Allocation in C, Deallocation in Rust</a></h3>
+<p>Same principle applies:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG
+let ptr = c_function_that_allocates();
+let _boxed = unsafe { Box::from_raw(ptr) };  // UB!
+
+// CORRECT
+let ptr = c_function_that_allocates();
+unsafe {
+    c_function_that_frees(ptr);  // Use C's free
+}
+<span class="boring">}</span></code></pre>
+<h3 id="resource-cleanup-patterns"><a class="header" href="#resource-cleanup-patterns">Resource Cleanup Patterns</a></h3>
+<p>Use RAII with Drop:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Repository {
+    raw: *mut raw::git_repository
+}
+
+impl Drop for Repository {
+    fn drop(&amp;mut self) {
+        unsafe {
+            raw::git_repository_free(self.raw);
+        }
+    }
+}
+
+// Automatic cleanup when Repository goes out of scope
+fn example() -&gt; Result&lt;()&gt; {
+    let repo = Repository::open("path")?;
+    // Use repo...
+}  // repo automatically freed here
+<span class="boring">}</span></code></pre>
+<h3 id="custom-allocators-for-ffi"><a class="header" href="#custom-allocators-for-ffi">Custom Allocators for FFI</a></h3>
+<p>When you need matching allocators:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::alloc::{alloc, dealloc, Layout};
+
+#[no_mangle]
+pub extern "C" fn rust_alloc(size: usize) -&gt; *mut c_void {
+    if size == 0 {
+        return std::ptr::null_mut();
+    }
+
+    unsafe {
+        let layout = Layout::from_size_align_unchecked(size, 1);
+        alloc(layout) as *mut c_void
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn rust_free(ptr: *mut c_void) {
+    if ptr.is_null() {
+        return;
+    }
+
+    unsafe {
+        // Must know size - store it alongside allocation
+        // or use a different strategy
+        dealloc(ptr as *mut u8, Layout::from_size_align_unchecked(1, 1));
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="8-data-race-prevention-in-ffi"><a class="header" href="#8-data-race-prevention-in-ffi">8. Data Race Prevention in FFI</a></h2>
+<h3 id="sendsync-boundaries-at-ffi"><a class="header" href="#sendsync-boundaries-at-ffi">Send/Sync Boundaries at FFI</a></h3>
+<p>Raw pointers are neither <code>Send</code> nor <code>Sync</code> by default. Wrapper types must explicitly implement these:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG - raw pointer is not Send
+pub struct UnsafeWrapper {
+    ptr: *mut git_repository,  // Not Send or Sync
+}
+
+// CORRECT - explicit Send/Sync with safety comments
+pub struct Repository {
+    raw: *mut raw::git_repository
+}
+
+// SAFETY: libgit2 repository handles are thread-safe
+// (per libgit2 documentation, multiple threads can safely
+// access different repository handles)
+unsafe impl Send for Repository {}
+
+// SAFETY: libgit2 requires external synchronization for
+// concurrent access to the same repository handle
+// (so we do NOT implement Sync)
+// unsafe impl Sync for Repository {}
+<span class="boring">}</span></code></pre>
+<h3 id="thread-safety-across-c-libraries"><a class="header" href="#thread-safety-across-c-libraries">Thread-Safety Across C Libraries</a></h3>
+<p>Not all C libraries are thread-safe:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Non-thread-safe C library
+static LIBRARY_LOCK: Mutex&lt;()&gt; = Mutex::new(());
+
+pub fn call_non_threadsafe_function() {
+    let _guard = LIBRARY_LOCK.lock().unwrap();
+    unsafe {
+        non_threadsafe_c_function();
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="mutex-requirements-for-shared-state"><a class="header" href="#mutex-requirements-for-shared-state">Mutex Requirements for Shared State</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Mutex;
+
+pub struct ThreadSafeWrapper {
+    inner: Mutex&lt;*mut raw::git_repository&gt;,
+}
+
+impl ThreadSafeWrapper {
+    pub fn do_operation(&amp;self) -&gt; Result&lt;()&gt; {
+        let repo = self.inner.lock().unwrap();
+        unsafe {
+            check(raw::git_repository_operation(*repo))?;
+        }
+        Ok(())
+    }
+}
+
+unsafe impl Send for ThreadSafeWrapper {}
+unsafe impl Sync for ThreadSafeWrapper {}
+<span class="boring">}</span></code></pre>
+<h3 id="race-conditions-in-c-code"><a class="header" href="#race-conditions-in-c-code">Race Conditions in C Code</a></h3>
+<p>Even if Rust is race-free, C code might have races:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// C library has internal static state
+static mut GLOBAL_COUNTER: c_int = 0;
+
+extern "C" {
+    fn increment_counter() -&gt; c_int;  // Modifies GLOBAL_COUNTER
+}
+
+// Must synchronize access
+static C_LIBRARY_MUTEX: Mutex&lt;()&gt; = Mutex::new(());
+
+fn safe_increment() -&gt; c_int {
+    let _guard = C_LIBRARY_MUTEX.lock().unwrap();
+    unsafe { increment_counter() }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="static-ffi-state-and-synchronization"><a class="header" href="#static-ffi-state-and-synchronization">Static FFI State and Synchronization</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn ensure_initialized() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        unsafe {
+            check(raw::git_libgit2_init())
+                .expect("initializing libgit2 failed");
+        }
+    });
+}
+<span class="boring">}</span></code></pre>
+<h2 id="9-error-handling-across-ffi"><a class="header" href="#9-error-handling-across-ffi">9. Error Handling Across FFI</a></h2>
+<h3 id="interpreting-c-error-codes"><a class="header" href="#interpreting-c-error-codes">Interpreting C Error Codes</a></h3>
+<p>C functions typically return:</p>
+<ul>
+<li><strong>0 or positive</strong>: Success (sometimes return value)</li>
+<li><strong>Negative</strong>: Error code</li>
+<li><strong>NULL pointer</strong>: Error</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn check(code: c_int) -&gt; Result&lt;c_int&gt; {
+    if code &gt;= 0 {
+        return Ok(code);
+    }
+
+    // Get detailed error from C library
+    unsafe {
+        let error = raw::giterr_last();
+        let message = CStr::from_ptr((*error).message)
+            .to_string_lossy()
+            .into_owned();
+
+        Err(Error { code: code as i32, message, class: (*error).klass as i32 })
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="exception-like-behavior-in-c"><a class="header" href="#exception-like-behavior-in-c">Exception-like Behavior in C</a></h3>
+<p>Some C libraries use setjmp/longjmp for error handling. <strong>This is incompatible with Rust unwinding:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DANGER: C library uses longjmp
+extern "C" {
+    fn c_function_that_longjmps();
+}
+
+// This is undefined behavior if c_function_that_longjmps actually jumps
+fn dangerous() {
+    let _guard = SomeDropGuard::new();
+    unsafe {
+        c_function_that_longjmps();  // UB if it jumps - _guard not dropped!
+    }
+}
+
+// SOLUTION: Document and avoid, or use separate process
+<span class="boring">}</span></code></pre>
+<h3 id="returning-result-from-ffi-functions"><a class="header" href="#returning-result-from-ffi-functions">Returning Result from FFI Functions</a></h3>
+<p>Convert C errors to Rust Result:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Repository {
+    pub fn open&lt;P: AsRef&lt;Path&gt;&gt;(path: P) -&gt; Result&lt;Repository&gt; {
+        ensure_initialized();
+
+        let path = path_to_cstring(path.as_ref())?;
+        let mut repo = ptr::null_mut();
+
+        unsafe {
+            check(raw::git_repository_open(&amp;mut repo, path.as_ptr()))?;
+        }
+
+        Ok(Repository { raw: repo })
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="propagating-errors-back-to-c"><a class="header" href="#propagating-errors-back-to-c">Propagating Errors Back to C</a></h3>
+<p>When Rust code is called from C:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[no_mangle]
+pub extern "C" fn rust_process_data(
+    data: *const u8,
+    len: usize,
+    out_result: *mut *mut ProcessedData,
+    out_error: *mut *mut c_char
+) -&gt; c_int {
+    // Catch panics
+    let result = std::panic::catch_unwind(|| {
+        if data.is_null() || out_result.is_null() {
+            return -1;  // Invalid argument
+        }
+
+        let slice = unsafe { std::slice::from_raw_parts(data, len) };
+
+        match process_data_internal(slice) {
+            Ok(processed) =&gt; {
+                unsafe {
+                    *out_result = Box::into_raw(Box::new(processed));
+                }
+                0  // Success
+            }
+            Err(e) =&gt; {
+                if !out_error.is_null() {
+                    let error_msg = CString::new(e.to_string()).unwrap();
+                    unsafe {
+                        *out_error = error_msg.into_raw();
+                    }
+                }
+                -2  // Processing error
+            }
+        }
+    });
+
+    result.unwrap_or(-3)  // Panic error code
+}
+<span class="boring">}</span></code></pre>
+<h3 id="panic-safety-at-ffi-boundary"><a class="header" href="#panic-safety-at-ffi-boundary">Panic Safety at FFI Boundary</a></h3>
+<p><strong>Never</strong> panic across FFI boundary:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>extern "C" fn callback(data: *mut c_void) -&gt; c_int {
+    let result = std::panic::catch_unwind(|| {
+        // Code that might panic
+        do_work(data)
+    });
+
+    match result {
+        Ok(val) =&gt; val,
+        Err(_) =&gt; {
+            eprintln!("Panic caught in FFI callback");
+            -1  // Error code
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="10-advanced-ffi-patterns"><a class="header" href="#10-advanced-ffi-patterns">10. Advanced FFI Patterns</a></h2>
+<h3 id="opaque-pointers-void-pattern"><a class="header" href="#opaque-pointers-void-pattern">Opaque Pointers (void* Pattern)</a></h3>
+<p>From libgit2-rs, opaque types prevent direct access:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Version 1: Zero-sized struct (can't be instantiated)
+#[repr(C)]
+pub struct git_repository {
+    _private: [u8; 0]
+}
+
+// Version 2: Empty enum (more idiomatic)
+pub enum git_repository {}
+pub enum git_commit {}
+
+// Both prevent: let x = git_repository { ... };
+// Can only work with pointers: *mut git_repository
+<span class="boring">}</span></code></pre>
+<h3 id="vtable-based-inheritance-in-c"><a class="header" href="#vtable-based-inheritance-in-c">Vtable-based Inheritance in C</a></h3>
+<p>C “objects” with function pointers:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct CVtable {
+    destroy: extern "C" fn(*mut c_void),
+    process: extern "C" fn(*mut c_void, *const u8, usize) -&gt; c_int,
+}
+
+#[repr(C)]
+struct CObject {
+    vtable: *const CVtable,
+    data: *mut c_void,
+}
+
+impl CObject {
+    fn destroy(&amp;self) {
+        unsafe {
+            ((*self.vtable).destroy)(self.data);
+        }
+    }
+
+    fn process(&amp;self, input: &amp;[u8]) -&gt; c_int {
+        unsafe {
+            ((*self.vtable).process)(self.data, input.as_ptr(), input.len())
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="c-class-interop"><a class="header" href="#c-class-interop">C++ Class Interop</a></h3>
+<p>Rust can call C++ through <code>extern "C"</code> wrappers or <code>cxx</code> crate:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Manual C wrapper approach
+// In C++ wrapper:
+// extern "C" MyClass* MyClass_new() { return new MyClass(); }
+// extern "C" void MyClass_delete(MyClass* ptr) { delete ptr; }
+// extern "C" int MyClass_method(MyClass* ptr, int arg) { return ptr-&gt;method(arg); }
+
+extern "C" {
+    fn MyClass_new() -&gt; *mut c_void;
+    fn MyClass_delete(ptr: *mut c_void);
+    fn MyClass_method(ptr: *mut c_void, arg: c_int) -&gt; c_int;
+}
+
+pub struct MyClass {
+    ptr: *mut c_void,
+}
+
+impl MyClass {
+    pub fn new() -&gt; Self {
+        MyClass {
+            ptr: unsafe { MyClass_new() }
+        }
+    }
+
+    pub fn method(&amp;self, arg: i32) -&gt; i32 {
+        unsafe { MyClass_method(self.ptr, arg as c_int) as i32 }
+    }
+}
+
+impl Drop for MyClass {
+    fn drop(&amp;mut self) {
+        unsafe { MyClass_delete(self.ptr); }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="custom-drop-for-c-resources"><a class="header" href="#custom-drop-for-c-resources">Custom Drop for C Resources</a></h3>
+<p>Always pair acquire with release:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Commit&lt;'repo&gt; {
+    raw: *mut raw::git_commit,
+    _marker: PhantomData&lt;&amp;'repo Repository&gt;
+}
+
+impl&lt;'repo&gt; Drop for Commit&lt;'repo&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            // SAFETY: self.raw is a valid git_commit pointer
+            // allocated by git_commit_lookup
+            raw::git_commit_free(self.raw);
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="ffi-based-wrapper-libraries"><a class="header" href="#ffi-based-wrapper-libraries">FFI-based Wrapper Libraries</a></h3>
+<p>Complete example from libgit2-rs-safe:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Repository {
+    raw: *mut raw::git_repository
+}
+
+impl Repository {
+    pub fn open&lt;P: AsRef&lt;Path&gt;&gt;(path: P) -&gt; Result&lt;Repository&gt; {
+        ensure_initialized();
+        let path = path_to_cstring(path.as_ref())?;
+        let mut repo = ptr::null_mut();
+
+        unsafe {
+            check(raw::git_repository_open(&amp;mut repo, path.as_ptr()))?;
+        }
+
+        Ok(Repository { raw: repo })
+    }
+
+    pub fn find_commit(&amp;self, oid: &amp;Oid) -&gt; Result&lt;Commit&gt; {
+        let mut commit = ptr::null_mut();
+
+        unsafe {
+            check(raw::git_commit_lookup(&amp;mut commit, self.raw, &amp;oid.raw))?;
+        }
+
+        Ok(Commit { raw: commit, _marker: PhantomData })
+    }
+}
+
+impl Drop for Repository {
+    fn drop(&amp;mut self) {
+        unsafe {
+            raw::git_repository_free(self.raw);
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="11-testing--verification"><a class="header" href="#11-testing--verification">11. Testing &amp; Verification</a></h2>
+<h3 id="property-based-testing-across-ffi"><a class="header" href="#property-based-testing-across-ffi">Property-based Testing Across FFI</a></h3>
+<p>Use <code>proptest</code> to verify invariants:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use proptest::prelude::*;
+
+proptest! {
+    #[test]
+    fn ffi_string_roundtrip(s in "\\PC*") {
+        // Property: Any valid Rust string (no nulls) can roundtrip
+        if !s.contains('\0') {
+            let c_string = CString::new(s.clone()).unwrap();
+            let recovered = unsafe {
+                CStr::from_ptr(c_string.as_ptr())
+            }.to_str().unwrap();
+            prop_assert_eq!(&amp;s, recovered);
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="fuzzing-c-rust-boundary"><a class="header" href="#fuzzing-c-rust-boundary">Fuzzing C-Rust Boundary</a></h3>
+<p>Use <code>cargo-fuzz</code> to find edge cases:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// fuzz/fuzz_targets/ffi_parse.rs
+#![no_main]
+use libfuzzer_sys::fuzz_target;
+
+fuzz_target!(|data: &amp;[u8]| {
+    // Try to parse arbitrary bytes through FFI
+    let _ = std::panic::catch_unwind(|| {
+        unsafe {
+            parse_ffi_data(data.as_ptr(), data.len());
+        }
+    });
+});
+<span class="boring">}</span></code></pre>
+<h3 id="memory-sanitizers-asan-msan"><a class="header" href="#memory-sanitizers-asan-msan">Memory Sanitizers (ASAN, MSAN)</a></h3>
+<p>Build with sanitizers to detect bugs:</p>
+<pre><code class="language-bash"># AddressSanitizer - detects memory errors
+RUSTFLAGS="-Z sanitizer=address" cargo +nightly test
+
+# MemorySanitizer - detects uninitialized reads
+RUSTFLAGS="-Z sanitizer=memory" cargo +nightly test
+
+# ThreadSanitizer - detects data races
+RUSTFLAGS="-Z sanitizer=thread" cargo +nightly test
+</code></pre>
+<h3 id="valgrind-for-c-memory-issues"><a class="header" href="#valgrind-for-c-memory-issues">Valgrind for C Memory Issues</a></h3>
+<pre><code class="language-bash">cargo build
+valgrind --leak-check=full --show-leak-kinds=all \
+    ./target/debug/libgit2-rs /path/to/repo
+
+# Look for:
+# - "definitely lost" (memory leaks)
+# - "invalid read/write" (use-after-free, bounds violations)
+# - "conditional jump depends on uninitialised value"
+</code></pre>
+<h3 id="ci-testing-with-multiple-platforms"><a class="header" href="#ci-testing-with-multiple-platforms">CI Testing with Multiple Platforms</a></h3>
+<pre><code class="language-yaml"># .github/workflows/ffi-test.yml
+name: FFI Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install libgit2
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get install -y libgit2-dev
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install libgit2
+          fi
+        shell: bash
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Run with sanitizer (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          RUSTFLAGS="-Z sanitizer=address" cargo +nightly test
+</code></pre>
+<h2 id="12-performance--optimization"><a class="header" href="#12-performance--optimization">12. Performance &amp; Optimization</a></h2>
+<h3 id="ffi-call-overhead"><a class="header" href="#ffi-call-overhead">FFI Call Overhead</a></h3>
+<p>Each FFI call has overhead:</p>
+<ul>
+<li><strong>Function call</strong>: ~10-20 CPU cycles</li>
+<li><strong>Context switch</strong>: None (same process)</li>
+<li><strong>Data marshalling</strong>: Depends on conversions</li>
+</ul>
+<p>Measure:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::time::Instant;
+
+fn benchmark_ffi_calls() {
+    let iterations = 1_000_000;
+
+    let start = Instant::now();
+    for _ in 0..iterations {
+        unsafe {
+            lightweight_c_function();
+        }
+    }
+    let elapsed = start.elapsed();
+
+    println!("FFI call overhead: {:?} per call", elapsed / iterations);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="batching-ffi-calls"><a class="header" href="#batching-ffi-calls">Batching FFI Calls</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// SLOW: Many FFI calls
+for item in items {
+    unsafe {
+        process_one_item(item);
+    }
+}
+
+// FAST: Batch FFI call
+unsafe {
+    process_items_batch(items.as_ptr(), items.len());
+}
+<span class="boring">}</span></code></pre>
+<h3 id="buffer-strategies-to-minimize-calls"><a class="header" href="#buffer-strategies-to-minimize-calls">Buffer Strategies to Minimize Calls</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// SLOW: One char at a time
+fn read_slow(fd: c_int) -&gt; String {
+    let mut result = String::new();
+    loop {
+        let mut ch = 0u8;
+        unsafe {
+            if libc::read(fd, &amp;mut ch as *mut u8 as *mut c_void, 1) != 1 {
+                break;
+            }
+        }
+        result.push(ch as char);
+    }
+    result
+}
+
+// FAST: Buffered reads
+fn read_fast(fd: c_int) -&gt; String {
+    let mut result = Vec::new();
+    let mut buffer = [0u8; 4096];
+
+    loop {
+        let n = unsafe {
+            libc::read(fd, buffer.as_mut_ptr() as *mut c_void, buffer.len())
+        };
+
+        if n &lt;= 0 { break; }
+        result.extend_from_slice(&amp;buffer[..n as usize]);
+    }
+
+    String::from_utf8_lossy(&amp;result).into_owned()
+}
+<span class="boring">}</span></code></pre>
+<h3 id="inline-hints-for-ffi-functions"><a class="header" href="#inline-hints-for-ffi-functions">Inline Hints for FFI Functions</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Prevents inlining (default for extern functions)
+extern "C" {
+    fn heavyweight_function();
+}
+
+// Wrapper can be inlined
+#[inline]
+pub fn call_heavyweight() {
+    unsafe { heavyweight_function(); }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="when-to-use-ffi-vs-native-rust"><a class="header" href="#when-to-use-ffi-vs-native-rust">When to Use FFI vs Native Rust</a></h3>
+<p><strong>Use FFI when:</strong></p>
+<ul>
+<li>Mature C library exists (OpenSSL, libgit2, SQLite)</li>
+<li>Performance-critical C code (optimized over decades)</li>
+<li>Platform integration required (Windows API, POSIX)</li>
+<li>Ecosystem compatibility needed</li>
+</ul>
+<p><strong>Avoid FFI when:</strong></p>
+<ul>
+<li>Pure Rust alternative exists and is mature</li>
+<li>Safety is paramount (crypto primitives - use <code>ring</code> not OpenSSL)</li>
+<li>Cross-platform support needed (Rust handles this better)</li>
+<li>Development velocity matters (FFI is slower to iterate)</li>
+</ul>
+<h2 id="13-security-in-ffi"><a class="header" href="#13-security-in-ffi">13. Security in FFI</a></h2>
+<h3 id="input-validation-before-c-calls"><a class="header" href="#input-validation-before-c-calls">Input Validation Before C Calls</a></h3>
+<p><strong>Never trust C code to validate:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn open_repository(path: &amp;str) -&gt; Result&lt;Repository&gt; {
+    // VALIDATE FIRST
+    if path.len() &gt; 4096 {
+        return Err("Path too long".into());
+    }
+
+    if path.contains('\0') {
+        return Err("Path contains null byte".into());
+    }
+
+    // Canonicalize to prevent traversal
+    let canonical = std::fs::canonicalize(path)?;
+
+    // NOW safe to pass to C
+    let path_c = CString::new(canonical.to_str().unwrap())?;
+
+    unsafe {
+        // C code receives validated input
+        check(raw::git_repository_open(&amp;mut repo, path_c.as_ptr()))?;
+    }
+
+    Ok(Repository { raw: repo })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="buffer-overflow-prevention"><a class="header" href="#buffer-overflow-prevention">Buffer Overflow Prevention</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// VULNERABLE: No bounds check
+fn vulnerable_copy(src: &amp;[u8]) {
+    let mut dest = [0u8; 100];
+    unsafe {
+        std::ptr::copy_nonoverlapping(
+            src.as_ptr(),
+            dest.as_mut_ptr(),
+            src.len()  // DANGER: src.len() might be &gt; 100
+        );
+    }
+}
+
+// SAFE: Explicit bounds check
+fn safe_copy(src: &amp;[u8]) -&gt; Result&lt;[u8; 100]&gt; {
+    if src.len() &gt; 100 {
+        return Err("Source too large".into());
+    }
+
+    let mut dest = [0u8; 100];
+    dest[..src.len()].copy_from_slice(src);
+    Ok(dest)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="integer-overflow-in-c-apis"><a class="header" href="#integer-overflow-in-c-apis">Integer Overflow in C APIs</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// C API expects size as uint32_t
+extern "C" {
+    fn allocate_buffer(size: u32) -&gt; *mut u8;
+}
+
+fn safe_allocate(size: usize) -&gt; Result&lt;*mut u8&gt; {
+    // Check for overflow when converting usize -&gt; u32
+    let size_u32 = u32::try_from(size)
+        .map_err(|_| "Size too large for C API")?;
+
+    Ok(unsafe { allocate_buffer(size_u32) })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="heap-exhaustion-attacks"><a class="header" href="#heap-exhaustion-attacks">Heap Exhaustion Attacks</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// VULNERABLE: Attacker controls allocation size
+fn vulnerable(untrusted_size: usize) {
+    unsafe {
+        let ptr = libc::malloc(untrusted_size);
+        // OOM if untrusted_size is huge
+    }
+}
+
+// SAFE: Limit maximum allocation
+const MAX_ALLOCATION: usize = 100 * 1024 * 1024;  // 100MB
+
+fn safe_allocate(requested_size: usize) -&gt; Result&lt;*mut u8&gt; {
+    if requested_size &gt; MAX_ALLOCATION {
+        return Err("Allocation too large".into());
+    }
+
+    unsafe {
+        let ptr = libc::malloc(requested_size);
+        if ptr.is_null() {
+            return Err("Allocation failed".into());
+        }
+        Ok(ptr as *mut u8)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="secure-cleanup-of-secrets"><a class="header" href="#secure-cleanup-of-secrets">Secure Cleanup of Secrets</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use zeroize::Zeroize;
+
+pub struct SecretKey {
+    data: Vec&lt;u8&gt;,
+}
+
+impl SecretKey {
+    pub fn new(key: Vec&lt;u8&gt;) -&gt; Self {
+        SecretKey { data: key }
+    }
+
+    pub fn use_with_c_api(&amp;self) {
+        unsafe {
+            c_crypto_function(self.data.as_ptr(), self.data.len());
+        }
+    }
+}
+
+impl Drop for SecretKey {
+    fn drop(&amp;mut self) {
+        // Zero memory before deallocation
+        self.data.zeroize();
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="14-real-world-examples"><a class="header" href="#14-real-world-examples">14. Real-World Examples</a></h2>
+<h3 id="libgit2-integration-patterns"><a class="header" href="#libgit2-integration-patterns">libgit2 Integration Patterns</a></h3>
+<p>The complete pattern from libgit2-rs-safe demonstrates best practices:</p>
+<ol>
+<li><strong>Opaque types</strong> for C structures</li>
+<li><strong>Lifetime tracking</strong> with PhantomData</li>
+<li><strong>RAII cleanup</strong> with Drop</li>
+<li><strong>Error conversion</strong> from C codes to Result</li>
+<li><strong>Safe initialization</strong> with Once</li>
+<li><strong>Platform-specific</strong> path handling</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Complete safe wrapper pattern
+pub struct Repository {
+    raw: *mut raw::git_repository
+}
+
+impl Repository {
+    pub fn open&lt;P: AsRef&lt;Path&gt;&gt;(path: P) -&gt; Result&lt;Repository&gt; {
+        ensure_initialized();
+        let path = path_to_cstring(path.as_ref())?;
+        let mut repo = ptr::null_mut();
+        unsafe {
+            check(raw::git_repository_open(&amp;mut repo, path.as_ptr()))?;
+        }
+        Ok(Repository { raw: repo })
+    }
+}
+
+impl Drop for Repository {
+    fn drop(&amp;mut self) {
+        unsafe { raw::git_repository_free(self.raw); }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="analyzing-unsafe-ffi-code"><a class="header" href="#analyzing-unsafe-ffi-code">Analyzing Unsafe FFI Code</a></h3>
+<p>When reviewing FFI code, verify:</p>
+<ol>
+<li><strong>Null checks</strong> before dereferencing</li>
+<li><strong>Lifetime relationships</strong> are sound</li>
+<li><strong>Memory ownership</strong> is clear</li>
+<li><strong>Error handling</strong> is complete</li>
+<li><strong>Thread safety</strong> is documented</li>
+<li><strong>Platform differences</strong> are handled</li>
+<li><strong>Resource cleanup</strong> is guaranteed</li>
+<li><strong>Panic safety</strong> at boundaries</li>
+</ol>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>FFI is Rust’s bridge to the vast ecosystem of C libraries, but it requires rigorous discipline. The key principles:</p>
+<ol>
+<li><strong>Minimize unsafe code</strong> - keep it isolated in small, well-documented functions</li>
+<li><strong>Validate at boundaries</strong> - never trust C code to validate inputs</li>
+<li><strong>Encode invariants in types</strong> - use lifetimes, PhantomData, and RAII</li>
+<li><strong>Test extensively</strong> - use sanitizers, fuzzers, and property-based tests</li>
+<li><strong>Document thoroughly</strong> - every unsafe block needs a SAFETY comment</li>
+</ol>
+<p>The libgit2-rs examples in this repository demonstrate the progression from raw, unsafe FFI bindings to safe, idiomatic Rust wrappers. Study both to understand the full spectrum of FFI patterns.</p>
+<p>When in doubt, favor safety over performance, and remember: undefined behavior in Rust is not a compile error—it’s a time bomb waiting to explode in production.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="10-ecosystem-integration-interoperability.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="12-memory-model-concurrent-access.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="10-ecosystem-integration-interoperability.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="12-memory-model-concurrent-access.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

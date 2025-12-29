@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Chapter 6: Modular Architecture Patterns - Refactoring Rust Frameworks</title>
+        <title>Chapter 20: Pin, Unpin &amp; Self-Referential Structures - Refactoring Rust Frameworks</title>
 
 
         <!-- Custom HTML head -->
@@ -148,7 +148,7 @@
                         <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/06-modular-architecture-patterns.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/20-pin-unpin-self-referential.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -182,242 +182,483 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="modular-architecture-patterns"><a class="header" href="#modular-architecture-patterns">Modular Architecture Patterns</a></h1>
-<p>Modular architecture is the foundation of maintainable, scalable software systems. This chapter explores how to organize code, manage dependencies, and design for evolution.</p>
-<h2 id="why-modularity-matters"><a class="header" href="#why-modularity-matters">Why Modularity Matters</a></h2>
-<p>Modular code provides several critical benefits:</p>
-<ul>
-<li><strong>Maintainability</strong>: Changes to one module rarely cascade to others</li>
-<li><strong>Testability</strong>: Modules can be tested in isolation</li>
-<li><strong>Reusability</strong>: Well-designed modules serve multiple contexts</li>
-<li><strong>Team Scalability</strong>: Different teams can own different modules</li>
-<li><strong>Compilation Speed</strong>: Only modified modules need recompilation</li>
-</ul>
-<h2 id="cohesion-and-coupling"><a class="header" href="#cohesion-and-coupling">Cohesion and Coupling</a></h2>
-<p><strong>Cohesion</strong> measures how closely related the elements within a module are. High cohesion means a module does one thing well.</p>
-<p><strong>Coupling</strong> measures the degree of interdependence between modules. Low coupling means modules can change independently.</p>
-<h2 id="module-organization"><a class="header" href="#module-organization">Module Organization</a></h2>
-<h3 id="single-file-vs-multi-file-crates"><a class="header" href="#single-file-vs-multi-file-crates">Single-File vs Multi-File Crates</a></h3>
-<p><strong>Single-file modules</strong> work well for small, focused functionality:</p>
+                        <h1 id="pin-unpin--self-referential-structures"><a class="header" href="#pin-unpin--self-referential-structures">Pin, Unpin &amp; Self-Referential Structures</a></h1>
+<p><strong>Target Audience</strong>: AI agents working with async code, futures, and self-referential data structures
+<strong>Prerequisites</strong>: Understanding of ownership, lifetimes, and unsafe code
+<strong>Scope</strong>: Pin guarantees, Unpin trait, structural pinning, async implications</p>
+<hr>
+<h2 id="1-why-pin-exists"><a class="header" href="#1-why-pin-exists">1. Why Pin Exists</a></h2>
+<h3 id="the-self-referential-problem"><a class="header" href="#the-self-referential-problem">The Self-Referential Problem</a></h3>
+<p>Rust’s ownership model assumes values can be moved freely in memory. However, certain data structures contain internal pointers that become invalid when the structure moves:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// src/lib.rs - Everything in one file
-pub mod parser {
-    pub fn parse(input: &amp;str) -&gt; Result&lt;Ast, ParseError&gt; {
-        // Implementation
-    }
+</span>// PROBLEMATIC: Self-referential struct
+struct SelfReferential {
+    data: String,
+    ptr: *const String,  // Points to 'data' field
+}
 
-    #[cfg(test)]
-    mod tests {
-        // Tests alongside code
+impl SelfReferential {
+    fn new(s: String) -&gt; Self {
+        let mut obj = SelfReferential {
+            data: s,
+            ptr: std::ptr::null(),
+        };
+        obj.ptr = &amp;obj.data as *const String;  // Becomes dangling on move!
+        obj
     }
 }
 <span class="boring">}</span></code></pre>
-<p><strong>Multi-file modules</strong> scale better for complex systems:</p>
-<pre><code>src/
-├── lib.rs              # Crate root
-├── parser/
-│   ├── mod.rs          # Parser module root
-│   ├── lexer.rs        # Tokenization
-│   └── ast.rs          # Abstract syntax tree
-├── compiler/
-│   ├── mod.rs          # Compiler module root
-│   └── codegen.rs      # Code generation
-└── runtime/
-    └── vm.rs           # Virtual machine
-</code></pre>
-<h3 id="public-api-boundaries"><a class="header" href="#public-api-boundaries">Public API Boundaries</a></h3>
-<p>Define clear public interfaces:</p>
+<p>When this value moves in memory, the pointer becomes dangling because it still points to the old memory location.</p>
+<h3 id="async-state-machines-and-pin"><a class="header" href="#async-state-machines-and-pin">Async State Machines and Pin</a></h3>
+<p>The compiler transforms async functions into state machines that can self-reference:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// src/lib.rs
-pub mod api;           // Fully public module
-mod internal;          // Private to crate
-pub(crate) mod shared; // Visible within crate only
-
-pub use api::Request;  // Re-export
-pub use api::Response;
+</span>async fn example() {
+    let local = String::from("data");
+    do_something(&amp;local).await;  // State machine holds reference to local
+}
 <span class="boring">}</span></code></pre>
-<h3 id="visibility-levels"><a class="header" href="#visibility-levels">Visibility Levels</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Visibility</th><th>Syntax</th><th>Scope</th></tr>
-</thead>
-<tbody>
-<tr><td>Public</td><td><code>pub</code></td><td>Anywhere</td></tr>
-<tr><td>Crate</td><td><code>pub(crate)</code></td><td>Within crate</td></tr>
-<tr><td>Parent</td><td><code>pub(super)</code></td><td>Parent module</td></tr>
-<tr><td>Private</td><td>(default)</td><td>Current module</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="dependency-management"><a class="header" href="#dependency-management">Dependency Management</a></h2>
-<h3 id="reducing-circular-dependencies"><a class="header" href="#reducing-circular-dependencies">Reducing Circular Dependencies</a></h3>
-<p>When modules create circular dependencies, extract shared types into a base module.</p>
-<p><strong>Strategy</strong>: Move shared types to a common module both depend on.</p>
-<h3 id="dependency-injection-patterns"><a class="header" href="#dependency-injection-patterns">Dependency Injection Patterns</a></h3>
+<p><strong>Pin solves this</strong> by guaranteeing the value won’t move in memory.</p>
+<h2 id="2-pin-fundamentals"><a class="header" href="#2-pin-fundamentals">2. Pin Fundamentals</a></h2>
+<h3 id="pinp-structure"><a class="header" href="#pinp-structure">Pin&lt;P<t>&gt; Structure</t></a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub trait Database: Send + Sync {
-    fn query(&amp;self, sql: &amp;str) -&gt; Result&lt;Vec&lt;Row&gt;, DbError&gt;;
+</span>pub struct Pin&lt;P&gt; {
+    pointer: P,
 }
 
-pub struct UserService&lt;D: Database&gt; {
-    db: D,
-}
-
-impl&lt;D: Database&gt; UserService&lt;D&gt; {
-    pub fn new(db: D) -&gt; Self {
-        Self { db }
+impl&lt;P: Deref&gt; Pin&lt;P&gt; {
+    // Safe: can only create Pin from pointer to Unpin type
+    pub fn new(pointer: P) -&gt; Pin&lt;P&gt;
+    where
+        P::Target: Unpin,
+    {
+        unsafe { Pin::new_unchecked(pointer) }
     }
 }
 <span class="boring">}</span></code></pre>
-<h3 id="feature-flags-for-optional-modules"><a class="header" href="#feature-flags-for-optional-modules">Feature Flags for Optional Modules</a></h3>
-<pre><code class="language-toml">[features]
-default = ["json"]
-json = ["serde_json"]
-yaml = ["serde_yaml"]
-</code></pre>
+<h3 id="creating-pinned-values"><a class="header" href="#creating-pinned-values">Creating Pinned Values</a></h3>
+<p><strong>Heap Pinning (Safe):</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[cfg(feature = "json")]
-pub mod json;
+</span>use std::pin::Pin;
 
-#[cfg(feature = "yaml")]
-pub mod yaml;
+let pinned: Pin&lt;Box&lt;String&gt;&gt; = Box::pin(String::from("pinned"));
+// Value is now permanently pinned on heap
 <span class="boring">}</span></code></pre>
-<h3 id="workspace-organization"><a class="header" href="#workspace-organization">Workspace Organization</a></h3>
-<p>For large projects, use Cargo workspaces:</p>
-<pre><code class="language-toml">[workspace]
-members = [
-    "crates/core",
-    "crates/parser",
-    "crates/cli",
-]
-</code></pre>
-<h2 id="breaking-monolithic-structures"><a class="header" href="#breaking-monolithic-structures">Breaking Monolithic Structures</a></h2>
-<p>Transform large, tightly coupled code into modular components:</p>
+<p><strong>Stack Pinning (With macro):</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// BEFORE: Monolithic struct
-pub struct Application {
-    config: Config,
-    database: Database,
-    cache: Cache,
-    http_client: HttpClient,
+</span>use std::pin::pin;
 
-    pub fn handle_request(&amp;mut self, req: Request) { /* 500 lines */ }
-    pub fn process_data(&amp;mut self, data: Data) { /* 300 lines */ }
-}
-
-// AFTER: Separated concerns
-pub mod config { /* ... */ }
-pub mod storage { /* ... */ }
-pub mod http { /* ... */ }
-
-pub struct Application&lt;S: Storage&gt; {
-    config: Config,
-    storage: S,
-    client: HttpClient,
+fn stack_pin_example() {
+    let pinned = pin!(String::from("pinned"));
+    // Type: Pin&lt;&amp;mut String&gt;
+    // Valid only within this scope
 }
 <span class="boring">}</span></code></pre>
-<h2 id="module-communication"><a class="header" href="#module-communication">Module Communication</a></h2>
-<h3 id="error-propagation-across-modules"><a class="header" href="#error-propagation-across-modules">Error Propagation Across Modules</a></h3>
+<h2 id="3-unpin--opt-out"><a class="header" href="#3-unpin--opt-out">3. Unpin &amp; Opt-Out</a></h2>
+<h3 id="unpin-auto-trait"><a class="header" href="#unpin-auto-trait">Unpin Auto Trait</a></h3>
+<p><code>Unpin</code> is an <strong>auto trait</strong> implemented by default for most types:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub mod parser {
-    #[derive(Error, Debug)]
-    pub enum ParseError {
-        #[error("unexpected token")]
-        UnexpectedToken,
+</span>// These automatically implement Unpin:
+struct Regular {
+    x: i32,
+    y: String,
+}
+
+// Unpin allows Pin to be safely created and unwrapped:
+let boxed = Box::new(Regular { x: 5, y: String::from("test") });
+let pinned = Pin::new(boxed);  // OK: Regular is Unpin
+let unpinned = Pin::into_inner(pinned);  // OK: can move again
+<span class="boring">}</span></code></pre>
+<h3 id="removing-unpin-with-phantompinned"><a class="header" href="#removing-unpin-with-phantompinned">Removing Unpin with PhantomPinned</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::marker::PhantomPinned;
+
+struct MustPin {
+    data: String,
+    ptr: *const String,
+    _pin: PhantomPinned,  // Removes Unpin
+}
+<span class="boring">}</span></code></pre>
+<p>A type is <code>!Unpin</code> if:</p>
+<ol>
+<li>It contains <code>PhantomPinned</code></li>
+<li>It contains a field that is <code>!Unpin</code></li>
+<li>It explicitly opts out: <code>impl !Unpin for MyType {}</code></li>
+</ol>
+<h2 id="4-projection--structural-pinning"><a class="header" href="#4-projection--structural-pinning">4. Projection &amp; Structural Pinning</a></h2>
+<h3 id="structural-pinning-rules"><a class="header" href="#structural-pinning-rules">Structural Pinning Rules</a></h3>
+<p><strong>Structural pinning</strong>: If a parent is pinned, its fields are also pinned.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+
+struct Parent {
+    field1: String,      // Unpin
+    field2: Vec&lt;u8&gt;,     // Unpin
+}
+
+impl Parent {
+    // SAFE projection: String is Unpin
+    fn project_field1(self: Pin&lt;&amp;mut Self&gt;) -&gt; &amp;mut String {
+        &amp;mut self.get_mut().field1
     }
 }
-
-pub mod compiler {
-    use super::parser;
-
-    #[derive(Error, Debug)]
-    pub enum CompileError {
-        #[error("parse error: {0}")]
-        Parse(#[from] parser::ParseError),
+<span class="boring">}</span></code></pre>
+<h3 id="pinmap_unchecked-for-field-access"><a class="header" href="#pinmap_unchecked-for-field-access">Pin::map_unchecked for Field Access</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;P: Deref&gt; Pin&lt;P&gt; {
+    pub unsafe fn map_unchecked&lt;U, F&gt;(self, func: F) -&gt; Pin&lt;&amp;U&gt;
+    where
+        F: FnOnce(&amp;P::Target) -&gt; &amp;U,
+    {
+        // SAFETY: Caller must ensure structural pinning invariants
+        let pointer = &amp;*self.pointer;
+        let new_pointer = func(pointer);
+        Pin::new_unchecked(new_pointer)
     }
 }
 <span class="boring">}</span></code></pre>
-<h3 id="message-passing"><a class="header" href="#message-passing">Message Passing</a></h3>
-<p>Use channels for decoupled communication:</p>
+<h2 id="5-self-referential-structs"><a class="header" href="#5-self-referential-structs">5. Self-Referential Structs</a></h2>
+<h3 id="safe-self-referential-pattern"><a class="header" href="#safe-self-referential-pattern">Safe Self-Referential Pattern</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use std::sync::mpsc;
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
 
-pub enum Message {
-    Process(String),
-    Shutdown,
+pub struct SelfRef {
+    data: String,
+    // Points to data - only valid when pinned
+    data_ptr: *const String,
+    _pin: PhantomPinned,
 }
 
-pub fn spawn_worker(rx: mpsc::Receiver&lt;Message&gt;) {
-    while let Ok(msg) = rx.recv() {
-        match msg {
-            Message::Process(data) =&gt; { /* process */ }
-            Message::Shutdown =&gt; break,
+impl SelfRef {
+    pub fn new(s: String) -&gt; Pin&lt;Box&lt;Self&gt;&gt; {
+        let mut obj = Box::new(SelfRef {
+            data: s,
+            data_ptr: std::ptr::null(),
+            _pin: PhantomPinned,
+        });
+
+        // Initialize pointer after boxing
+        let ptr: *const String = &amp;obj.data;
+        obj.data_ptr = ptr;
+
+        // Pin guarantees obj won't move
+        unsafe { Pin::new_unchecked(obj) }
+    }
+
+    pub fn get_data(&amp;self) -&gt; &amp;str {
+        &amp;self.data
+    }
+
+    pub fn get_via_pointer(&amp;self) -&gt; &amp;str {
+        unsafe {
+            // SAFETY: Pin guarantees data_ptr remains valid
+            &amp;*self.data_ptr
         }
     }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="testing-modular-systems"><a class="header" href="#testing-modular-systems">Testing Modular Systems</a></h2>
-<h3 id="integration-testing"><a class="header" href="#integration-testing">Integration Testing</a></h3>
+<h2 id="6-drop-with-pin"><a class="header" href="#6-drop-with-pin">6. Drop with Pin</a></h2>
+<h3 id="drop-requirements"><a class="header" href="#drop-requirements">Drop Requirements</a></h3>
+<p>When implementing <code>Drop</code> for pinned types:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[test]
-fn test_full_command_flow() {
-    let parser = parser::parse(...).unwrap();
-    let registry = commands::Registry::new();
-    let cmd = registry.get(...).unwrap();
-    cmd.execute(...).unwrap();
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+struct PinnedResource {
+    data: Vec&lt;u8&gt;,
+    registered: bool,
+    _pin: PhantomPinned,
+}
+
+impl Drop for PinnedResource {
+    fn drop(&amp;mut self) {
+        // SAFETY: Drop is called in-place
+        if self.registered {
+            println!("Unregistering resource at {:p}", self);
+        }
+        self.data.clear();
+    }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
-<h3 id="right-sizing-modules"><a class="header" href="#right-sizing-modules">Right-Sizing Modules</a></h3>
-<ul>
-<li><strong>Too small</strong>: One function per module creates navigation overhead</li>
-<li><strong>Too large</strong>: Defeats the purpose of modularity</li>
-<li><strong>Just right</strong>: 100-500 lines per module</li>
-</ul>
-<h3 id="avoiding-deep-hierarchies"><a class="header" href="#avoiding-deep-hierarchies">Avoiding Deep Hierarchies</a></h3>
-<p>Limit module depth to maintain navigability.</p>
-<h3 id="documentation-for-modules"><a class="header" href="#documentation-for-modules">Documentation for Modules</a></h3>
+<p><strong>Critical rule</strong>: Drop must never panic - it could leave the system in an inconsistent state.</p>
+<h2 id="7-asyncawait--pin"><a class="header" href="#7-asyncawait--pin">7. Async/Await &amp; Pin</a></h2>
+<h3 id="why-futures-require-pin"><a class="header" href="#why-futures-require-pin">Why Futures Require Pin</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>//! # Parser Module
-//!
-//! This module handles command-line argument parsing.
-//!
-//! ## Architecture
-//! [architectural description]
-//!
-//! ## Usage
-//! [usage examples]
+</span>use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+// Future trait requires Pin:
+pub trait Future {
+    type Output;
+
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Self::Output&gt;;
+}
 <span class="boring">}</span></code></pre>
-<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
-<p>Modular architecture requires upfront investment but pays dividends in maintainability, testability, and team productivity. Start with clear boundaries, evolve based on real usage patterns, and refactor when modules grow beyond their intended scope.</p>
-<p>Key principles:</p>
-<ul>
-<li>Each module has a single, clear responsibility</li>
-<li>Public APIs are minimal and stable</li>
-<li>Dependencies flow in one direction</li>
-<li>Modules can be tested in isolation</li>
-<li>Error types compose across boundaries</li>
-</ul>
+<p>The compiler generates state machines for async functions that self-reference across <code>await</code> points. Pin guarantees these self-references remain valid.</p>
+<h3 id="pinning-in-executors"><a class="header" href="#pinning-in-executors">Pinning in Executors</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::future::Future;
+use std::pin::Pin;
+
+struct SimpleExecutor;
+
+impl SimpleExecutor {
+    fn block_on&lt;F: Future&gt;(future: F) -&gt; F::Output {
+        // Must pin future before polling
+        let mut future = Box::pin(future);
+
+        loop {
+            match future.as_mut().poll(&amp;mut context) {
+                Poll::Ready(output) =&gt; return output,
+                Poll::Pending =&gt; {
+                    std::thread::yield_now();
+                }
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="8-common-pinning-patterns"><a class="header" href="#8-common-pinning-patterns">8. Common Pinning Patterns</a></h2>
+<h3 id="intrusive-linked-list"><a class="header" href="#intrusive-linked-list">Intrusive Linked List</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+pub struct IntrusiveNode&lt;T&gt; {
+    value: T,
+    next: Option&lt;*mut IntrusiveNode&lt;T&gt;&gt;,
+    prev: Option&lt;*mut IntrusiveNode&lt;T&gt;&gt;,
+    _pin: PhantomPinned,
+}
+
+pub struct IntrusiveList&lt;T&gt; {
+    head: Option&lt;Pin&lt;Box&lt;IntrusiveNode&lt;T&gt;&gt;&gt;&gt;,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="custom-future-pattern"><a class="header" href="#custom-future-pattern">Custom Future Pattern</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+struct MyFuture {
+    state: State,
+    data: String,
+    data_ref: Option&lt;*const String&gt;,
+}
+
+enum State {
+    NotStarted,
+    InProgress,
+    Done,
+}
+
+impl Future for MyFuture {
+    type Output = usize;
+
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;usize&gt; {
+        let this = unsafe { self.get_unchecked_mut() };
+
+        match this.state {
+            State::NotStarted =&gt; {
+                // Initialize self-reference
+                this.data_ref = Some(&amp;this.data as *const String);
+                this.state = State::InProgress;
+                Poll::Pending
+            }
+            State::InProgress =&gt; {
+                let data_ref = unsafe { &amp;*this.data_ref.unwrap() };
+                this.state = State::Done;
+                Poll::Ready(data_ref.len())
+            }
+            State::Done =&gt; panic!("Polled after completion"),
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="9-pin-safety-rules"><a class="header" href="#9-pin-safety-rules">9. Pin Safety Rules</a></h2>
+<h3 id="structural-pinning-invariants"><a class="header" href="#structural-pinning-invariants">Structural Pinning Invariants</a></h3>
+<p><strong>Rule 1</strong>: If <code>Pin&lt;&amp;mut T&gt;</code> exists, <code>T</code> will not move until dropped.</p>
+<p><strong>Rule 2</strong>: Structural pinning - pinning a struct pins all <code>!Unpin</code> fields.</p>
+<p><strong>Rule 3</strong>: Cannot obtain <code>&amp;mut T</code> from <code>Pin&lt;&amp;mut T&gt;</code> if <code>T: !Unpin</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// SOUND projection:
+struct Sound {
+    unpinned: String,      // Unpin
+    pinned: PhantomPinned, // !Unpin
+}
+
+impl Sound {
+    // OK: String is Unpin
+    fn project_unpinned(self: Pin&lt;&amp;mut Self&gt;) -&gt; &amp;mut String {
+        &amp;mut self.get_mut().unpinned
+    }
+
+    // OK: Returns pinned reference
+    fn project_pinned(self: Pin&lt;&amp;mut Self&gt;) -&gt; Pin&lt;&amp;PhantomPinned&gt; {
+        unsafe { self.map_unchecked(|s| &amp;s.pinned) }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="10-testing-pinned-types"><a class="header" href="#10-testing-pinned-types">10. Testing Pinned Types</a></h2>
+<h3 id="asserting-unpin"><a class="header" href="#asserting-unpin">Asserting Unpin</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_unpin&lt;T: Unpin&gt;() {}
+
+    #[test]
+    fn test_unpin_properties() {
+        // These should be Unpin
+        assert_unpin::&lt;String&gt;();
+        assert_unpin::&lt;Vec&lt;u8&gt;&gt;();
+
+        // These should NOT be Unpin
+        // assert_unpin::&lt;PhantomPinned&gt;();  // Won't compile
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="miri-analysis"><a class="header" href="#miri-analysis">Miri Analysis</a></h3>
+<pre><code class="language-bash"># Run tests under Miri to detect undefined behavior
+cargo +nightly miri test
+
+# Miri will catch:
+# - Invalid pointer dereferences
+# - Use-after-free
+# - Violations of Pin guarantees
+</code></pre>
+<h2 id="11-performance-implications"><a class="header" href="#11-performance-implications">11. Performance Implications</a></h2>
+<h3 id="pin-overhead"><a class="header" href="#pin-overhead">Pin Overhead</a></h3>
+<p>Pin is a <strong>zero-cost abstraction</strong>. Pin overhead: ~0% at runtime.</p>
+<p>Pin is purely a type-system guarantee enforced at compile-time.</p>
+<h3 id="stack-vs-heap-pinning"><a class="header" href="#stack-vs-heap-pinning">Stack vs Heap Pinning</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn pinning_performance() {
+    // Heap allocation (required for safety)
+    let heap_pinned = Box::pin(String::from("heap"));
+
+    // Stack allocation (faster, lifetime-restricted)
+    let stack_pinned = std::pin::pin!(String::from("stack"));
+}
+<span class="boring">}</span></code></pre>
+<p>Stack pinning avoids allocation but has lifetime restrictions.</p>
+<h2 id="12-compiler-analysis"><a class="header" href="#12-compiler-analysis">12. Compiler Analysis</a></h2>
+<h3 id="pin-error-messages"><a class="header" href="#pin-error-messages">Pin Error Messages</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+struct NotUnpin {
+    _pin: PhantomPinned,
+}
+
+fn causes_error() {
+    let value = Box::new(NotUnpin { _pin: PhantomPinned });
+    let pinned = Pin::new(value);
+    // ERROR: the trait `Unpin` is not implemented
+}
+<span class="boring">}</span></code></pre>
+<h3 id="common-pin-confusion"><a class="header" href="#common-pin-confusion">Common Pin Confusion</a></h3>
+<p>“Pin&lt;&amp;mut T&gt; doesn’t let me access fields” - this is by design for <code>!Unpin</code> types.</p>
+<h2 id="13-alternatives-to-pin"><a class="header" href="#13-alternatives-to-pin">13. Alternatives to Pin</a></h2>
+<h3 id="when-pin-is-unnecessary"><a class="header" href="#when-pin-is-unnecessary">When Pin Is Unnecessary</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BEFORE (using Pin):
+struct WithPin {
+    data: String,
+    ptr: *const String,
+    _pin: PhantomPinned,
+}
+
+// AFTER (avoiding self-reference):
+struct WithoutPin {
+    data: String,
+}
+
+impl WithoutPin {
+    fn get_ref(&amp;self) -&gt; &amp;str {
+        &amp;self.data  // Just borrow normally
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="14-ai-agent-pin-analysis"><a class="header" href="#14-ai-agent-pin-analysis">14. AI Agent Pin Analysis</a></h2>
+<h3 id="detecting-unsound-pinning"><a class="header" href="#detecting-unsound-pinning">Detecting Unsound Pinning</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// AI agents should flag this:
+struct Unsound {
+    data: Vec&lt;u8&gt;,
+    ptr: *const Vec&lt;u8&gt;,
+    _pin: PhantomPinned,
+}
+
+impl Unsound {
+    // UNSOUND: Exposes &amp;mut to !Unpin type
+    fn get_data_mut(self: Pin&lt;&amp;mut Self&gt;) -&gt; &amp;mut Vec&lt;u8&gt; {
+        unsafe { &amp;mut self.get_unchecked_mut().data }  // DANGER!
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="verification-checklist"><a class="header" href="#verification-checklist">Verification Checklist</a></h3>
+<p>AI agents analyzing Pin code should verify:</p>
+<ol>
+<li>✅ <strong>PhantomPinned usage</strong> - Present for self-referential types</li>
+<li>✅ <strong>Projection safety</strong> - Projections return <code>Pin&lt;&amp;mut Field&gt;</code> for <code>!Unpin</code> fields</li>
+<li>✅ <strong>Initialization order</strong> - Self-references initialized after pinning</li>
+<li>✅ <strong>Drop implementation</strong> - Panic-safe and doesn’t move values</li>
+<li>✅ <strong>Future implementation</strong> - Uses <code>Pin&lt;&amp;mut Self&gt;</code> correctly</li>
+</ol>
+<h2 id="summary-pin-mental-model"><a class="header" href="#summary-pin-mental-model">Summary: Pin Mental Model</a></h2>
+<pre><code>┌──────────────────────────────────────────┐
+│ Pin&lt;P&lt;T&gt;&gt; Guarantees                     │
+├──────────────────────────────────────────┤
+│                                          │
+│  IF T: !Unpin:                           │
+│    - Value CANNOT move in memory        │
+│    - Address remains stable until drop   │
+│    - Enables self-references             │
+│                                          │
+│  IF T: Unpin:                            │
+│    - Pin is transparent wrapper          │
+│    - Value CAN be moved                  │
+│    - No special guarantees               │
+│                                          │
+└──────────────────────────────────────────┘
+</code></pre>
+<p><strong>Key Insight</strong>: Pin enables safe self-referential structures by preventing moves through the type system. It’s essential for async/await but adds complexity—use only when necessary.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="05-type-driven-refactoring-safety.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="19-compiler-intrinsics-llvm.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="07-documentation-dx-during-refactoring.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="21-raw-pointers-pointer-arithmetic.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -427,11 +668,11 @@ fn test_full_command_flow() {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="05-type-driven-refactoring-safety.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="19-compiler-intrinsics-llvm.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="07-documentation-dx-during-refactoring.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="21-raw-pointers-pointer-arithmetic.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
