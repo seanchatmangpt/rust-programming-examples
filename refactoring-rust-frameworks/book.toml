@@ -1,0 +1,16 @@
+[book]
+title = "Refactoring Rust Frameworks"
+authors = ["Claude Code - Anthropic"]
+description = "A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices"
+language = "en"
+multilingual = false
+
+[output.html]
+cursorline = true
+mathjax-support = true
+git-repository-url = "https://github.com/seanchatmangpt/rust-programming-examples"
+edit-url-template = "https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/{path}"
+
+[preprocessor.toc]
+
+[preprocessor.mermaid]
