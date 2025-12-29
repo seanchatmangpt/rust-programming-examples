@@ -1,0 +1,33 @@
+[book]
+title = "Rust Patterns: An Alexander-Style Pattern Language"
+authors = ["Programming Rust Examples Contributors"]
+description = "A pattern language for Rust programming, inspired by Christopher Alexander's approach to design patterns"
+language = "en"
+
+[build]
+build-dir = "book"
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "coal"
+git-repository-url = "https://github.com/ProgrammingRust/code-examples"
+edit-url-template = "https://github.com/ProgrammingRust/code-examples/edit/main/patterns-book/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = true
+copy-js = true
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-hierarchical-headers = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
