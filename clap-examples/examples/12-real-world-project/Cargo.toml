@@ -1,0 +1,30 @@
+# Example 12: Real-World Project
+# ================================
+# A complete, production-quality CLI application demonstrating
+# all best practices: multi-binary workspace, proper error handling,
+# configuration management, and professional CLI design.
+
+[package]
+name = "cloudctl"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "cloudctl"
+path = "src/main.rs"
+
+[[bin]]
+name = "cloud-auth"
+path = "src/bin/auth.rs"
+
+[[bin]]
+name = "cloud-config"
+path = "src/bin/config.rs"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }

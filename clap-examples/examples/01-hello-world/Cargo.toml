@@ -1,0 +1,12 @@
+# Example 01: Hello World
+# =======================
+# The simplest possible Clap application using derive macros.
+# Demonstrates: Parser derive, basic argument, help generation
+
+[package]
+name = "hello-world"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

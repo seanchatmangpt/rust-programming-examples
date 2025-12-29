@@ -1,0 +1,12 @@
+# Example 10: Plugin Architecture
+# ================================
+# Demonstrates a plugin system with command registry, dynamic
+# command loading, and extensible CLI architecture.
+
+[package]
+name = "plugins-architecture"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

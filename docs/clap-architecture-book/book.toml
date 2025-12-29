@@ -1,0 +1,58 @@
+# Clap Systems Architecture Patterns: 2026 Edition
+# mdbook configuration file
+
+[book]
+title = "Clap Systems Architecture Patterns: 2026 Edition"
+description = "Advanced patterns, architecture decisions, and real-world systems design using Clap"
+authors = ["Rust Programming Examples Contributors"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = true
+use-default-preprocessors = true
+
+[preprocessor.links]
+# Enable {{#include}} and other link directives
+
+[preprocessor.index]
+# Generate index page from SUMMARY.md
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+smart-punctuation = true
+no-section-label = false
+git-repository-url = "https://github.com/ProgrammingRust/code-examples"
+edit-url-template = "https://github.com/ProgrammingRust/code-examples/edit/main/docs/clap-architecture-book/{path}"
+site-url = "/clap-architecture-book/"
+cname = ""
+input-404 = "404.md"
+
+[output.html.print]
+enable = true
+page-break = true
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = true
+copyable = true
+copy-js = true
+line-numbers = true
+runnable = true
+
+[output.html.code]
+hidelines = { rust = "#" }
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+copy-js = true
+
+[rust]
+edition = "2021"

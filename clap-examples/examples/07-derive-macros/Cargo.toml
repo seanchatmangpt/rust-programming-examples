@@ -1,0 +1,12 @@
+# Example 07: Derive Macros
+# =========================
+# Comprehensive showcase of all major derive macro attributes
+# including Parser, Args, Subcommand, and ValueEnum.
+
+[package]
+name = "derive-macros"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

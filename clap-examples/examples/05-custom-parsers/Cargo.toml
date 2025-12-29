@@ -1,0 +1,12 @@
+# Example 05: Custom Parsers
+# ==========================
+# Demonstrates ValueParser, FromStr implementation, custom validation,
+# and complex parsing logic for CLI arguments.
+
+[package]
+name = "custom-parsers"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }

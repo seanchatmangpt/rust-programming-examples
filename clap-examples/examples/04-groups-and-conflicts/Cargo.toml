@@ -1,0 +1,12 @@
+# Example 04: Groups and Conflicts
+# =================================
+# Demonstrates argument groups, mutual exclusivity, required groups,
+# and complex argument relationships.
+
+[package]
+name = "groups-and-conflicts"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }
