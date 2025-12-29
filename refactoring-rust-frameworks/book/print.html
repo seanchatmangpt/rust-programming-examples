@@ -1,0 +1,3205 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Refactoring Rust Frameworks</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-f42775c0.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-c9f38b0a.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Refactoring Rust Frameworks</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>Welcome to “Refactoring Rust Frameworks”—a comprehensive guide to modernizing, improving, and maintaining Rust frameworks throughout their lifecycle. This book is designed for framework developers, library maintainers, and engineers responsible for large-scale Rust projects.</p>
+<h2 id="what-this-book-covers"><a class="header" href="#what-this-book-covers">What This Book Covers</a></h2>
+<p>Refactoring is the disciplined technique of restructuring existing code without changing its external behavior. For framework developers, refactoring is not a luxury—it is a necessity. As your framework matures, you discover better abstractions, encounter edge cases that demand architectural adjustments, and need to align with evolving best practices.</p>
+<p>This book addresses the unique challenges of refactoring at the framework level: managing API stability, maintaining performance, ensuring security, and keeping your user community confident in the trajectory of your project.</p>
+<h2 id="who-this-book-is-for"><a class="header" href="#who-this-book-is-for">Who This Book Is For</a></h2>
+<ul>
+<li><strong>Framework Maintainers</strong>: Building and evolving libraries that thousands depend on</li>
+<li><strong>Senior Rust Engineers</strong>: Responsible for large-scale architectural decisions</li>
+<li><strong>Architecture Leads</strong>: Planning major refactoring initiatives</li>
+<li><strong>Open Source Contributors</strong>: Learning best practices for ecosystem stewardship</li>
+</ul>
+<h2 id="how-to-use-this-book"><a class="header" href="#how-to-use-this-book">How to Use This Book</a></h2>
+<p>This book is organized into three parts:</p>
+<p><strong>Part I: Foundation</strong> (Chapters 1-3) covers the practical fundamentals:</p>
+<ul>
+<li>How to optimize performance during refactoring</li>
+<li>How to evolve APIs gracefully</li>
+<li>How to test comprehensively to catch regressions</li>
+</ul>
+<p><strong>Part II: Architecture &amp; Design</strong> (Chapters 4-6) dives into architectural patterns:</p>
+<ul>
+<li>Async and concurrent systems</li>
+<li>Type-driven design for safety</li>
+<li>Modular organization</li>
+</ul>
+<p><strong>Part III: User Experience &amp; Ecosystem</strong> (Chapters 7-10) addresses the broader context:</p>
+<ul>
+<li>Documentation and developer experience</li>
+<li>Backward compatibility strategies</li>
+<li>Security hardening</li>
+<li>Ecosystem integration</li>
+</ul>
+<p>Each chapter can be read independently, but reading sequentially provides additional context and continuity.</p>
+<h2 id="the-case-study-clap-noun-verb"><a class="header" href="#the-case-study-clap-noun-verb">The Case Study: clap-noun-verb</a></h2>
+<p>Throughout this book, we reference a running case study of refactoring a CLI framework called <code>clap-noun-verb</code>. This framework allows developers to build command-line tools using a noun-verb structure (<code>myapp resource action</code>), similar to Git’s command-line interface. The case study illustrates how the patterns and techniques in each chapter apply to a real-world project facing significant architectural decisions.</p>
+<h2 id="key-principles"><a class="header" href="#key-principles">Key Principles</a></h2>
+<p>This book emphasizes several core principles:</p>
+<p><strong>Correctness First</strong>: Before optimizing, ensure functionality is correct. Tests are the foundation.</p>
+<p><strong>Iterate Incrementally</strong>: Large refactorings succeed through small, validated steps. Commit frequently.</p>
+<p><strong>Respect Your Users</strong>: Backward compatibility is not about perfection—it is about respect for your users’ time and codebases.</p>
+<p><strong>Document Everything</strong>: Code changes; documentation remains. Make migration easy through clear guidance.</p>
+<p><strong>Measure Before and After</strong>: Use data to verify that refactoring achieved its goals.</p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What You’ll Learn</a></h2>
+<p>By the end of this book, you will understand:</p>
+<ul>
+<li>How to profile and measure framework performance during refactoring</li>
+<li>How to design APIs that evolve gracefully without breaking changes</li>
+<li>How to build test strategies that catch regressions before they ship</li>
+<li>How to architect async systems that remain maintainable</li>
+<li>How to use Rust’s type system to eliminate bugs at compile time</li>
+<li>How to organize code into modules that scale with complexity</li>
+<li>How to document refactoring in ways that guide users to migration</li>
+<li>How to maintain backward compatibility while innovating</li>
+<li>How to harden security during architectural changes</li>
+<li>How to integrate your framework into the broader ecosystem</li>
+</ul>
+<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<p>This book includes extensive code examples. If you get stuck:</p>
+<ol>
+<li><strong>Read the full context</strong>: Each chapter builds on concepts introduced earlier</li>
+<li><strong>Run the examples</strong>: Code that works today may differ from documentation tomorrow</li>
+<li><strong>Check the references</strong>: Most chapters point to authoritative sources</li>
+<li><strong>Ask the community</strong>: The Rust community is welcoming and knowledgeable</li>
+</ol>
+<h2 id="acknowledgments"><a class="header" href="#acknowledgments">Acknowledgments</a></h2>
+<p>This book synthesizes patterns and practices from the Rust ecosystem, including lessons learned from prominent frameworks like Tokio, Actix-web, Diesel, and clap. The techniques described here have been tested and refined by thousands of developers shipping production Rust code.</p>
+<p>Let’s begin the journey of building better frameworks.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="performance-refactoring-patterns"><a class="header" href="#performance-refactoring-patterns">Performance Refactoring Patterns</a></h1>
+<p>Performance optimization during framework refactoring requires a disciplined approach that balances speed improvements against code maintainability and correctness. This chapter explores the tools, techniques, and patterns that enable you to refactor Rust frameworks while maintaining or improving performance characteristics.</p>
+<h2 id="introduction-why-performance-matters-in-framework-refactoring"><a class="header" href="#introduction-why-performance-matters-in-framework-refactoring">Introduction: Why Performance Matters in Framework Refactoring</a></h2>
+<p>Framework code sits at the foundation of countless applications. A 10% slowdown in your CLI parsing library affects thousands of downstream projects. A memory allocation pattern that seems harmless in isolation becomes catastrophic when multiplied across millions of invocations.</p>
+<p>When refactoring frameworks, performance concerns manifest in several critical areas:</p>
+<p><strong>Startup Time</strong>: CLI tools and short-lived applications spend proportionally more time in initialization. A framework that adds 50ms of startup overhead transforms a snappy tool into a sluggish one.</p>
+<p><strong>Memory Footprint</strong>: Frameworks often instantiate data structures eagerly. Poor memory layout decisions compound as applications scale, leading to cache thrashing and excessive page faults.</p>
+<p><strong>Compile Time</strong>: Generic-heavy frameworks push work to compile time. While this can improve runtime performance, it degrades developer experience when compile times balloon.</p>
+<p><strong>Binary Size</strong>: Each generic instantiation and inline function contributes to binary bloat. Framework design choices directly impact deployment artifacts.</p>
+<p>Common bottlenecks during refactoring include:</p>
+<ul>
+<li>Inadvertent allocation in hot paths</li>
+<li>Loss of inlining opportunities across new abstraction boundaries</li>
+<li>Hash map operations where perfect hashing could suffice</li>
+<li>String processing that allocates unnecessarily</li>
+<li>Trait objects introducing dynamic dispatch where static dispatch sufficed</li>
+</ul>
+<p>The key insight is that refactoring changes code structure, and structure determines performance. Understanding this relationship allows you to refactor confidently while preserving the performance characteristics your users depend on.</p>
+<h2 id="profiling-and-measurement"><a class="header" href="#profiling-and-measurement">Profiling and Measurement</a></h2>
+<p>Before optimizing, you must measure. Rust’s ecosystem provides excellent profiling tools that integrate seamlessly into development workflows.</p>
+<h3 id="cargo-flamegraph"><a class="header" href="#cargo-flamegraph">Cargo Flamegraph</a></h3>
+<p>Flamegraphs visualize where your program spends time, making hotspots immediately visible:</p>
+<pre><code class="language-bash"># Install flamegraph
+cargo install flamegraph
+
+# Generate flamegraph for your binary
+cargo flamegraph --bin my_framework -- --example-args
+
+# For tests or benchmarks
+cargo flamegraph --test integration_tests
+</code></pre>
+<p>Flamegraphs aggregate stack traces, showing function call hierarchies with width proportional to time spent. When refactoring, generate flamegraphs before and after changes to visualize performance shifts.</p>
+<h3 id="criterion-for-microbenchmarks"><a class="header" href="#criterion-for-microbenchmarks">Criterion for Microbenchmarks</a></h3>
+<p>Criterion provides statistically rigorous benchmarking with automatic regression detection:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn parse_arguments_benchmark(c: &amp;mut Criterion) {
+    let args = vec!["program", "subcommand", "--flag", "value"];
+
+    c.bench_function("parse_simple_args", |b| {
+        b.iter(|| {
+            let result = parse_args(black_box(&amp;args));
+            black_box(result)
+        })
+    });
+}
+
+fn parse_complex_benchmark(c: &amp;mut Criterion) {
+    let mut group = c.benchmark_group("parsing");
+
+    for size in [10, 100, 1000].iter() {
+        let args = generate_args(*size);
+        group.bench_with_input(
+            criterion::BenchmarkId::new("complex_args", size),
+            &amp;args,
+            |b, args| b.iter(|| parse_args(black_box(args))),
+        );
+    }
+    group.finish();
+}
+
+criterion_group!(benches, parse_arguments_benchmark, parse_complex_benchmark);
+criterion_main!(benches);
+<span class="boring">}</span></code></pre>
+<p>Run benchmarks with <code>cargo bench</code> and examine the generated HTML reports in <code>target/criterion/</code>.</p>
+<h3 id="system-profilers"><a class="header" href="#system-profilers">System Profilers</a></h3>
+<p>For deeper analysis, system profilers provide hardware-level insights:</p>
+<pre><code class="language-bash"># Linux perf for CPU profiling
+perf record --call-graph dwarf ./target/release/my_binary
+perf report
+
+# Memory profiling with heaptrack
+heaptrack ./target/release/my_binary
+heaptrack_gui heaptrack.my_binary.*.gz
+
+# Cache analysis with Cachegrind
+valgrind --tool=cachegrind ./target/release/my_binary
+cg_annotate cachegrind.out.*
+</code></pre>
+<h3 id="metrics-to-track"><a class="header" href="#metrics-to-track">Metrics to Track</a></h3>
+<p>Establish baseline metrics before refactoring:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Metric</th><th>Tool</th><th>Target</th></tr>
+</thead>
+<tbody>
+<tr><td>Throughput</td><td>Criterion</td><td>Operations/second</td></tr>
+<tr><td>Latency</td><td>Criterion</td><td>p50, p99, p999</td></tr>
+<tr><td>Memory peak</td><td>heaptrack</td><td>Maximum RSS</td></tr>
+<tr><td>Allocations</td><td>heaptrack</td><td>Count and size</td></tr>
+<tr><td>Cache misses</td><td>Cachegrind</td><td>L1, L2, L3 miss rates</td></tr>
+<tr><td>Binary size</td><td><code>ls -la</code></td><td>Bytes</td></tr>
+<tr><td>Compile time</td><td><code>cargo build --timings</code></td><td>Seconds</td></tr>
+</tbody>
+</table>
+</div>
+<p>Track these metrics in CI to catch regressions early:</p>
+<pre><code class="language-yaml"># .github/workflows/bench.yml
+- name: Run benchmarks
+  run: cargo bench -- --save-baseline refactor-branch
+
+- name: Compare against main
+  run: cargo bench -- --baseline main-branch
+</code></pre>
+<h2 id="common-refactoring-patterns"><a class="header" href="#common-refactoring-patterns">Common Refactoring Patterns</a></h2>
+<h3 id="compile-time-computation-with-macros"><a class="header" href="#compile-time-computation-with-macros">Compile-Time Computation with Macros</a></h3>
+<p>Moving computation from runtime to compile time eliminates overhead entirely. Declarative macros excel at generating static data:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Generate a static lookup table at compile time
+macro_rules! define_command_table {
+    ($($name:ident =&gt; $handler:expr),* $(,)?) =&gt; {
+        const COMMAND_COUNT: usize = {
+            let mut count = 0;
+            $(
+                let _ = stringify!($name);
+                count += 1;
+            )*
+            count
+        };
+
+        static COMMANDS: [(&amp;str, fn(&amp;Args) -&gt; Result&lt;()&gt;); COMMAND_COUNT] = [
+            $(
+                (stringify!($name), $handler),
+            )*
+        ];
+
+        fn lookup_command(name: &amp;str) -&gt; Option&lt;fn(&amp;Args) -&gt; Result&lt;()&gt;&gt; {
+            COMMANDS.iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, handler)| *handler)
+        }
+    };
+}
+
+define_command_table! {
+    build =&gt; handle_build,
+    test =&gt; handle_test,
+    run =&gt; handle_run,
+    clean =&gt; handle_clean,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="memory-layout-optimization"><a class="header" href="#memory-layout-optimization">Memory Layout Optimization</a></h3>
+<p>Cache locality dramatically impacts performance. Structure your data for sequential access:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Poor cache locality: Array of Structs (AoS)
+struct CommandAoS {
+    name: String,           // 24 bytes
+    description: String,    // 24 bytes
+    handler: fn() -&gt; (),    // 8 bytes
+    flags: u32,             // 4 bytes
+    _padding: [u8; 4],      // 4 bytes (compiler-inserted)
+}
+// Total: 64 bytes per command, fields accessed together scattered
+
+// Better cache locality: Struct of Arrays (SoA)
+struct CommandsSoA {
+    names: Vec&lt;String&gt;,
+    descriptions: Vec&lt;String&gt;,
+    handlers: Vec&lt;fn() -&gt; ()&gt;,
+    flags: Vec&lt;u32&gt;,
+}
+
+impl CommandsSoA {
+    fn lookup_by_name(&amp;self, target: &amp;str) -&gt; Option&lt;usize&gt; {
+        // Sequential memory access through names array
+        self.names.iter().position(|n| n == target)
+    }
+
+    fn get_handler(&amp;self, idx: usize) -&gt; fn() -&gt; () {
+        self.handlers[idx]
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="perfect-hashing-and-static-data-structures"><a class="header" href="#perfect-hashing-and-static-data-structures">Perfect Hashing and Static Data Structures</a></h3>
+<p>When your set of keys is known at compile time, perfect hashing eliminates collision handling:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use phf::phf_map;
+
+/// Zero-collision lookup table generated at compile time
+static KEYWORDS: phf::Map&lt;&amp;'static str, Keyword&gt; = phf_map! {
+    "if" =&gt; Keyword::If,
+    "else" =&gt; Keyword::Else,
+    "while" =&gt; Keyword::While,
+    "for" =&gt; Keyword::For,
+    "fn" =&gt; Keyword::Fn,
+    "let" =&gt; Keyword::Let,
+    "mut" =&gt; Keyword::Mut,
+    "const" =&gt; Keyword::Const,
+};
+
+pub fn classify_token(s: &amp;str) -&gt; TokenKind {
+    match KEYWORDS.get(s) {
+        Some(kw) =&gt; TokenKind::Keyword(*kw),
+        None =&gt; TokenKind::Identifier,
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>phf</code> crate computes hash parameters at compile time, guaranteeing O(1) lookup with no runtime collision resolution.</p>
+<h2 id="benchmarking-during-refactoring"><a class="header" href="#benchmarking-during-refactoring">Benchmarking During Refactoring</a></h2>
+<p>Maintaining performance during refactoring requires continuous measurement. Establish a benchmark suite before beginning:</p>
+<pre><code class="language-bash"># Before starting refactoring work
+cargo bench -- --save-baseline before-refactor
+
+# After each significant change
+cargo bench -- --baseline before-refactor
+
+# Criterion will report regressions and improvements
+</code></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="when-to-optimize"><a class="header" href="#when-to-optimize">When to Optimize</a></h3>
+<p>Optimize when:</p>
+<ul>
+<li><strong>Profiling identifies a bottleneck</strong>: Data shows specific code is slow</li>
+<li><strong>Users report performance issues</strong>: Real-world usage reveals problems</li>
+<li><strong>Performance is a documented requirement</strong>: API contracts specify latency bounds</li>
+<li><strong>Framework position demands it</strong>: Hot paths in widely-used code</li>
+</ul>
+<h3 id="when-not-to-optimize"><a class="header" href="#when-not-to-optimize">When Not to Optimize</a></h3>
+<p>Avoid premature optimization when:</p>
+<ul>
+<li><strong>Clarity suffers significantly</strong>: Unreadable code has maintenance costs</li>
+<li><strong>Measurements don’t support it</strong>: Intuition often misleads</li>
+<li><strong>Flexibility is needed</strong>: Optimization often reduces abstraction</li>
+<li><strong>Development velocity matters more</strong>: Ship first, optimize later</li>
+</ul>
+<h3 id="optimization-checklist"><a class="header" href="#optimization-checklist">Optimization Checklist</a></h3>
+<p>Before committing an optimization:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Baseline benchmark exists</li>
+<li><input disabled="" type="checkbox"> Improvement is measurable and significant</li>
+<li><input disabled="" type="checkbox"> Code includes comments explaining the optimization</li>
+<li><input disabled="" type="checkbox"> Edge cases are tested</li>
+<li><input disabled="" type="checkbox"> Optimization doesn’t break public API</li>
+<li><input disabled="" type="checkbox"> Performance regression tests are added</li>
+<li><input disabled="" type="checkbox"> Documentation updated if behavior changes</li>
+</ul>
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>Performance optimization during framework refactoring demands rigor: measure before and after, understand the trade-offs, and document your decisions. The patterns in this chapter, from compile-time computation to cache-conscious data structures, provide a toolkit for maintaining performance through architectural changes.</p>
+<p>Remember that performance is a feature, but not the only feature. Balance optimization against code clarity, development velocity, and long-term maintainability. When in doubt, prefer simple correct code and optimize only what measurements prove necessary.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="api-evolution--design-strategies"><a class="header" href="#api-evolution--design-strategies">API Evolution &amp; Design Strategies</a></h1>
+<p>A comprehensive guide to designing, evolving, and maintaining Rust APIs for long-term success. This chapter focuses on how to improve APIs during refactoring while maintaining backward compatibility with existing users.</p>
+<h2 id="the-cost-of-poor-api-design"><a class="header" href="#the-cost-of-poor-api-design">The Cost of Poor API Design</a></h2>
+<p>API design is one of the most consequential decisions a framework developer makes. A poorly designed API accumulates technical debt not just in your codebase, but in every project that depends on it.</p>
+<p><strong>Real-world impact metrics:</strong></p>
+<ul>
+<li>Each breaking change in a widely-used crate affects hundreds of downstream projects</li>
+<li>Poor API ergonomics lead to 3-5x more support questions</li>
+<li>Migration guides for breaking changes require 10-20x the effort of the original change</li>
+</ul>
+<h2 id="principles-of-good-api-design"><a class="header" href="#principles-of-good-api-design">Principles of Good API Design</a></h2>
+<p>Effective Rust APIs share common characteristics:</p>
+<p><strong>Consistency</strong> reduces cognitive load. <strong>Discoverability</strong> enables users to find functionality through IDE autocompletion. <strong>Intuitiveness</strong> ensures APIs behave as expected. <strong>Extensibility</strong> allows adding new functionality without breaking existing code.</p>
+<h2 id="refactoring-patterns-for-apis"><a class="header" href="#refactoring-patterns-for-apis">Refactoring Patterns for APIs</a></h2>
+<h3 id="derive-macros-for-reducing-boilerplate"><a class="header" href="#derive-macros-for-reducing-boilerplate">Derive Macros for Reducing Boilerplate</a></h3>
+<p>Custom derive macros eliminate repetitive code and ensure consistency. Instead of manually implementing traits for each type, derive macros generate the boilerplate automatically.</p>
+<h3 id="builder-pattern-evolution"><a class="header" href="#builder-pattern-evolution">Builder Pattern Evolution</a></h3>
+<p>The builder pattern allows API evolution without breaking changes:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Stage 1: Simple constructor
+impl Client {
+    pub fn new(url: &amp;str) -&gt; Self { /* ... */ }
+}
+
+// Stage 2: Add builder for optional configuration
+impl Client {
+    pub fn new(url: &amp;str) -&gt; Self { /* ... */ }  // Preserved!
+    pub fn builder() -&gt; ClientBuilder { /* ... */ }
+}
+
+// Stage 3: Type-safe builder (prevents invalid states)
+pub struct ClientBuilder&lt;State&gt; {
+    url: Option&lt;String&gt;,
+    timeout: Option&lt;Duration&gt;,
+    _state: PhantomData&lt;State&gt;,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="type-state-patterns-for-safety"><a class="header" href="#type-state-patterns-for-safety">Type-State Patterns for Safety</a></h3>
+<p>Type-state patterns encode state machines in the type system, preventing invalid operations at compile time.</p>
+<h3 id="trait-based-abstraction-and-polymorphism"><a class="header" href="#trait-based-abstraction-and-polymorphism">Trait-Based Abstraction and Polymorphism</a></h3>
+<p>Traits enable API evolution by allowing new implementations without modifying existing code.</p>
+<h3 id="feature-flags-for-api-expansion"><a class="header" href="#feature-flags-for-api-expansion">Feature Flags for API Expansion</a></h3>
+<p>Cargo features allow optional API extensions:</p>
+<pre><code class="language-toml">[features]
+default = []
+async = ["tokio", "async-trait"]
+serde = ["dep:serde"]
+full = ["async", "serde"]
+</code></pre>
+<h2 id="breaking-changes--deprecation"><a class="header" href="#breaking-changes--deprecation">Breaking Changes &amp; Deprecation</a></h2>
+<h3 id="identifying-when-breaking-changes-are-necessary"><a class="header" href="#identifying-when-breaking-changes-are-necessary">Identifying When Breaking Changes Are Necessary</a></h3>
+<p><strong>Valid reasons for breaking changes:</strong></p>
+<ul>
+<li>Security vulnerabilities that cannot be fixed otherwise</li>
+<li>Fundamental design flaws causing widespread issues</li>
+<li>Alignment with ecosystem standards</li>
+<li>Performance improvements requiring API restructuring</li>
+</ul>
+<h3 id="deprecation-timeline-strategies"><a class="header" href="#deprecation-timeline-strategies">Deprecation Timeline Strategies</a></h3>
+<p>A well-planned deprecation follows a predictable timeline with grace periods allowing users time to migrate.</p>
+<h3 id="migration-guides-and-automation-tools"><a class="header" href="#migration-guides-and-automation-tools">Migration Guides and Automation Tools</a></h3>
+<p>Effective migration requires documentation and tooling:</p>
+<pre><code class="language-markdown"># Migrating from v1.x to v2.0
+
+## Quick Reference
+
+| v1.x Pattern | v2.0 Pattern | Notes |
+|--------------|--------------|-------|
+| `Client::new(config)` | `Client::builder().config(c).build()` | Structural change |
+| `client.send(req)` | `client.execute(req)` | Method rename |
+| `Response.body` field | `Response.body()` method | Field to method |
+</code></pre>
+<h2 id="semantic-versioning"><a class="header" href="#semantic-versioning">Semantic Versioning</a></h2>
+<h3 id="majorminorpatch-semantics"><a class="header" href="#majorminorpatch-semantics">MAJOR.MINOR.PATCH Semantics</a></h3>
+<pre><code>MAJOR.MINOR.PATCH
+  │     │     │
+  │     │     └── Bug fixes (backward compatible)
+  │     │
+  │     └──────── New features (backward compatible)
+  │
+  └────────────── Breaking changes
+</code></pre>
+<h3 id="semver-in-practice"><a class="header" href="#semver-in-practice">SemVer in Practice</a></h3>
+<ul>
+<li><strong>MAJOR</strong>: Breaking changes requiring code updates</li>
+<li><strong>MINOR</strong>: New features that don’t break existing code</li>
+<li><strong>PATCH</strong>: Bug fixes with no API changes</li>
+</ul>
+<h2 id="pre-releases-and-stability"><a class="header" href="#pre-releases-and-stability">Pre-releases and Stability</a></h2>
+<p>Pre-release versions signal instability:</p>
+<pre><code class="language-toml">version = "2.0.0-alpha.1"  # No stability guarantees
+version = "2.0.0-beta.3"   # Feature-complete, testing
+version = "2.0.0-rc.1"     # Release candidate
+</code></pre>
+<h2 id="case-study-clap-noun-verb-api-improvements"><a class="header" href="#case-study-clap-noun-verb-api-improvements">Case Study: clap-noun-verb API Improvements</a></h2>
+<p>The transition from imperative command definition to declarative derive-based design demonstrates effective API evolution.</p>
+<h3 id="initial-api-v10"><a class="header" href="#initial-api-v10">Initial API (v1.0)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Manual, imperative command definition
+let matches = App::new("myapp")
+    .subcommand(
+        SubCommand::with_name("user")
+            .subcommand(
+                SubCommand::with_name("create")
+                    .arg(Arg::with_name("name").required(true))
+            )
+    )
+    .get_matches();
+<span class="boring">}</span></code></pre>
+<p><strong>Problems:</strong></p>
+<ul>
+<li>Verbose boilerplate</li>
+<li>Easy to mismatch argument names</li>
+<li>No compile-time validation</li>
+<li>Difficult to maintain as commands grow</li>
+</ul>
+<h3 id="evolved-api-v20"><a class="header" href="#evolved-api-v20">Evolved API (v2.0)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use clap::Parser;
+
+#[derive(Parser)]
+#[command(name = "myapp")]
+enum Cli {
+    /// Manage users
+    User(UserCommand),
+}
+
+#[derive(Parser)]
+enum UserCommand {
+    /// Create a new user
+    Create(CreateUser),
+    /// Delete an existing user
+    Delete(DeleteUser),
+}
+
+#[derive(Parser)]
+struct CreateUser {
+    #[arg(short, long)]
+    name: String,
+
+    #[arg(short, long)]
+    email: String,
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Improvements:</strong></p>
+<ul>
+<li>Type-safe argument access</li>
+<li>Compile-time validation</li>
+<li>Self-documenting</li>
+<li>Reduced boilerplate</li>
+</ul>
+<h2 id="best-practices-1"><a class="header" href="#best-practices-1">Best Practices</a></h2>
+<h3 id="designing-for-evolution"><a class="header" href="#designing-for-evolution">Designing for Evolution</a></h3>
+<p><strong>1. Use <code>#[non_exhaustive]</code> liberally</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[non_exhaustive]
+pub struct Options {
+    pub timeout: Duration,
+}
+<span class="boring">}</span></code></pre>
+<p><strong>2. Prefer builders over constructors with many parameters</strong></p>
+<p><strong>3. Return <code>impl Trait</code> for flexibility</strong></p>
+<p><strong>4. Accept generic parameters</strong></p>
+<h3 id="documentation-as-api-contract"><a class="header" href="#documentation-as-api-contract">Documentation as API Contract</a></h3>
+<p>Document not just what, but why and when:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Creates a new client with the specified configuration.
+///
+/// # Panics
+///
+/// Panics if `config.timeout` is zero.
+///
+/// # Stability
+///
+/// This constructor has been stable since v1.0. For more configuration
+/// options, consider using [`Client::builder()`] instead.
+pub fn new(config: Config) -&gt; Self { /* ... */ }
+<span class="boring">}</span></code></pre>
+<h3 id="changelog-and-communication"><a class="header" href="#changelog-and-communication">Changelog and Communication</a></h3>
+<p>Maintain a CHANGELOG.md following Keep a Changelog format, documenting what changed and why.</p>
+<h2 id="summary-1"><a class="header" href="#summary-1">Summary</a></h2>
+<p>Effective API evolution balances innovation with stability. The key principles are:</p>
+<ol>
+<li><strong>Design for extensibility</strong> - Use <code>#[non_exhaustive]</code>, builders, and traits</li>
+<li><strong>Evolve incrementally</strong> - Add new APIs before removing old ones</li>
+<li><strong>Communicate clearly</strong> - Deprecation warnings, changelogs, migration guides</li>
+<li><strong>Respect SemVer</strong> - Users depend on version numbers meaning something</li>
+<li><strong>Automate where possible</strong> - Migration tools reduce friction</li>
+</ol>
+<p>Remember: your API is a user interface. Treat it with the same care you would give any UX design, and your users will reward you with loyalty and adoption.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="testing-strategy-during-refactoring"><a class="header" href="#testing-strategy-during-refactoring">Testing Strategy During Refactoring</a></h1>
+<p>Refactoring without tests is like performing surgery without anesthesia monitoring—technically possible, but unnecessarily dangerous. This chapter presents comprehensive testing strategies specifically designed for major refactoring efforts in Rust projects.</p>
+<h2 id="the-critical-role-of-testing-in-refactoring"><a class="header" href="#the-critical-role-of-testing-in-refactoring">The Critical Role of Testing in Refactoring</a></h2>
+<p>When restructuring code, you make the implicit promise that behavior remains unchanged while implementation improves. Tests are the mechanism by which you verify this promise.</p>
+<h3 id="why-testing-strategy-matters-during-refactoring"><a class="header" href="#why-testing-strategy-matters-during-refactoring">Why Testing Strategy Matters During Refactoring</a></h3>
+<ol>
+<li><strong>Behavioral Preservation</strong>: Tests codify expected behavior and detect deviations immediately</li>
+<li><strong>Incremental Confidence</strong>: Large refactoring efforts span days or weeks; tests provide checkpoints</li>
+<li><strong>Regression Detection</strong>: Changes to internal structures may have unintended side effects</li>
+<li><strong>Documentation of Intent</strong>: Tests are executable documentation during implementation flux</li>
+<li><strong>Enabling Boldness</strong>: With comprehensive tests, developers can make aggressive improvements confidently</li>
+</ol>
+<h2 id="the-test-pyramid"><a class="header" href="#the-test-pyramid">The Test Pyramid</a></h2>
+<p>The test pyramid organizes tests into levels, each with different scope and speed:</p>
+<ul>
+<li><strong>Unit Tests</strong> (bottom, largest): Test individual components in isolation</li>
+<li><strong>Integration Tests</strong> (middle): Test component interactions</li>
+<li><strong>End-to-End Tests</strong> (top, smallest): Test complete user workflows</li>
+</ul>
+<h3 id="unit-tests-for-components"><a class="header" href="#unit-tests-for-components">Unit Tests for Components</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_simple_command() {
+        let parser = CommandParser::new();
+        let result = parser.parse(&amp;["program", "build", "--release"]);
+
+        assert!(result.is_ok());
+        let cmd = result.unwrap();
+        assert_eq!(cmd.name(), "build");
+        assert!(cmd.has_flag("release"));
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="integration-tests-for-subsystems"><a class="header" href="#integration-tests-for-subsystems">Integration Tests for Subsystems</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// tests/integration/command_execution.rs
+#[test]
+fn full_command_pipeline() {
+    let app = App::builder()
+        .command(Command::new("deploy")
+            .arg("--environment")
+            .arg("--dry-run"))
+        .build();
+
+    let result = app.run_with_args(
+        &amp;["myapp", "deploy", "--environment", "staging", "--dry-run"],
+        &amp;ExecutionContext::test()
+    );
+
+    assert!(result.is_ok());
+}
+<span class="boring">}</span></code></pre>
+<h3 id="property-based-testing-with-proptest"><a class="header" href="#property-based-testing-with-proptest">Property-Based Testing with Proptest</a></h3>
+<p>Property-based testing explores edge cases automatically:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use proptest::prelude::*;
+
+proptest! {
+    #[test]
+    fn parsing_never_panics(args in prop::collection::vec("[a-zA-Z0-9_-]+", 0..20)) {
+        let parser = CommandParser::new();
+        // Property: Parser should never panic, only return Result
+        let _ = parser.parse(&amp;args.iter().map(|s| s.as_str()).collect::&lt;Vec&lt;_&gt;&gt;());
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="snapshot-testing-for-complex-outputs"><a class="header" href="#snapshot-testing-for-complex-outputs">Snapshot Testing for Complex Outputs</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use insta::assert_snapshot;
+
+#[test]
+fn help_message_format() {
+    let app = create_test_app();
+    let help = app.generate_help();
+    assert_snapshot!("main_help_message", help);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="refactoring-testing-patterns"><a class="header" href="#refactoring-testing-patterns">Refactoring Testing Patterns</a></h2>
+<h3 id="dual-version-testing-matrices"><a class="header" href="#dual-version-testing-matrices">Dual-Version Testing Matrices</a></h3>
+<p>When migrating between implementations, run both and compare:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn noun_verb_equivalent_to_verb_only() {
+    let verb_result = parse_verb_first(&amp;["git", "commit", "-m", "msg"]);
+    let noun_result = parse_noun_verb(&amp;["git", "repo", "commit", "-m", "msg"]);
+
+    assert_eq!(verb_result, Ok(expected_command.clone()));
+    assert_eq!(noun_result, Ok(expected_command));
+}
+<span class="boring">}</span></code></pre>
+<h3 id="golden-file-testing"><a class="header" href="#golden-file-testing">Golden File Testing</a></h3>
+<p>Golden files capture expected outputs and detect regressions:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn golden_help_output() {
+    let app = create_test_app();
+    let help = app.generate_help();
+
+    let expected = std::fs::read_to_string("tests/golden/help.golden")
+        .expect("Golden file not found");
+
+    assert_eq!(help, expected);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="performance-regression-testing"><a class="header" href="#performance-regression-testing">Performance Regression Testing</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use criterion::{criterion_group, criterion_main, Criterion};
+
+fn benchmark_parsing(c: &amp;mut Criterion) {
+    let parser = CommandParser::new();
+    let args = vec!["--flag1", "--flag2", "--flag3"];
+
+    c.bench_function("parse_flags", |b| {
+        b.iter(|| parser.parse(&amp;args))
+    });
+}
+
+criterion_group!(benches, benchmark_parsing);
+criterion_main!(benches);
+<span class="boring">}</span></code></pre>
+<h2 id="cicd-integration"><a class="header" href="#cicd-integration">CI/CD Integration</a></h2>
+<pre><code class="language-yaml"># .github/workflows/test.yml
+name: Test Suite
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Run unit tests
+        run: cargo test --lib --all-features
+
+      - name: Run integration tests
+        run: cargo test --test '*' --all-features
+
+      - name: Run doc tests
+        run: cargo test --doc
+
+      - name: Check code coverage
+        run: cargo tarpaulin --out xml
+</code></pre>
+<h2 id="best-practices-for-test-driven-refactoring"><a class="header" href="#best-practices-for-test-driven-refactoring">Best Practices for Test-Driven Refactoring</a></h2>
+<h3 id="the-refactoring-testing-manifesto"><a class="header" href="#the-refactoring-testing-manifesto">The Refactoring Testing Manifesto</a></h3>
+<ol>
+<li><strong>Write tests before refactoring</strong>: Capture current behavior before changing it</li>
+<li><strong>Run tests continuously</strong>: Use <code>cargo watch -x test</code> during development</li>
+<li><strong>Maintain the safety net</strong>: Never delete tests unless intentionally changing behavior</li>
+<li><strong>Test at multiple levels</strong>: Unit tests catch component issues; integration tests catch interactions</li>
+<li><strong>Embrace property-based testing</strong>: It finds edge cases you would never imagine</li>
+<li><strong>Use snapshot testing</strong>: Ideal for complex formatted output</li>
+<li><strong>Benchmark critical paths</strong>: Performance regressions are silent bugs</li>
+<li><strong>Automate everything</strong>: If a test can run in CI, it should run in CI</li>
+</ol>
+<h3 id="the-safety-net-checklist"><a class="header" href="#the-safety-net-checklist">The Safety Net Checklist</a></h3>
+<p>Before starting any refactoring session:</p>
+<ul>
+<li><input disabled="" type="checkbox"> All existing tests pass</li>
+<li><input disabled="" type="checkbox"> Coverage meets or exceeds threshold</li>
+<li><input disabled="" type="checkbox"> Benchmarks establish baseline</li>
+<li><input disabled="" type="checkbox"> Golden files are up to date</li>
+<li><input disabled="" type="checkbox"> CI pipeline is green</li>
+</ul>
+<p>After each refactoring step:</p>
+<ul>
+<li><input disabled="" type="checkbox"> All tests still pass</li>
+<li><input disabled="" type="checkbox"> No new compiler warnings</li>
+<li><input disabled="" type="checkbox"> Coverage has not decreased</li>
+<li><input disabled="" type="checkbox"> Benchmarks show no regression</li>
+<li><input disabled="" type="checkbox"> Changes are committed with descriptive message</li>
+</ul>
+<h2 id="summary-2"><a class="header" href="#summary-2">Summary</a></h2>
+<p>Testing during refactoring is not overhead—it is the mechanism that makes refactoring possible. The investment in comprehensive testing pays dividends in developer confidence, code quality, and sustainable velocity.</p>
+<p>When you can refactor boldly knowing your test suite will catch mistakes, you unlock the ability to continuously improve your codebase without fear. This is the true value of testing: not the bugs it catches, but the confidence it gives you to experiment and innovate.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="async-refactoring--concurrency-patterns"><a class="header" href="#async-refactoring--concurrency-patterns">Async Refactoring &amp; Concurrency Patterns</a></h1>
+<p>Modern Rust applications increasingly rely on asynchronous programming. This chapter explores the transition from synchronous to asynchronous code, examines common concurrency patterns, and provides practical guidance for building robust async systems.</p>
+<h2 id="asyncawait-fundamentals"><a class="header" href="#asyncawait-fundamentals">Async/Await Fundamentals</a></h2>
+<h3 id="understanding-futures"><a class="header" href="#understanding-futures">Understanding Futures</a></h3>
+<p>A <code>Future</code> in Rust represents a computation that may not have completed yet. Futures are lazy—they do nothing until polled. This fundamental difference drives Rust’s async model:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+struct YieldOnce {
+    yielded: bool,
+}
+
+impl Future for YieldOnce {
+    type Output = &amp;'static str;
+
+    fn poll(mut self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Self::Output&gt; {
+        if self.yielded {
+            Poll::Ready("completed")
+        } else {
+            self.yielded = true;
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>async/await</code> syntax provides ergonomic access without manual <code>Future</code> implementation:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn fetch_data(url: &amp;str) -&gt; Result&lt;String, reqwest::Error&gt; {
+    let response = reqwest::get(url).await?;
+    response.text().await
+}
+<span class="boring">}</span></code></pre>
+<h3 id="executors-and-runtimes"><a class="header" href="#executors-and-runtimes">Executors and Runtimes</a></h3>
+<p>Futures require an executor to drive them to completion. Rust’s standard library provides the <code>Future</code> trait but no runtime—this is intentional, allowing ecosystem diversity:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Runtime</th><th>Use Case</th><th>Key Features</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Tokio</strong></td><td>General-purpose, production servers</td><td>Work-stealing, io-uring</td></tr>
+<tr><td><strong>async-std</strong></td><td>Standard library-like API</td><td>Familiar naming</td></tr>
+<tr><td><strong>smol</strong></td><td>Minimal, embeddable</td><td>Small binary size</td></tr>
+<tr><td><strong>Embassy</strong></td><td>Embedded systems</td><td>No-std, interrupt-driven</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="refactoring-to-async"><a class="header" href="#refactoring-to-async">Refactoring to Async</a></h2>
+<h3 id="from-blocking-to-async-io"><a class="header" href="#from-blocking-to-async-io">From Blocking to Async I/O</a></h3>
+<p>The transition from blocking to async code follows predictable patterns:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Before (Blocking)
+fn read_lines(path: &amp;str) -&gt; std::io::Result&lt;Vec&lt;String&gt;&gt; {
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    reader.lines().collect()
+}
+
+// After (Async)
+async fn read_lines(path: &amp;str) -&gt; std::io::Result&lt;Vec&lt;String&gt;&gt; {
+    let file = File::open(path).await?;
+    let reader = BufReader::new(file);
+    let mut lines = reader.lines();
+
+    let mut result = Vec::new();
+    while let Some(line) = lines.next_line().await? {
+        result.push(line);
+    }
+    Ok(result)
+}
+<span class="boring">}</span></code></pre>
+<p>The async version enables concurrent execution when combined with spawning:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn process_files_concurrent(paths: &amp;[&amp;str]) -&gt; std::io::Result&lt;Vec&lt;String&gt;&gt; {
+    let futures: Vec&lt;_&gt; = paths
+        .iter()
+        .map(|path| read_lines(path))
+        .collect();
+
+    let results = futures::future::try_join_all(futures).await?;
+    Ok(results.into_iter().flatten().collect())
+}
+<span class="boring">}</span></code></pre>
+<h3 id="runtime-abstraction-patterns"><a class="header" href="#runtime-abstraction-patterns">Runtime Abstraction Patterns</a></h3>
+<p>To write runtime-agnostic code, abstract over runtime-specific types using traits:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Spawner: Send + Sync + 'static {
+    fn spawn&lt;F&gt;(&amp;self, future: F)
+    where
+        F: Future&lt;Output = ()&gt; + Send + 'static;
+}
+
+#[cfg(feature = "tokio-runtime")]
+pub struct TokioSpawner;
+
+#[cfg(feature = "tokio-runtime")]
+impl Spawner for TokioSpawner {
+    fn spawn&lt;F&gt;(&amp;self, future: F)
+    where
+        F: Future&lt;Output = ()&gt; + Send + 'static,
+    {
+        tokio::spawn(future);
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="concurrency-patterns"><a class="header" href="#concurrency-patterns">Concurrency Patterns</a></h2>
+<h3 id="channels-for-communication"><a class="header" href="#channels-for-communication">Channels for Communication</a></h3>
+<p>Channels provide safe communication between async tasks without shared mutable state:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use tokio::sync::mpsc;
+
+#[derive(Debug)]
+enum Command {
+    Increment,
+    Decrement,
+    Get(tokio::sync::oneshot::Sender&lt;i64&gt;),
+}
+
+async fn counter_actor(mut rx: mpsc::Receiver&lt;Command&gt;) {
+    let mut count: i64 = 0;
+
+    while let Some(cmd) = rx.recv().await {
+        match cmd {
+            Command::Increment =&gt; count += 1,
+            Command::Decrement =&gt; count -= 1,
+            Command::Get(reply) =&gt; {
+                let _ = reply.send(count);
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="shared-state-with-arcmutex"><a class="header" href="#shared-state-with-arcmutex">Shared State with Arc&lt;Mutex<t>&gt;</t></a></h3>
+<p>For shared mutable state, use <code>Arc&lt;Mutex&lt;T&gt;&gt;</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+use tokio::sync::Mutex;
+
+#[derive(Clone)]
+struct SharedState {
+    data: Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;,
+}
+
+impl SharedState {
+    async fn add(&amp;self, item: String) {
+        let mut guard = self.data.lock().await;
+        guard.push(item);
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Important</strong>: Use <code>tokio::sync::Mutex</code> for async code, not <code>std::sync::Mutex</code>. The standard library mutex blocks the entire thread.</p>
+<h3 id="task-spawning-and-structured-concurrency"><a class="header" href="#task-spawning-and-structured-concurrency">Task Spawning and Structured Concurrency</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use tokio::task::JoinSet;
+
+async fn structured_concurrency() -&gt; Vec&lt;Result&lt;String, String&gt;&gt; {
+    let mut set = JoinSet::new();
+
+    let urls = vec!["url1", "url2", "url3"];
+
+    for url in urls {
+        set.spawn(async move {
+            fetch_and_process(url).await
+        });
+    }
+
+    let mut results = Vec::new();
+
+    while let Some(result) = set.join_next().await {
+        match result {
+            Ok(Ok(data)) =&gt; results.push(Ok(data)),
+            Ok(Err(e)) =&gt; results.push(Err(e)),
+            Err(join_error) =&gt; results.push(Err(format!("Task panicked: {}", join_error))),
+        }
+    }
+
+    results
+}
+<span class="boring">}</span></code></pre>
+<h2 id="testing-async-code"><a class="header" href="#testing-async-code">Testing Async Code</a></h2>
+<h3 id="using-tokio-test"><a class="header" href="#using-tokio-test">Using tokio-test</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn test_async_parser() {
+    let parser = AsyncParser::new();
+    let args = futures::stream::iter(vec![
+        "--verbose".to_string(),
+        "--output".to_string(),
+        "file.txt".to_string(),
+    ]);
+
+    let result = parser.parse_stream(args).await;
+    assert!(result.is_ok());
+}
+<span class="boring">}</span></code></pre>
+<h2 id="case-study-async-refactoring-with-streaming-parsing"><a class="header" href="#case-study-async-refactoring-with-streaming-parsing">Case Study: Async Refactoring with Streaming Parsing</a></h2>
+<p>Consider a CLI framework that needs to parse arguments from streaming sources:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use futures::stream::Stream;
+use tokio::sync::mpsc;
+
+pub struct AsyncParser {
+    rules: Vec&lt;Rule&gt;,
+}
+
+impl AsyncParser {
+    pub async fn parse_stream&lt;S&gt;(&amp;self, args: S) -&gt; Result&lt;ParseResult, ParseError&gt;
+    where
+        S: Stream&lt;Item = String&gt; + Unpin,
+    {
+        let mut state = ParseState::new();
+        let mut args = args;
+
+        while let Some(arg) = args.next().await {
+            self.process_arg(&amp;mut state, &amp;arg).await?;
+        }
+
+        state.finalize()
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices-2"><a class="header" href="#best-practices-2">Best Practices</a></h2>
+<h3 id="async-aware-design"><a class="header" href="#async-aware-design">Async-Aware Design</a></h3>
+<ol>
+<li><strong>Design for cancellation</strong>: Ensure resources are cleaned up when tasks are cancelled</li>
+<li><strong>Prefer bounded channels</strong>: Unbounded channels risk memory exhaustion</li>
+<li><strong>Use structured concurrency</strong>: <code>JoinSet</code> over bare <code>spawn</code> when possible</li>
+<li><strong>Document Send/Sync requirements</strong>: Be explicit about thread safety</li>
+</ol>
+<h3 id="avoiding-blocking"><a class="header" href="#avoiding-blocking">Avoiding Blocking</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG: Blocks the executor thread
+async fn bad_sleep() {
+    std::thread::sleep(std::time::Duration::from_secs(1));
+}
+
+// CORRECT: Yields to executor
+async fn good_sleep() {
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+}
+
+// CORRECT: Move blocking to dedicated thread
+async fn blocking_computation() -&gt; i32 {
+    tokio::task::spawn_blocking(|| {
+        expensive_computation()
+    }).await.unwrap()
+}
+<span class="boring">}</span></code></pre>
+<h2 id="summary-3"><a class="header" href="#summary-3">Summary</a></h2>
+<p>Async programming in Rust provides powerful tools for building concurrent, efficient applications. Key takeaways:</p>
+<ul>
+<li><strong>Futures are lazy</strong>: They require an executor to make progress</li>
+<li><strong>Runtime abstraction enables flexibility</strong>: Design for portability across runtimes</li>
+<li><strong>Channels over shared state</strong>: Prefer message passing for cleaner concurrency</li>
+<li><strong>Cancellation safety matters</strong>: Use RAII patterns for resource cleanup</li>
+<li><strong>Test thoroughly</strong>: Async code has unique failure modes requiring dedicated testing</li>
+</ul>
+<p>By applying these patterns, you can build robust async systems that leverage Rust’s safety guarantees while achieving excellent performance.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="type-driven-refactoring--safety"><a class="header" href="#type-driven-refactoring--safety">Type-Driven Refactoring &amp; Safety</a></h1>
+<p>Rust’s type system provides uniquely powerful tools for type-driven design. A well-designed type hierarchy can make illegal states unrepresentable, guide users toward correct usage patterns, and catch configuration errors at compile time.</p>
+<h2 id="eliminating-impossible-states"><a class="header" href="#eliminating-impossible-states">Eliminating Impossible States</a></h2>
+<p>The principle of making illegal states unrepresentable is foundational to robust API design.</p>
+<h3 id="the-newtype-pattern"><a class="header" href="#the-newtype-pattern">The Newtype Pattern</a></h3>
+<p>Newtypes wrap primitive types to create distinct semantic types:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// A validated command name (non-empty, alphanumeric with hyphens)
+pub struct CommandName(String);
+
+impl CommandName {
+    pub fn new(s: impl Into&lt;String&gt;) -&gt; Result&lt;Self, ValidationError&gt; {
+        let s = s.into();
+        if s.is_empty() {
+            return Err(ValidationError::EmptyCommandName);
+        }
+        if !s.chars().all(|c| c.is_alphanumeric() || c == '-') {
+            return Err(ValidationError::InvalidCommandName(s));
+        }
+        Ok(CommandName(s))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="phantom-types-for-compile-time-validation"><a class="header" href="#phantom-types-for-compile-time-validation">Phantom Types for Compile-Time Validation</a></h3>
+<p>Phantom types carry type-level information without runtime representation:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::marker::PhantomData;
+
+pub struct Unvalidated;
+pub struct Validated;
+
+pub struct Arg&lt;State&gt; {
+    name: String,
+    _state: PhantomData&lt;State&gt;,
+}
+
+impl Arg&lt;Unvalidated&gt; {
+    pub fn new(name: impl Into&lt;String&gt;) -&gt; Self {
+        Arg {
+            name: name.into(),
+            _state: PhantomData,
+        }
+    }
+
+    pub fn validate(self) -&gt; Result&lt;Arg&lt;Validated&gt;, ValidationError&gt; {
+        Ok(Arg {
+            name: self.name,
+            _state: PhantomData,
+        })
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="the-typestate-pattern"><a class="header" href="#the-typestate-pattern">The Typestate Pattern</a></h3>
+<p>Typestate extends phantom types to model state machines:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Empty;
+pub struct HasName;
+pub struct Ready;
+
+pub struct AppBuilder&lt;State&gt; {
+    name: Option&lt;String&gt;,
+    version: Option&lt;String&gt;,
+    _state: PhantomData&lt;State&gt;,
+}
+
+impl AppBuilder&lt;Empty&gt; {
+    pub fn new() -&gt; Self {
+        AppBuilder {
+            name: None,
+            version: None,
+            _state: PhantomData,
+        }
+    }
+
+    pub fn name(self, name: impl Into&lt;String&gt;) -&gt; AppBuilder&lt;HasName&gt; {
+        AppBuilder {
+            name: Some(name.into()),
+            version: self.version,
+            _state: PhantomData,
+        }
+    }
+}
+
+impl AppBuilder&lt;HasName&gt; {
+    pub fn build(self) -&gt; App {
+        App {
+            name: self.name.expect("type system guarantees this"),
+            version: self.version,
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>This ensures <code>build()</code> can only be called after <code>name()</code> has been invoked.</p>
+<h2 id="trait-refactoring"><a class="header" href="#trait-refactoring">Trait Refactoring</a></h2>
+<h3 id="associated-types-vs-generic-parameters"><a class="header" href="#associated-types-vs-generic-parameters">Associated Types vs Generic Parameters</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Generic parameter: multiple implementations per type
+trait Parser&lt;T&gt; {
+    fn parse(&amp;self, input: &amp;str) -&gt; Result&lt;T, ParseError&gt;;
+}
+
+// Associated type: one implementation per type
+trait ValueParser {
+    type Value;
+    fn parse(&amp;self, input: &amp;str) -&gt; Result&lt;Self::Value, ParseError&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Guidelines</strong>: Use <strong>associated types</strong> when the relationship is functional (each implementor has exactly one output type). Use <strong>generic parameters</strong> when relational (implementors may handle multiple types).</p>
+<h3 id="generic-associated-types-gats"><a class="header" href="#generic-associated-types-gats">Generic Associated Types (GATs)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait ArgCollection {
+    type Iter&lt;'a&gt;: Iterator&lt;Item = &amp;'a Arg&gt; where Self: 'a;
+
+    fn iter(&amp;self) -&gt; Self::Iter&lt;'_&gt;;
+}
+
+impl ArgCollection for Vec&lt;Arg&gt; {
+    type Iter&lt;'a&gt; = std::slice::Iter&lt;'a, Arg&gt;;
+
+    fn iter(&amp;self) -&gt; Self::Iter&lt;'_&gt; {
+        self.as_slice().iter()
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="trait-objects-and-dynamic-dispatch"><a class="header" href="#trait-objects-and-dynamic-dispatch">Trait Objects and Dynamic Dispatch</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Validator: Send + Sync {
+    fn validate(&amp;self, value: &amp;str) -&gt; Result&lt;(), ValidationError&gt;;
+    fn description(&amp;self) -&gt; &amp;str;
+}
+
+pub struct Arg {
+    name: String,
+    validators: Vec&lt;Box&lt;dyn Validator&gt;&gt;,
+}
+
+impl Arg {
+    pub fn validator(mut self, v: impl Validator + 'static) -&gt; Self {
+        self.validators.push(Box::new(v));
+        self
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="compile-time-validation"><a class="header" href="#compile-time-validation">Compile-Time Validation</a></h2>
+<h3 id="const-functions-and-const-generics"><a class="header" href="#const-functions-and-const-generics">Const Functions and Const Generics</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ArgBuffer&lt;const N: usize&gt; {
+    args: [Option&lt;String&gt;; N],
+    count: usize,
+}
+
+impl&lt;const N: usize&gt; ArgBuffer&lt;N&gt; {
+    pub const fn new() -&gt; Self {
+        const NONE: Option&lt;String&gt; = None;
+        ArgBuffer {
+            args: [NONE; N],
+            count: 0,
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="declarative-macros-for-validation"><a class="header" href="#declarative-macros-for-validation">Declarative Macros for Validation</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>macro_rules! command {
+    (
+        name: $name:expr,
+        about: $about:expr,
+        $(args: [$($arg:expr),* $(,)?],)?
+    ) =&gt; {{
+        let mut cmd = Command::new($name).about($about);
+        $($(cmd = cmd.arg($arg);)*)?
+        cmd
+    }};
+
+    ($($tt:tt)*) =&gt; {
+        compile_error!("Command definition requires 'name' and 'about' fields")
+    };
+}
+<span class="boring">}</span></code></pre>
+<h3 id="procedural-macros-for-code-generation"><a class="header" href="#procedural-macros-for-code-generation">Procedural Macros for Code Generation</a></h3>
+<p>Derive macros can generate type-safe code from declarations:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(TypedArgs)]
+pub struct MyArgs {
+    #[arg(short, long)]
+    verbose: bool,
+
+    #[arg(short, long)]
+    config: String,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="error-types--result-handling"><a class="header" href="#error-types--result-handling">Error Types &amp; Result Handling</a></h2>
+<h3 id="sum-types-for-errors"><a class="header" href="#sum-types-for-errors">Sum Types for Errors</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug)]
+pub enum ParseError {
+    UnknownCommand { name: String, suggestions: Vec&lt;String&gt; },
+    MissingRequiredArg { arg: String, command: String },
+    InvalidValue { arg: String, value: String, expected: String },
+    ConflictingArgs { args: Vec&lt;String&gt; },
+}
+<span class="boring">}</span></code></pre>
+<h3 id="error-context-and-cause-chains"><a class="header" href="#error-context-and-cause-chains">Error Context and Cause Chains</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug)]
+pub struct ContextualError {
+    context: String,
+    source: Box&lt;dyn std::error::Error + Send + Sync&gt;,
+}
+
+impl ContextualError {
+    pub fn new(context: impl Into&lt;String&gt;, source: impl std::error::Error + Send + Sync + 'static) -&gt; Self {
+        ContextualError {
+            context: context.into(),
+            source: Box::new(source),
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="type-safe-error-handling"><a class="header" href="#type-safe-error-handling">Type-Safe Error Handling</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait ResultExt&lt;T, E&gt; {
+    fn context(self, ctx: impl Into&lt;String&gt;) -&gt; Result&lt;T, ContextualError&gt;
+    where
+        E: std::error::Error + Send + Sync + 'static;
+}
+
+impl&lt;T, E&gt; ResultExt&lt;T, E&gt; for Result&lt;T, E&gt; {
+    fn context(self, ctx: impl Into&lt;String&gt;) -&gt; Result&lt;T, ContextualError&gt;
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        self.map_err(|e| ContextualError::new(ctx, e))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="testing-type-safety"><a class="header" href="#testing-type-safety">Testing Type Safety</a></h2>
+<h3 id="compile-fail-tests"><a class="header" href="#compile-fail-tests">Compile-Fail Tests</a></h3>
+<p>The <code>trybuild</code> crate enables testing that invalid code fails to compile:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn ui_tests() {
+    let t = trybuild::TestCases::new();
+    t.compile_fail("tests/ui/required-with-default.rs");
+    t.pass("tests/ui/valid-configurations.rs");
+}
+<span class="boring">}</span></code></pre>
+<h3 id="miri-for-undefined-behavior"><a class="header" href="#miri-for-undefined-behavior">Miri for Undefined Behavior</a></h3>
+<pre><code class="language-bash">cargo +nightly miri test
+</code></pre>
+<p>Miri catches use-after-free, uninitialized memory, and data races.</p>
+<h2 id="performance-impact"><a class="header" href="#performance-impact">Performance Impact</a></h2>
+<h3 id="monomorphization-trade-offs"><a class="header" href="#monomorphization-trade-offs">Monomorphization Trade-offs</a></h3>
+<p>Generic code is monomorphized, generating specialized versions for each type:</p>
+<p><strong>Benefits</strong>: Zero-cost abstraction, full optimization, inlining
+<strong>Costs</strong>: Increased binary size, longer compile times</p>
+<h3 id="mitigating-code-bloat"><a class="header" href="#mitigating-code-bloat">Mitigating Code Bloat</a></h3>
+<ol>
+<li><strong>Strategic use of trait objects</strong> where performance is non-critical</li>
+<li><strong>Outline cold paths</strong> into non-generic functions</li>
+<li><strong>Use concrete types</strong> in hot paths</li>
+</ol>
+<h2 id="best-practices-3"><a class="header" href="#best-practices-3">Best Practices</a></h2>
+<h3 id="when-to-add-types-for-safety"><a class="header" href="#when-to-add-types-for-safety">When to Add Types for Safety</a></h3>
+<p><strong>Add types when:</strong></p>
+<ul>
+<li>Invalid states can be constructed</li>
+<li>Runtime validation is required</li>
+<li>API misuse is common</li>
+<li>The domain has clear semantic distinctions</li>
+</ul>
+<p><strong>Avoid over-engineering when:</strong></p>
+<ul>
+<li>Type complexity exceeds problem complexity</li>
+<li>Types significantly impair ergonomics</li>
+<li>Invariants are trivial or temporary</li>
+<li>Performance overhead is unacceptable</li>
+</ul>
+<h3 id="the-type-safety-spectrum"><a class="header" href="#the-type-safety-spectrum">The Type Safety Spectrum</a></h3>
+<pre><code>Less Type Safety                    More Type Safety
+      │                                   │
+  String ─► Newtype ─► Phantom ─► Typestate ─► GADTs
+</code></pre>
+<p>Choose your position based on correctness criticality, API surface area, and user sophistication.</p>
+<h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
+<p>Type-driven refactoring transforms runtime failures into compile-time errors. By making illegal states unrepresentable, you shift the burden of correctness from vigilant programmers to the infallible compiler.</p>
+<p>The investment in type-driven design pays dividends in fewer bugs, clearer APIs, and more confident refactoring.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="modular-architecture-patterns"><a class="header" href="#modular-architecture-patterns">Modular Architecture Patterns</a></h1>
+<p>Modular architecture is the foundation of maintainable, scalable software systems. This chapter explores how to organize code, manage dependencies, and design for evolution.</p>
+<h2 id="why-modularity-matters"><a class="header" href="#why-modularity-matters">Why Modularity Matters</a></h2>
+<p>Modular code provides several critical benefits:</p>
+<ul>
+<li><strong>Maintainability</strong>: Changes to one module rarely cascade to others</li>
+<li><strong>Testability</strong>: Modules can be tested in isolation</li>
+<li><strong>Reusability</strong>: Well-designed modules serve multiple contexts</li>
+<li><strong>Team Scalability</strong>: Different teams can own different modules</li>
+<li><strong>Compilation Speed</strong>: Only modified modules need recompilation</li>
+</ul>
+<h2 id="cohesion-and-coupling"><a class="header" href="#cohesion-and-coupling">Cohesion and Coupling</a></h2>
+<p><strong>Cohesion</strong> measures how closely related the elements within a module are. High cohesion means a module does one thing well.</p>
+<p><strong>Coupling</strong> measures the degree of interdependence between modules. Low coupling means modules can change independently.</p>
+<h2 id="module-organization"><a class="header" href="#module-organization">Module Organization</a></h2>
+<h3 id="single-file-vs-multi-file-crates"><a class="header" href="#single-file-vs-multi-file-crates">Single-File vs Multi-File Crates</a></h3>
+<p><strong>Single-file modules</strong> work well for small, focused functionality:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/lib.rs - Everything in one file
+pub mod parser {
+    pub fn parse(input: &amp;str) -&gt; Result&lt;Ast, ParseError&gt; {
+        // Implementation
+    }
+
+    #[cfg(test)]
+    mod tests {
+        // Tests alongside code
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Multi-file modules</strong> scale better for complex systems:</p>
+<pre><code>src/
+├── lib.rs              # Crate root
+├── parser/
+│   ├── mod.rs          # Parser module root
+│   ├── lexer.rs        # Tokenization
+│   └── ast.rs          # Abstract syntax tree
+├── compiler/
+│   ├── mod.rs          # Compiler module root
+│   └── codegen.rs      # Code generation
+└── runtime/
+    └── vm.rs           # Virtual machine
+</code></pre>
+<h3 id="public-api-boundaries"><a class="header" href="#public-api-boundaries">Public API Boundaries</a></h3>
+<p>Define clear public interfaces:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/lib.rs
+pub mod api;           // Fully public module
+mod internal;          // Private to crate
+pub(crate) mod shared; // Visible within crate only
+
+pub use api::Request;  // Re-export
+pub use api::Response;
+<span class="boring">}</span></code></pre>
+<h3 id="visibility-levels"><a class="header" href="#visibility-levels">Visibility Levels</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Visibility</th><th>Syntax</th><th>Scope</th></tr>
+</thead>
+<tbody>
+<tr><td>Public</td><td><code>pub</code></td><td>Anywhere</td></tr>
+<tr><td>Crate</td><td><code>pub(crate)</code></td><td>Within crate</td></tr>
+<tr><td>Parent</td><td><code>pub(super)</code></td><td>Parent module</td></tr>
+<tr><td>Private</td><td>(default)</td><td>Current module</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="dependency-management"><a class="header" href="#dependency-management">Dependency Management</a></h2>
+<h3 id="reducing-circular-dependencies"><a class="header" href="#reducing-circular-dependencies">Reducing Circular Dependencies</a></h3>
+<p>When modules create circular dependencies, extract shared types into a base module.</p>
+<p><strong>Strategy</strong>: Move shared types to a common module both depend on.</p>
+<h3 id="dependency-injection-patterns"><a class="header" href="#dependency-injection-patterns">Dependency Injection Patterns</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Database: Send + Sync {
+    fn query(&amp;self, sql: &amp;str) -&gt; Result&lt;Vec&lt;Row&gt;, DbError&gt;;
+}
+
+pub struct UserService&lt;D: Database&gt; {
+    db: D,
+}
+
+impl&lt;D: Database&gt; UserService&lt;D&gt; {
+    pub fn new(db: D) -&gt; Self {
+        Self { db }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="feature-flags-for-optional-modules"><a class="header" href="#feature-flags-for-optional-modules">Feature Flags for Optional Modules</a></h3>
+<pre><code class="language-toml">[features]
+default = ["json"]
+json = ["serde_json"]
+yaml = ["serde_yaml"]
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(feature = "json")]
+pub mod json;
+
+#[cfg(feature = "yaml")]
+pub mod yaml;
+<span class="boring">}</span></code></pre>
+<h3 id="workspace-organization"><a class="header" href="#workspace-organization">Workspace Organization</a></h3>
+<p>For large projects, use Cargo workspaces:</p>
+<pre><code class="language-toml">[workspace]
+members = [
+    "crates/core",
+    "crates/parser",
+    "crates/cli",
+]
+</code></pre>
+<h2 id="breaking-monolithic-structures"><a class="header" href="#breaking-monolithic-structures">Breaking Monolithic Structures</a></h2>
+<p>Transform large, tightly coupled code into modular components:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BEFORE: Monolithic struct
+pub struct Application {
+    config: Config,
+    database: Database,
+    cache: Cache,
+    http_client: HttpClient,
+
+    pub fn handle_request(&amp;mut self, req: Request) { /* 500 lines */ }
+    pub fn process_data(&amp;mut self, data: Data) { /* 300 lines */ }
+}
+
+// AFTER: Separated concerns
+pub mod config { /* ... */ }
+pub mod storage { /* ... */ }
+pub mod http { /* ... */ }
+
+pub struct Application&lt;S: Storage&gt; {
+    config: Config,
+    storage: S,
+    client: HttpClient,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="module-communication"><a class="header" href="#module-communication">Module Communication</a></h2>
+<h3 id="error-propagation-across-modules"><a class="header" href="#error-propagation-across-modules">Error Propagation Across Modules</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod parser {
+    #[derive(Error, Debug)]
+    pub enum ParseError {
+        #[error("unexpected token")]
+        UnexpectedToken,
+    }
+}
+
+pub mod compiler {
+    use super::parser;
+
+    #[derive(Error, Debug)]
+    pub enum CompileError {
+        #[error("parse error: {0}")]
+        Parse(#[from] parser::ParseError),
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="message-passing"><a class="header" href="#message-passing">Message Passing</a></h3>
+<p>Use channels for decoupled communication:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::mpsc;
+
+pub enum Message {
+    Process(String),
+    Shutdown,
+}
+
+pub fn spawn_worker(rx: mpsc::Receiver&lt;Message&gt;) {
+    while let Ok(msg) = rx.recv() {
+        match msg {
+            Message::Process(data) =&gt; { /* process */ }
+            Message::Shutdown =&gt; break,
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="testing-modular-systems"><a class="header" href="#testing-modular-systems">Testing Modular Systems</a></h2>
+<h3 id="integration-testing"><a class="header" href="#integration-testing">Integration Testing</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_full_command_flow() {
+    let parser = parser::parse(...).unwrap();
+    let registry = commands::Registry::new();
+    let cmd = registry.get(...).unwrap();
+    cmd.execute(...).unwrap();
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices-4"><a class="header" href="#best-practices-4">Best Practices</a></h2>
+<h3 id="right-sizing-modules"><a class="header" href="#right-sizing-modules">Right-Sizing Modules</a></h3>
+<ul>
+<li><strong>Too small</strong>: One function per module creates navigation overhead</li>
+<li><strong>Too large</strong>: Defeats the purpose of modularity</li>
+<li><strong>Just right</strong>: 100-500 lines per module</li>
+</ul>
+<h3 id="avoiding-deep-hierarchies"><a class="header" href="#avoiding-deep-hierarchies">Avoiding Deep Hierarchies</a></h3>
+<p>Limit module depth to maintain navigability.</p>
+<h3 id="documentation-for-modules"><a class="header" href="#documentation-for-modules">Documentation for Modules</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>//! # Parser Module
+//!
+//! This module handles command-line argument parsing.
+//!
+//! ## Architecture
+//! [architectural description]
+//!
+//! ## Usage
+//! [usage examples]
+<span class="boring">}</span></code></pre>
+<h2 id="summary-5"><a class="header" href="#summary-5">Summary</a></h2>
+<p>Modular architecture requires upfront investment but pays dividends in maintainability, testability, and team productivity. Start with clear boundaries, evolve based on real usage patterns, and refactor when modules grow beyond their intended scope.</p>
+<p>Key principles:</p>
+<ul>
+<li>Each module has a single, clear responsibility</li>
+<li>Public APIs are minimal and stable</li>
+<li>Dependencies flow in one direction</li>
+<li>Modules can be tested in isolation</li>
+<li>Error types compose across boundaries</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="documentation--dx-during-refactoring"><a class="header" href="#documentation--dx-during-refactoring">Documentation &amp; DX During Refactoring</a></h1>
+<p>Refactoring a Rust framework is fundamentally a communication challenge. When you restructure APIs, rename modules, or redesign abstractions, you create a knowledge gap between what users knew and what they need to learn.</p>
+<h2 id="why-dx-matters-during-refactoring"><a class="header" href="#why-dx-matters-during-refactoring">Why DX Matters During Refactoring</a></h2>
+<p>Poor documentation during refactoring leads to:</p>
+<ul>
+<li>User frustration and abandonment</li>
+<li>Increased support burden on maintainers</li>
+<li>Fragmented community knowledge</li>
+<li>Slower adoption of improved APIs</li>
+</ul>
+<p>Excellent documentation enables:</p>
+<ul>
+<li>Smooth migration paths for existing users</li>
+<li>Clear understanding of why changes were made</li>
+<li>Confidence in the framework’s stability</li>
+<li>Community contributions aligned with new architecture</li>
+</ul>
+<h2 id="documentation-types"><a class="header" href="#documentation-types">Documentation Types</a></h2>
+<h3 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h3>
+<p>Rust’s built-in documentation through <code>///</code> comments serves dual duty:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Executes a command with the noun-verb pattern.
+///
+/// This method replaces the legacy `run_command` function, providing
+/// better type safety and clearer semantics.
+///
+/// # Examples
+///
+/// ```rust
+/// use myframework::Command;
+///
+/// let result = Command::new("user")
+///     .verb("create")
+///     .arg("--name", "alice")
+///     .execute()?;
+/// ```
+///
+/// # Migration from `run_command`
+///
+/// If you were previously using `run_command(...)`,
+/// the equivalent with the new API is shown above.
+///
+/// # Errors
+///
+/// Returns [`CommandError::InvalidNoun`] if the noun is not registered.
+pub fn execute(&amp;self) -&gt; Result&lt;Output, CommandError&gt; {
+    // implementation
+}
+<span class="boring">}</span></code></pre>
+<h3 id="architecture-documentation"><a class="header" href="#architecture-documentation">Architecture Documentation</a></h3>
+<pre><code class="language-markdown"># Architecture: Noun-Verb Command Pattern
+
+## Overview
+
+The noun-verb pattern organizes commands around resources (nouns)
+and actions (verbs).
+
+## Design Rationale
+
+The flat command structure had several problems:
+
+1. **Discoverability**: Users couldn't easily find related commands
+2. **Consistency**: Different commands used different naming
+3. **Extensibility**: Adding resources required many commands
+
+## The New Model
+
+[diagrams and examples]
+
+## Migration Impact
+
+[affected areas]
+</code></pre>
+<h3 id="migration-guides"><a class="header" href="#migration-guides">Migration Guides</a></h3>
+<p>A migration guide is the most critical documentation artifact:</p>
+<pre><code class="language-markdown"># Migration Guide: v3.x to v4.0
+
+## Overview
+
+Version 4.0 introduces the noun-verb command pattern.
+**Estimated migration time**: 30 minutes for small CLIs
+
+## Quick Reference
+
+| v3.x Pattern | v4.0 Pattern | Notes |
+|--------------|--------------|-------|
+| `App::new()` | `App::new()` | Same |
+| `.subcommand(...)` | `.noun(...)` | New structure |
+
+## Step-by-Step Migration
+
+### Step 1: Update Command Structure
+
+**Before (v3.x):**
+```rust
+let app = App::new("mycli")
+    .subcommand(SubCommand::with_name("create"));
+</code></pre>
+<p><strong>After (v4.0):</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let app = App::new("mycli")
+    .noun(Noun::new("user").verb(Verb::new("create")));
+<span class="boring">}</span></code></pre>
+<pre><code>
+### Changelog
+
+Maintain CHANGELOG.md following Keep a Changelog format:
+
+```markdown
+## [4.0.0] - 2025-01-15
+
+### Added
+- Noun-verb command pattern
+
+### Changed
+- **BREAKING**: `SubCommand` renamed to `Verb`
+- Minimum Rust version updated to 1.70.0
+
+### Deprecated
+- `Arg::with_name()` - use `Arg::new()` instead
+
+### Removed
+- `App::subcommand_matches()`
+</code></pre>
+<h2 id="maintaining-dx-during-refactoring"><a class="header" href="#maintaining-dx-during-refactoring">Maintaining DX During Refactoring</a></h2>
+<h3 id="compile-tested-documentation"><a class="header" href="#compile-tested-documentation">Compile-Tested Documentation</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Creates a new noun with the given name.
+///
+/// ```rust
+/// # use myframework::Noun;
+/// let noun = Noun::new("user");
+/// assert_eq!(noun.name(), "user");
+/// ```
+pub fn new(name: &amp;str) -&gt; Self {
+    // If this API changes, the doctest fails
+}
+<span class="boring">}</span></code></pre>
+<h3 id="deprecation-notices"><a class="header" href="#deprecation-notices">Deprecation Notices</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[deprecated(
+    since = "4.0.0",
+    note = "Use App::noun() instead. See migration guide."
+)]
+pub fn subcommand(self, subcmd: SubCommand) -&gt; Self {
+    // Shim implementation using new API
+    self.noun(Noun::from_legacy(subcmd))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="error-messages-as-documentation"><a class="header" href="#error-messages-as-documentation">Error Messages as Documentation</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug, thiserror::Error)]
+pub enum CommandError {
+    #[error(
+        "Unknown command '{command}'.\n\n\
+         Hint: Commands now use noun-verb structure.\n\
+         Instead of 'user-create', try 'user create'.\n\n\
+         Available nouns: {available_nouns}"
+    )]
+    UnknownCommand {
+        command: String,
+        available_nouns: String,
+    },
+}
+<span class="boring">}</span></code></pre>
+<h2 id="the-diataxis-framework"><a class="header" href="#the-diataxis-framework">The Diataxis Framework</a></h2>
+<p>The Diataxis framework organizes documentation into four types:</p>
+<h3 id="tutorials-learning-oriented"><a class="header" href="#tutorials-learning-oriented">Tutorials (Learning-Oriented)</a></h3>
+<pre><code class="language-markdown"># Tutorial: Building Your First Noun-Verb CLI
+
+In this tutorial, you'll build a simple CLI tool that manages users.
+
+## Prerequisites
+
+- Rust 1.70 or later
+- Basic familiarity with Cargo
+
+## Step 1: Create Your Project
+
+```bash
+cargo new userctl
+cd userctl
+</code></pre>
+<p>[steps continue…]</p>
+<pre><code>
+### How-To Guides (Task-Oriented)
+
+```markdown
+# How to: Migrate Subcommand Matching
+
+## The Problem
+
+In v3.x, you matched subcommands like this:
+```rust
+match matches.subcommand() {
+    ("create", Some(sub_m)) =&gt; handle_create(sub_m),
+    _ =&gt; show_help(),
+}
+</code></pre>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Use the new <code>route</code> method:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>app.route(|noun, verb, matches| {
+    match (noun, verb) {
+        ("user", "create") =&gt; handle_user_create(matches),
+        _ =&gt; show_help(),
+    }
+});
+<span class="boring">}</span></code></pre>
+<pre><code>
+### Explanations (Understanding-Oriented)
+
+Explain why changes were made and what problems they solve.
+
+### Reference (Information-Oriented)
+
+Exhaustive, accurate reference documentation.
+
+## Code Examples
+
+### Runnable Examples
+
+</code></pre>
+<p>examples/
+├── 01_basic_cli.rs
+├── 02_noun_verb.rs
+├── 03_arguments.rs
+└── migration_from_v3.rs</p>
+<pre><code>
+### Compile-Fail Examples
+
+```rust
+//! This example demonstrates a common mistake.
+//!
+//! ```compile_fail
+//! use myframework::Verb;
+//!
+//! // ERROR: Cannot add verb without noun
+//! let app = App::new("example")
+//!     .verb(Verb::new("create")); // This won't compile!
+//! ```
+</code></pre>
+<h2 id="tool-integration"><a class="header" href="#tool-integration">Tool Integration</a></h2>
+<h3 id="cargo-doc-configuration"><a class="header" href="#cargo-doc-configuration">cargo doc Configuration</a></h3>
+<pre><code class="language-toml">[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+</code></pre>
+<h3 id="mdbook-setup"><a class="header" href="#mdbook-setup">mdBook Setup</a></h3>
+<p>Structure documentation book with progression from basics to advanced topics.</p>
+<h2 id="best-practices-5"><a class="header" href="#best-practices-5">Best Practices</a></h2>
+<h3 id="progressive-disclosure"><a class="header" href="#progressive-disclosure">Progressive Disclosure</a></h3>
+<p>Layer information from simple to complex.</p>
+<h3 id="learning-paths"><a class="header" href="#learning-paths">Learning Paths</a></h3>
+<p>Guide users through progressive learning:</p>
+<pre><code class="language-markdown">## Learning Path
+
+### Beginner (30 minutes)
+1. [Quick Start](./quickstart.md)
+2. [Tutorial: User Manager](./tutorials/user-manager.md)
+
+### Intermediate (2 hours)
+3. [Understanding Noun-Verb](./explanation/noun-verb.md)
+4. [How-To Guides](./howto/)
+
+### Advanced (4+ hours)
+5. [Architecture](./explanation/architecture.md)
+6. [Reference: Full API](./reference/api.md)
+</code></pre>
+<h2 id="summary-6"><a class="header" href="#summary-6">Summary</a></h2>
+<p>Documentation during refactoring is not an afterthought—it is an integral part of the refactoring itself. By treating documentation as a first-class deliverable, you:</p>
+<ol>
+<li><strong>Reduce user friction</strong> during transition</li>
+<li><strong>Communicate intent</strong> behind decisions</li>
+<li><strong>Build trust</strong> through clear timelines</li>
+<li><strong>Enable contributions</strong> aligned with new design</li>
+</ol>
+<p>The investment in documentation pays dividends in reduced support burden, faster adoption, and a healthier ecosystem.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="backward-compatibility--migration-strategies"><a class="header" href="#backward-compatibility--migration-strategies">Backward Compatibility &amp; Migration Strategies</a></h1>
+<p>Software evolution is inevitable. The challenge lies in managing this evolution without breaking the ecosystem of users and downstream dependencies that rely on your code.</p>
+<h2 id="semantic-versioning-deep-dive"><a class="header" href="#semantic-versioning-deep-dive">Semantic Versioning Deep Dive</a></h2>
+<p>Semantic Versioning (SemVer) provides a shared vocabulary for communicating the nature of changes.</p>
+<h3 id="majorminorpatch-semantics-1"><a class="header" href="#majorminorpatch-semantics-1">MAJOR.MINOR.PATCH Semantics</a></h3>
+<pre><code>MAJOR.MINOR.PATCH
+  │     │     │
+  │     │     └── Bug fixes (backward compatible)
+  │     │
+  │     └──────── New features (backward compatible)
+  │
+  └────────────── Breaking changes
+</code></pre>
+<p><strong>Example version progression:</strong></p>
+<pre><code>1.0.0  - Initial stable release
+1.0.1  - Bug fix (PATCH)
+1.1.0  - New feature (MINOR)
+1.2.0  - Another feature (MINOR)
+2.0.0  - Breaking change (MAJOR)
+</code></pre>
+<h3 id="what-constitutes-a-breaking-change"><a class="header" href="#what-constitutes-a-breaking-change">What Constitutes a Breaking Change?</a></h3>
+<p><strong>Definitely breaking:</strong></p>
+<ul>
+<li>Removing public items</li>
+<li>Changing function signatures</li>
+<li>Adding required parameters</li>
+<li>Changing trait bounds</li>
+<li>Removing trait implementations</li>
+</ul>
+<p><strong>Surprisingly breaking:</strong></p>
+<ul>
+<li>Adding new methods to traits (users may have implemented them)</li>
+<li>Adding enum variants (for non-<code>#[non_exhaustive]</code> enums)</li>
+</ul>
+<p><strong>Not breaking:</strong></p>
+<ul>
+<li>Adding public functions, types, modules</li>
+<li>Adding optional parameters via builders</li>
+<li>Implementing traits for existing types</li>
+<li>Adding <code>#[non_exhaustive]</code></li>
+</ul>
+<h2 id="maintaining-compatibility"><a class="header" href="#maintaining-compatibility">Maintaining Compatibility</a></h2>
+<h3 id="deprecation-with-grace-periods"><a class="header" href="#deprecation-with-grace-periods">Deprecation with Grace Periods</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[deprecated(
+    since = "1.8.0",
+    note = "use `process_v2` instead, will be removed in 2.0.0"
+)]
+pub fn process(data: &amp;str) -&gt; Output {
+    process_v2(data).into()
+}
+
+pub fn process_v2(data: &amp;str) -&gt; DetailedOutput {
+    // New implementation
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Grace period timeline:</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Version</th><th>Action</th><th>User Impact</th></tr>
+</thead>
+<tbody>
+<tr><td>v1.8.0</td><td>Deprecate <code>process()</code></td><td>Warning on use</td></tr>
+<tr><td>v1.9.0</td><td>Add migration guide</td><td>Warning + docs</td></tr>
+<tr><td>v1.10.0</td><td>Final warning release</td><td>6 months elapsed</td></tr>
+<tr><td>v2.0.0</td><td>Remove <code>process()</code></td><td>Migration required</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="feature-flags-for-transitions"><a class="header" href="#feature-flags-for-transitions">Feature Flags for Transitions</a></h3>
+<pre><code class="language-toml">[features]
+default = ["v1-compat"]
+v1-compat = []
+v2-api = []
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(feature = "v1-compat")]
+#[deprecated]
+pub fn old_api() { }
+
+#[cfg(feature = "v2-api")]
+pub fn new_api() { }
+<span class="boring">}</span></code></pre>
+<h3 id="multiple-api-versions"><a class="header" href="#multiple-api-versions">Multiple API Versions</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod v1 {
+    pub use crate::legacy::*;
+}
+
+pub mod v2 {
+    pub use crate::current::*;
+}
+
+pub use v2::*;
+<span class="boring">}</span></code></pre>
+<h2 id="deprecation-strategies"><a class="header" href="#deprecation-strategies">Deprecation Strategies</a></h2>
+<h3 id="announcing-deprecation"><a class="header" href="#announcing-deprecation">Announcing Deprecation</a></h3>
+<p>Communicate through multiple channels:</p>
+<ol>
+<li><strong>Code</strong>: <code>#[deprecated]</code> attribute</li>
+<li><strong>CHANGELOG</strong>: Dedicated deprecation section</li>
+<li><strong>Documentation</strong>: Migration guide in rustdoc</li>
+<li><strong>Release notes</strong>: Highlight in GitHub releases</li>
+<li><strong>Blog</strong>: For major deprecations</li>
+</ol>
+<h3 id="timeline-best-practices"><a class="header" href="#timeline-best-practices">Timeline Best Practices</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Deprecation Scope</th><th>Minimum Grace Period</th></tr>
+</thead>
+<tbody>
+<tr><td>Minor function</td><td>2 minor versions or 3 months</td></tr>
+<tr><td>Major API component</td><td>6 months minimum</td></tr>
+<tr><td>Core functionality</td><td>12 months, with LTS option</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="automated-migration-tooling"><a class="header" href="#automated-migration-tooling">Automated Migration Tooling</a></h3>
+<pre class="playground"><code class="language-rust">// migrations/v1_to_v2.rs
+fn main() {
+    let re = Regex::new(r"process\(([^)]+)\)").unwrap();
+
+    for entry in walkdir::WalkDir::new("src") {
+        let path = entry.path();
+        if path.extension() == Some("rs".as_ref()) {
+            let content = fs::read_to_string(path).unwrap();
+            let updated = re.replace_all(&amp;content, "process_v2($1)");
+            if content != updated {
+                println!("Migrating: {}", path.display());
+                fs::write(path, updated.as_ref()).unwrap();
+            }
+        }
+    }
+}</code></pre>
+<h2 id="lts-releases"><a class="header" href="#lts-releases">LTS Releases</a></h2>
+<p>Long-Term Support releases provide stability for users who cannot migrate quickly:</p>
+<pre><code>Timeline:
+├── v1.0.0 (January 2024)
+├── v1.10.0 LTS (December 2024) ← LTS branch created
+├── v2.0.0 (February 2025)
+├── v1.10.1 LTS (March 2025) ← Security fix
+└── v1.10.x EOL (December 2025) ← LTS ends
+</code></pre>
+<p><strong>LTS Policies:</strong></p>
+<ul>
+<li><strong>Duration</strong>: 12 months from LTS designation</li>
+<li><strong>Scope</strong>: Security fixes and critical bugs only</li>
+<li><strong>No features</strong>: New functionality goes to current major</li>
+<li><strong>Backports</strong>: Security fixes backported within 30 days</li>
+</ul>
+<h2 id="version-testing-matrices"><a class="header" href="#version-testing-matrices">Version Testing Matrices</a></h2>
+<p>Test across multiple versions to ensure compatibility claims:</p>
+<pre><code class="language-yaml">jobs:
+  test:
+    strategy:
+      matrix:
+        rust: [1.56, 1.65, 1.75, stable, beta, nightly]
+        include:
+          - rust: 1.56
+            msrv: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - run: cargo test
+</code></pre>
+<h2 id="case-study-clap-noun-verb-compatibility-roadmap"><a class="header" href="#case-study-clap-noun-verb-compatibility-roadmap">Case Study: clap-noun-verb Compatibility Roadmap</a></h2>
+<h3 id="migration-roadmap"><a class="header" href="#migration-roadmap">Migration Roadmap</a></h3>
+<p><strong>Phase 1: v1.8.0 (Month 0)</strong></p>
+<ul>
+<li>Introduce builder API alongside macro</li>
+<li>Mark macro as <code>#[deprecated]</code></li>
+<li>Publish migration guide</li>
+</ul>
+<p><strong>Phase 2: v1.9.0 (Month 2)</strong></p>
+<ul>
+<li>Release migration tool</li>
+<li>Add clippy lint</li>
+<li>Update examples</li>
+</ul>
+<p><strong>Phase 3: v1.10.0 (Month 4)</strong></p>
+<ul>
+<li>Macro emits warning</li>
+<li>Builder API marked stable</li>
+<li>LTS branch created</li>
+</ul>
+<p><strong>Phase 4: v2.0.0 (Month 6)</strong></p>
+<ul>
+<li>Remove macro API</li>
+<li>Builder API is only option</li>
+</ul>
+<h3 id="compatibility-matrix"><a class="header" href="#compatibility-matrix">Compatibility Matrix</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>User Scenario</th><th>v1.8</th><th>v1.9</th><th>v1.10</th><th>v2.0</th></tr>
+</thead>
+<tbody>
+<tr><td>Macro API</td><td>Deprecated</td><td>Deprecated</td><td>Deprecated</td><td>Removed</td></tr>
+<tr><td>Builder API</td><td>Available</td><td>Stable</td><td>Stable</td><td>Only</td></tr>
+<tr><td>Migration tool</td><td>N/A</td><td>Available</td><td>Available</td><td>N/A</td></tr>
+<tr><td>Security updates</td><td>Yes</td><td>Yes</td><td>LTS</td><td>Yes</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="best-practices-6"><a class="header" href="#best-practices-6">Best Practices</a></h2>
+<h3 id="version-bump-decision-tree"><a class="header" href="#version-bump-decision-tree">Version Bump Decision Tree</a></h3>
+<pre><code>Removing public API? → MAJOR
+Changing signatures? → MAJOR
+Changing behavior? → MAJOR
+Adding new API? → MINOR
+Bug fixes only? → PATCH
+</code></pre>
+<h3 id="pre-release-checklist"><a class="header" href="#pre-release-checklist">Pre-Release Checklist</a></h3>
+<p>Before releasing a breaking change:</p>
+<ul>
+<li><input disabled="" type="checkbox"> CHANGELOG updated</li>
+<li><input disabled="" type="checkbox"> Migration guide written</li>
+<li><input disabled="" type="checkbox"> API documentation updated</li>
+<li><input disabled="" type="checkbox"> Migration tooling tested</li>
+<li><input disabled="" type="checkbox"> All examples updated</li>
+<li><input disabled="" type="checkbox"> Minimum grace period elapsed</li>
+<li><input disabled="" type="checkbox"> LTS branch created if applicable</li>
+</ul>
+<h3 id="user-communication"><a class="header" href="#user-communication">User Communication</a></h3>
+<p>Maintain trust through clear communication:</p>
+<ul>
+<li><strong>CHANGELOG</strong>: Keep it updated</li>
+<li><strong>Migration guides</strong>: Detailed, step-by-step</li>
+<li><strong>Release notes</strong>: Highlight breaking changes</li>
+<li><strong>Deprecation timeline</strong>: Always specify removal version</li>
+<li><strong>Upgrade testing</strong>: Provide example migrations</li>
+</ul>
+<h2 id="summary-7"><a class="header" href="#summary-7">Summary</a></h2>
+<p>Backward compatibility is a discipline that respects your users’ time and builds trust. By understanding semantic versioning deeply, identifying breaking changes accurately, and planning deprecations thoughtfully, you can evolve your API while maintaining stability.</p>
+<p>Key principles:</p>
+<ul>
+<li><strong>Communicate early and often</strong> about upcoming changes</li>
+<li><strong>Provide migration paths</strong> before removing functionality</li>
+<li><strong>Test across versions</strong> to verify compatibility</li>
+<li><strong>Respect the timeline</strong> you commit to</li>
+<li><strong>Document everything</strong> so users can self-serve</li>
+</ul>
+<p>When users can update your crate with confidence, they stay current with security fixes and new features—benefiting everyone.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="security-hardening-through-refactoring"><a class="header" href="#security-hardening-through-refactoring">Security Hardening Through Refactoring</a></h1>
+<p>Security is not a feature to be bolted on after development; it is a fundamental property that must be woven into the fabric of framework design from the earliest stages.</p>
+<h2 id="common-vulnerabilities-in-framework-code"><a class="header" href="#common-vulnerabilities-in-framework-code">Common Vulnerabilities in Framework Code</a></h2>
+<p>The most prevalent vulnerabilities include:</p>
+<ul>
+<li><strong>Command injection</strong>: Unsanitized input passed to shell commands</li>
+<li><strong>Path traversal</strong>: Unvalidated file paths allowing access outside intended directories</li>
+<li><strong>Information disclosure</strong>: Error messages revealing sensitive details</li>
+<li><strong>Denial of service</strong>: Unbounded resource consumption</li>
+<li><strong>Dependency vulnerabilities</strong>: Transitive dependencies with known issues</li>
+</ul>
+<h2 id="input-validation-and-sanitization"><a class="header" href="#input-validation-and-sanitization">Input Validation and Sanitization</a></h2>
+<h3 id="validation-layers"><a class="header" href="#validation-layers">Validation Layers</a></h3>
+<p>A defense-in-depth approach requires multiple validation layers:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Layer 1: Syntactic validation at the boundary
+pub struct RawInput(String);
+
+impl RawInput {
+    pub fn new(input: &amp;str) -&gt; Result&lt;Self, ValidationError&gt; {
+        if input.len() &gt; MAX_INPUT_LENGTH {
+            return Err(ValidationError::TooLong);
+        }
+
+        if input.bytes().any(|b| b == 0 || (b &lt; 32 &amp;&amp; b != b'\n')) {
+            return Err(ValidationError::InvalidCharacters);
+        }
+
+        Ok(RawInput(input.to_string()))
+    }
+}
+
+/// Layer 2: Semantic validation with domain types
+pub struct CommandName(String);
+
+impl TryFrom&lt;RawInput&gt; for CommandName {
+    type Error = ValidationError;
+
+    fn try_from(raw: RawInput) -&gt; Result&lt;Self, Self::Error&gt; {
+        let name = raw.0.trim();
+
+        if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+            return Err(ValidationError::InvalidCommandName);
+        }
+
+        if name.starts_with('-') {
+            return Err(ValidationError::InvalidCommandName);
+        }
+
+        Ok(CommandName(name.to_string()))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="defending-against-injection-attacks"><a class="header" href="#defending-against-injection-attacks">Defending Against Injection Attacks</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::process::Command;
+
+/// VULNERABLE: Shell injection possible
+fn vulnerable_execute(user_input: &amp;str) {
+    std::process::Command::new("sh")
+        .arg("-c")
+        .arg(format!("echo {}", user_input))
+        .spawn();
+}
+
+/// SAFE: Arguments passed directly
+fn safe_execute(validated_arg: &amp;ValidatedArg) {
+    Command::new("echo")
+        .arg(validated_arg.as_str())
+        .spawn()
+        .expect("Failed to execute command");
+}
+<span class="boring">}</span></code></pre>
+<h3 id="boundary-checking"><a class="header" href="#boundary-checking">Boundary Checking</a></h3>
+<p>Establish explicit limits on all resource-consuming operations:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ResourceLimits {
+    pub max_arguments: usize,
+    pub max_argument_length: usize,
+    pub max_nesting_depth: usize,
+    pub max_total_size: usize,
+}
+
+pub fn parse_with_limits(
+    input: &amp;[String],
+    limits: &amp;ResourceLimits,
+) -&gt; Result&lt;ParsedCommand, ParseError&gt; {
+    if input.len() &gt; limits.max_arguments {
+        return Err(ParseError::TooManyArguments);
+    }
+
+    let total_size: usize = input.iter().map(|s| s.len()).sum();
+    if total_size &gt; limits.max_total_size {
+        return Err(ParseError::InputTooLarge);
+    }
+
+    parse_internal(input, limits.max_nesting_depth)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="memory-safety"><a class="header" href="#memory-safety">Memory Safety</a></h2>
+<h3 id="unsafe-code-review-during-refactoring"><a class="header" href="#unsafe-code-review-during-refactoring">Unsafe Code Review During Refactoring</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// SAFETY: Document what invariants the unsafe code relies upon
+pub struct AlignedBuffer {
+    ptr: *mut u8,
+    len: usize,
+}
+
+impl AlignedBuffer {
+    pub fn new(size: usize, alignment: usize) -&gt; Result&lt;Self, AllocationError&gt; {
+        // SAFETY: Layout is valid. We must deallocate with same layout in Drop.
+        let layout = std::alloc::Layout::from_size_align(size, alignment)?;
+        let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
+
+        if ptr.is_null() {
+            return Err(AllocationError::OutOfMemory);
+        }
+
+        Ok(AlignedBuffer { ptr, len: size })
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="using-miri-for-detection"><a class="header" href="#using-miri-for-detection">Using Miri for Detection</a></h3>
+<pre><code class="language-bash"># Install miri
+rustup +nightly component add miri
+
+# Run tests under miri
+cargo +nightly miri test
+</code></pre>
+<h2 id="capability-based-security"><a class="header" href="#capability-based-security">Capability-Based Security</a></h2>
+<p>Design APIs where access rights are granted through unforgeable tokens:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct FsCapability {
+    allowed_paths: Vec&lt;PathBuf&gt;,
+    permissions: FsPermissions,
+    _private: (),
+}
+
+impl FsCapability {
+    pub fn check(&amp;self, path: &amp;Path) -&gt; Result&lt;(), AccessDenied&gt; {
+        let canonical = path.canonicalize().map_err(|_| AccessDenied)?;
+
+        let allowed = self.allowed_paths.iter()
+            .any(|allowed| canonical.starts_with(allowed));
+
+        if !allowed {
+            return Err(AccessDenied);
+        }
+
+        Ok(())
+    }
+}
+
+pub fn read_file(cap: &amp;FsCapability, path: &amp;Path) -&gt; Result&lt;Vec&lt;u8&gt;, FileError&gt; {
+    cap.check(path)?;
+    std::fs::read(path).map_err(FileError::from)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="error-handling-security"><a class="header" href="#error-handling-security">Error Handling Security</a></h2>
+<h3 id="information-disclosure-prevention"><a class="header" href="#information-disclosure-prevention">Information Disclosure Prevention</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct InternalError {
+    pub kind: ErrorKind,
+    pub message: String,
+    pub sensitive_context: Option&lt;String&gt;,
+}
+
+pub struct DisplayError {
+    pub code: ErrorCode,
+    pub message: String,
+}
+
+impl From&lt;InternalError&gt; for DisplayError {
+    fn from(internal: InternalError) -&gt; Self {
+        // Map to safe, generic messages
+        let (code, message) = match internal.kind {
+            ErrorKind::Database =&gt; (
+                ErrorCode::ServiceError,
+                "An internal error occurred".to_string(),
+            ),
+            ErrorKind::Validation =&gt; (
+                ErrorCode::InvalidInput,
+                internal.message, // Safe to expose
+            ),
+            _ =&gt; (ErrorCode::Unknown, "An unexpected error occurred".to_string()),
+        };
+
+        DisplayError { code, message }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="secure-logging"><a class="header" href="#secure-logging">Secure Logging</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Redacted&lt;T&gt;(T);
+
+impl&lt;T&gt; std::fmt::Debug for Redacted&lt;T&gt; {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        write!(f, "[REDACTED]")
+    }
+}
+
+fn log_auth_attempt(username: &amp;str, password: &amp;str, success: bool) {
+    info!(
+        username = %username,
+        password = %Redacted(password),
+        success = success,
+        "Authentication attempt"
+    );
+}
+<span class="boring">}</span></code></pre>
+<h2 id="dependency-vulnerability-scanning"><a class="header" href="#dependency-vulnerability-scanning">Dependency Vulnerability Scanning</a></h2>
+<h3 id="cargo-audit"><a class="header" href="#cargo-audit">cargo-audit</a></h3>
+<pre><code class="language-bash"># Install audit tool
+cargo install cargo-audit
+
+# Scan for vulnerabilities
+cargo audit
+</code></pre>
+<h3 id="denytoml-configuration"><a class="header" href="#denytoml-configuration">deny.toml Configuration</a></h3>
+<pre><code class="language-toml">[advisories]
+vulnerability = "deny"
+unmaintained = "warn"
+
+[licenses]
+allow = ["MIT", "Apache-2.0"]
+deny = ["GPL-2.0", "AGPL-3.0"]
+</code></pre>
+<h2 id="cryptographic-considerations"><a class="header" href="#cryptographic-considerations">Cryptographic Considerations</a></h2>
+<h3 id="secure-random-generation"><a class="header" href="#secure-random-generation">Secure Random Generation</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rand::{rngs::OsRng, RngCore};
+
+pub fn generate_token() -&gt; [u8; 32] {
+    let mut token = [0u8; 32];
+    OsRng.fill_bytes(&amp;mut token);
+    token
+}
+<span class="boring">}</span></code></pre>
+<h3 id="timing-attack-resistance"><a class="header" href="#timing-attack-resistance">Timing-Attack Resistance</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use subtle::ConstantTimeEq;
+
+pub fn verify_token(provided: &amp;[u8; 32], expected: &amp;[u8; 32]) -&gt; bool {
+    provided.ct_eq(expected).into()
+}
+<span class="boring">}</span></code></pre>
+<h2 id="audit-logging"><a class="header" href="#audit-logging">Audit Logging</a></h2>
+<p>Implement log entries that can detect tampering:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use sha2::{Sha256, Digest};
+
+pub struct AuditEntry {
+    pub timestamp: chrono::DateTime&lt;chrono::Utc&gt;,
+    pub event_type: String,
+    pub actor: String,
+    pub action: String,
+    pub outcome: Outcome,
+    pub previous_hash: [u8; 32],
+    pub hash: [u8; 32],
+}
+
+impl AuditEntry {
+    pub fn verify_chain(entries: &amp;[AuditEntry]) -&gt; bool {
+        for window in entries.windows(2) {
+            if window[1].previous_hash != window[0].hash {
+                return false;
+            }
+        }
+        true
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices-7"><a class="header" href="#best-practices-7">Best Practices</a></h2>
+<h3 id="defense-in-depth"><a class="header" href="#defense-in-depth">Defense in Depth</a></h3>
+<p>Layer security controls:</p>
+<ol>
+<li><strong>Input validation</strong> at boundaries</li>
+<li><strong>Type-safe</strong> internal representations</li>
+<li><strong>Capability-based</strong> authorization</li>
+<li><strong>Secure error</strong> handling</li>
+<li><strong>Comprehensive</strong> audit logging</li>
+<li><strong>Dependency</strong> vulnerability scanning</li>
+</ol>
+<h3 id="threat-modeling"><a class="header" href="#threat-modeling">Threat Modeling</a></h3>
+<p>Before refactoring, identify:</p>
+<ul>
+<li><strong>Assets</strong>: What are you protecting?</li>
+<li><strong>Threats</strong>: Who might attack and how?</li>
+<li><strong>Vulnerabilities</strong>: Where are weak points?</li>
+<li><strong>Mitigations</strong>: How will you address each?</li>
+</ul>
+<h3 id="secure-defaults"><a class="header" href="#secure-defaults">Secure Defaults</a></h3>
+<p>Design APIs where the easiest path is also the secure path:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct CommandBuilder {
+    validate_input: bool,      // Default: true
+    sandbox_execution: bool,   // Default: true
+    log_operations: bool,      // Default: true
+    timeout: Duration,         // Default: 30 seconds
+}
+
+impl Default for CommandBuilder {
+    fn default() -&gt; Self {
+        CommandBuilder {
+            validate_input: true,
+            sandbox_execution: true,
+            log_operations: true,
+            timeout: Duration::from_secs(30),
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="summary-8"><a class="header" href="#summary-8">Summary</a></h2>
+<p>Security hardening during refactoring is not a one-time activity but an ongoing process. By integrating these practices into your development workflow, you build frameworks that are resilient to attack and maintain their security properties as they evolve.</p>
+<p>Key principles:</p>
+<ul>
+<li><strong>Validate early and often</strong> at system boundaries</li>
+<li><strong>Use types to enforce security</strong> at compile time</li>
+<li><strong>Log comprehensively</strong> for forensics</li>
+<li><strong>Update dependencies</strong> promptly for security fixes</li>
+<li><strong>Test security</strong> like you test functionality</li>
+<li><strong>Communicate transparently</strong> about vulnerabilities</li>
+</ul>
+<p>Security is a process, not a product. Make it a continuous part of your refactoring culture.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="ecosystem-integration--interoperability"><a class="header" href="#ecosystem-integration--interoperability">Ecosystem Integration &amp; Interoperability</a></h1>
+<p>A CLI framework’s value extends far beyond parsing command-line arguments. Modern applications operate within complex ecosystems spanning multiple programming languages, deployment environments, and integration points.</p>
+<h2 id="cross-language-interoperability"><a class="header" href="#cross-language-interoperability">Cross-Language Interoperability</a></h2>
+<h3 id="foreign-function-interface-for-cc"><a class="header" href="#foreign-function-interface-for-cc">Foreign Function Interface for C/C++</a></h3>
+<p>The Foreign Function Interface forms the foundation of Rust’s cross-language capabilities:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+#[repr(C)]
+pub struct CliParser {
+    inner: *mut ParserInner,
+}
+
+#[repr(C)]
+pub enum CliError {
+    Success = 0,
+    InvalidArgument = 1,
+    ParseError = 2,
+    OutOfMemory = 3,
+}
+
+#[no_mangle]
+pub extern "C" fn cli_parser_new(program_name: *const c_char) -&gt; *mut CliParser {
+    let name = unsafe {
+        if program_name.is_null() {
+            return std::ptr::null_mut();
+        }
+        match CStr::from_ptr(program_name).to_str() {
+            Ok(s) =&gt; s.to_owned(),
+            Err(_) =&gt; return std::ptr::null_mut(),
+        }
+    };
+
+    let inner = Box::new(ParserInner::new(name));
+    let parser = Box::new(CliParser {
+        inner: Box::into_raw(inner),
+    });
+    Box::into_raw(parser)
+}
+
+#[no_mangle]
+pub extern "C" fn cli_parser_free(parser: *mut CliParser) {
+    if !parser.is_null() {
+        unsafe {
+            let p = Box::from_raw(parser);
+            if !p.inner.is_null() {
+                drop(Box::from_raw(p.inner));
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="python-bindings-with-pyo3"><a class="header" href="#python-bindings-with-pyo3">Python Bindings with PyO3</a></h3>
+<p>PyO3 provides ergonomic bindings for Python:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use pyo3::prelude::*;
+
+#[pyclass]
+struct ArgumentParser {
+    name: String,
+    arguments: Vec&lt;ArgumentDef&gt;,
+}
+
+#[pymethods]
+impl ArgumentParser {
+    #[new]
+    fn new(name: String) -&gt; Self {
+        ArgumentParser {
+            name,
+            arguments: Vec::new(),
+        }
+    }
+
+    fn add_argument(
+        &amp;mut self,
+        name: String,
+        required: Option&lt;bool&gt;,
+    ) -&gt; PyResult&lt;()&gt; {
+        let def = ArgumentDef {
+            name,
+            required: required.unwrap_or(false),
+        };
+        self.arguments.push(def);
+        Ok(())
+    }
+
+    fn parse_args(&amp;self, py: Python&lt;'_&gt;, args: Vec&lt;String&gt;) -&gt; PyResult&lt;PyObject&gt; {
+        let parsed = self.parse_internal(&amp;args)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+
+        let dict = pyo3::types::PyDict::new(py);
+        for (key, value) in parsed {
+            dict.set_item(key, value)?;
+        }
+        Ok(dict.into())
+    }
+}
+
+#[pymodule]
+fn rust_cli(_py: Python&lt;'_&gt;, m: &amp;PyModule) -&gt; PyResult&lt;()&gt; {
+    m.add_class::&lt;ArgumentParser&gt;()?;
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<h3 id="webassembly-compilation"><a class="header" href="#webassembly-compilation">WebAssembly Compilation</a></h3>
+<p>WASM enables CLI logic to run in browsers and serverless environments:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub struct WasmParser {
+    config: ParserConfig,
+}
+
+#[wasm_bindgen]
+impl WasmParser {
+    #[wasm_bindgen(constructor)]
+    pub fn new(config_json: &amp;str) -&gt; Result&lt;WasmParser, JsValue&gt; {
+        let config: ParserConfig = serde_json::from_str(config_json)
+            .map_err(|e| JsValue::from_str(&amp;e.to_string()))?;
+        Ok(WasmParser { config })
+    }
+
+    pub fn parse(&amp;self, args: Box&lt;[JsValue]&gt;) -&gt; Result&lt;JsValue, JsValue&gt; {
+        let string_args: Vec&lt;String&gt; = args
+            .iter()
+            .filter_map(|v| v.as_string())
+            .collect();
+
+        let result = self.parse_internal(&amp;string_args)
+            .map_err(|e| JsValue::from_str(&amp;e.to_string()))?;
+
+        serde_wasm_bindgen::to_value(&amp;result)
+            .map_err(|e| JsValue::from_str(&amp;e.to_string()))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="standard-integration-points"><a class="header" href="#standard-integration-points">Standard Integration Points</a></h2>
+<h3 id="configuration-format-support"><a class="header" href="#configuration-format-support">Configuration Format Support</a></h3>
+<p>CLI frameworks must read configuration from multiple sources:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use serde::Deserialize;
+
+#[derive(Debug, Deserialize, Default)]
+pub struct AppConfig {
+    #[serde(default)]
+    pub verbose: bool,
+    #[serde(default)]
+    pub output_format: OutputFormat,
+}
+
+impl AppConfig {
+    /// Load with precedence:
+    /// 1. Command-line arguments
+    /// 2. Environment variables
+    /// 3. User config file
+    /// 4. Project config file
+    /// 5. Default values
+    pub fn load(cli_args: &amp;CliArgs) -&gt; Result&lt;Self, ConfigError&gt; {
+        let mut config = Self::default();
+
+        if let Some(user_config) = Self::load_user_config()? {
+            config = config.merge(user_config);
+        }
+
+        config = config.apply_env()?;
+        config = config.apply_cli(cli_args);
+
+        Ok(config)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="shell-integration"><a class="header" href="#shell-integration">Shell Integration</a></h3>
+<p>Shell completions transform CLI usability:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait CompletionGenerator {
+    fn generate(&amp;self, shell: Shell) -&gt; String;
+}
+
+pub fn generate_bash(&amp;self) -&gt; String {
+    let mut script = String::new();
+    script.push_str(&amp;format!(
+        r#"_{name}_completions() {{
+    local cur="${{COMP_WORDS[COMP_CWORD]}}"
+    local commands="{commands}"
+    COMPREPLY=($(compgen -W "$commands" -- "$cur"))
+}}
+complete -F _{name}_completions {name}
+"#,
+        name = self.name,
+        commands = self.subcommands.join(" "),
+    ));
+    script
+}
+<span class="boring">}</span></code></pre>
+<h3 id="exit-codes-and-output-protocols"><a class="header" href="#exit-codes-and-output-protocols">Exit Codes and Output Protocols</a></h3>
+<p>Consistent exit codes enable scripting:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(u8)]
+pub enum ExitCode {
+    Success = 0,
+    GeneralError = 1,
+    UsageError = 64,
+    DataError = 65,
+    NoInput = 66,
+    NoUser = 67,
+    NoHost = 68,
+    Unavailable = 69,
+    Software = 70,
+    OsError = 71,
+    OsFile = 72,
+    CantCreate = 73,
+    IoError = 74,
+    TempFail = 75,
+    Protocol = 76,
+    NoPermission = 77,
+    Config = 78,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="framework-composition"><a class="header" href="#framework-composition">Framework Composition</a></h2>
+<h3 id="async-runtime-integration"><a class="header" href="#async-runtime-integration">Async Runtime Integration</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait AsyncExecutor {
+    fn block_on&lt;F: Future&gt;(&amp;self, future: F) -&gt; F::Output;
+}
+
+pub struct TokioExecutor {
+    runtime: tokio::runtime::Runtime,
+}
+
+impl AsyncExecutor for TokioExecutor {
+    fn block_on&lt;F: Future&gt;(&amp;self, future: F) -&gt; F::Output {
+        self.runtime.block_on(future)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="pluggable-backend-pattern"><a class="header" href="#pluggable-backend-pattern">Pluggable Backend Pattern</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait StorageBackend: Send + Sync {
+    fn store(&amp;self, key: &amp;str, value: &amp;[u8]) -&gt; Result&lt;(), StorageError&gt;;
+    fn retrieve(&amp;self, key: &amp;str) -&gt; Result&lt;Option&lt;Vec&lt;u8&gt;&gt;, StorageError&gt;;
+}
+
+pub struct BackendRegistry {
+    backends: HashMap&lt;String, Box&lt;dyn StorageBackend&gt;&gt;,
+}
+
+impl BackendRegistry {
+    pub fn get(&amp;self, name: &amp;str) -&gt; Option&lt;&amp;dyn StorageBackend&gt; {
+        self.backends.get(name).map(|b| b.as_ref())
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="middleware-pattern"><a class="header" href="#middleware-pattern">Middleware Pattern</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Middleware: Send + Sync {
+    fn before(&amp;self, ctx: &amp;mut Context) -&gt; Result&lt;(), MiddlewareError&gt;;
+    fn after(&amp;self, ctx: &amp;mut Context, result: &amp;CommandResult) -&gt; Result&lt;(), MiddlewareError&gt;;
+}
+
+pub struct MiddlewareChain {
+    middlewares: Vec&lt;Arc&lt;dyn Middleware&gt;&gt;,
+}
+
+impl MiddlewareChain {
+    pub fn execute&lt;F&gt;(&amp;self, mut ctx: Context, handler: F) -&gt; Result&lt;CommandResult, Error&gt;
+    where
+        F: FnOnce(&amp;Context) -&gt; Result&lt;CommandResult, Error&gt;,
+    {
+        for mw in &amp;self.middlewares {
+            mw.before(&amp;mut ctx)?;
+        }
+
+        let result = handler(&amp;ctx)?;
+
+        for mw in self.middlewares.iter().rev() {
+            mw.after(&amp;mut ctx, &amp;result)?;
+        }
+
+        Ok(result)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="distributed-systems-patterns"><a class="header" href="#distributed-systems-patterns">Distributed Systems Patterns</a></h2>
+<h3 id="grpc-integration"><a class="header" href="#grpc-integration">gRPC Integration</a></h3>
+<p>CLI tools often need to communicate with gRPC services using generated Rust bindings.</p>
+<h3 id="message-queue-compatibility"><a class="header" href="#message-queue-compatibility">Message Queue Compatibility</a></h3>
+<p>Integrate with message queues for async command processing:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait MessageQueue: Send + Sync {
+    fn publish(&amp;self, topic: &amp;str, message: &amp;[u8]) -&gt; Result&lt;(), QueueError&gt;;
+}
+
+pub struct CommandQueue&lt;Q: MessageQueue&gt; {
+    queue: Q,
+    topic: String,
+}
+
+impl&lt;Q: MessageQueue&gt; CommandQueue&lt;Q&gt; {
+    pub fn submit(&amp;self, command: Command) -&gt; Result&lt;JobId, QueueError&gt; {
+        let message = CommandMessage {
+            job_id: JobId::new(),
+            command,
+            submitted_at: chrono::Utc::now(),
+        };
+
+        let encoded = serde_json::to_vec(&amp;message)?;
+        self.queue.publish(&amp;self.topic, &amp;encoded)?;
+
+        Ok(message.job_id)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="documentation-for-integrators"><a class="header" href="#documentation-for-integrators">Documentation for Integrators</a></h2>
+<p>Clear documentation accelerates adoption:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// # Integration Guide
+///
+/// ## Quick Start
+///
+/// Add to your `Cargo.toml`:
+/// ```toml
+/// [dependencies]
+/// my-cli-framework = "1.0"
+/// ```
+///
+/// ## Python Integration
+///
+/// ```python
+/// from my_cli import Parser
+/// parser = Parser("myapp")
+/// parser.run()
+/// ```
+///
+/// ## C Integration
+///
+/// ```c
+/// #include &lt;my_cli.h&gt;
+/// CliParser* parser = cli_parser_new("myapp");
+/// cli_parser_free(parser);
+/// ```
+<span class="boring">}</span></code></pre>
+<h2 id="performance-in-multi-language-contexts"><a class="header" href="#performance-in-multi-language-contexts">Performance in Multi-Language Contexts</a></h2>
+<p>Minimize FFI crossings by batching operations:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[no_mangle]
+pub extern "C" fn cli_batch_execute(
+    parser: *mut CliParser,
+    commands: *const BatchCommand,
+    count: usize,
+) -&gt; CliError {
+    // Process all commands in single FFI call
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices-8"><a class="header" href="#best-practices-8">Best Practices</a></h2>
+<p><strong>Stable Interfaces</strong>: Version your FFI and public APIs. Use semantic versioning rigorously.</p>
+<p><strong>Minimal Coupling</strong>: Design integration points that depend on abstractions, not implementations.</p>
+<p><strong>Clear Contracts</strong>: Document preconditions, postconditions, and invariants.</p>
+<p><strong>Graceful Degradation</strong>: Handle missing optional integrations gracefully.</p>
+<p><strong>Consistent Behavior</strong>: Ensure the same inputs produce the same outputs regardless of integration path.</p>
+<p><strong>Security Boundaries</strong>: Validate all data crossing FFI boundaries.</p>
+<h2 id="summary-9"><a class="header" href="#summary-9">Summary</a></h2>
+<p>The goal is building CLI frameworks that become natural parts of larger systems—tools that developers reach for instinctively because they integrate smoothly with everything else in their environment.</p>
+<p>Key principles:</p>
+<ul>
+<li><strong>Support multiple languages</strong> through FFI, Python, WASM</li>
+<li><strong>Standard integration points</strong> for configuration, shell, processes</li>
+<li><strong>Composable architecture</strong> with pluggable backends and middleware</li>
+<li><strong>Clear contracts</strong> for distributed systems integration</li>
+<li><strong>Security-conscious</strong> FFI design with validated boundaries</li>
+</ul>
+<p>By designing for ecosystem integration, you multiply the impact and value of your framework.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="conclusion--next-steps"><a class="header" href="#conclusion--next-steps">Conclusion &amp; Next Steps</a></h1>
+<p>We have journeyed through ten comprehensive chapters covering the full spectrum of framework refactoring. From performance optimization to ecosystem integration, from testing strategies to security hardening, we have explored the patterns, practices, and principles that enable confident, deliberate evolution of Rust frameworks.</p>
+<h2 id="the-refactoring-journey"><a class="header" href="#the-refactoring-journey">The Refactoring Journey</a></h2>
+<p>Refactoring is not a means to an end—it is a continuous practice that keeps your codebase healthy, responsive to user needs, and aligned with evolving best practices. The best frameworks are those that improve constantly while maintaining the stability and trust that users depend on.</p>
+<h3 id="key-takeaways"><a class="header" href="#key-takeaways">Key Takeaways</a></h3>
+<p><strong>Part I: Foundation</strong></p>
+<p>The foundation of successful refactoring rests on three pillars:</p>
+<ol>
+<li>
+<p><strong>Performance Measurement</strong> - You cannot optimize what you do not measure. Establish baselines, measure consistently, and make decisions based on data, not intuition.</p>
+</li>
+<li>
+<p><strong>API Evolution</strong> - Design APIs that can grow. Use builders, feature flags, and derive macros. Deprecate thoughtfully. Your API is a contract with users; treat it as such.</p>
+</li>
+<li>
+<p><strong>Comprehensive Testing</strong> - Tests are your safety net. Unit tests catch component bugs. Integration tests catch interaction bugs. Property-based tests find edge cases. Together, they enable confident refactoring.</p>
+</li>
+</ol>
+<p><strong>Part II: Architecture &amp; Design</strong></p>
+<p>Architecture determines both possibility and constraint. The chapters on async, types, and modularity emphasize that structure is strategy:</p>
+<ol start="4">
+<li>
+<p><strong>Async Architecture</strong> - Asynchronous programming is not an afterthought in modern Rust. Design for it from the beginning. Abstract over runtime choices to maximize portability.</p>
+</li>
+<li>
+<p><strong>Type-Driven Safety</strong> - Lean on Rust’s type system. Make illegal states unrepresentable. Use phantom types for compile-time validation. Typestate patterns encode state machines safely.</p>
+</li>
+<li>
+<p><strong>Modular Organization</strong> - Break monoliths into focused modules. Reduce coupling. Clarify dependencies. Good modularity enables team scalability and parallel development.</p>
+</li>
+</ol>
+<p><strong>Part III: User Experience &amp; Ecosystem</strong></p>
+<p>Ultimately, frameworks exist to serve users. The final four chapters emphasize that technical excellence must be paired with excellent user experience:</p>
+<ol start="7">
+<li>
+<p><strong>Documentation as Priority</strong> - Refactoring creates knowledge gaps. Bridge them with clear, progressive documentation. Use the Diataxis framework to organize information. Maintain living examples.</p>
+</li>
+<li>
+<p><strong>Compatibility Commitments</strong> - Semantic versioning is more than a number scheme; it is a promise. Honor grace periods. Provide migration paths. Respect your users’ time.</p>
+</li>
+<li>
+<p><strong>Security as Foundation</strong> - Security is not a feature. It is a requirement. Validate inputs at boundaries. Use types to enforce security. Log comprehensively. Update dependencies promptly.</p>
+</li>
+<li>
+<p><strong>Ecosystem Integration</strong> - Frameworks gain power through integration. Support multiple languages via FFI. Enable shell integration. Compose with other systems. The stronger your ecosystem, the more valuable your framework.</p>
+</li>
+</ol>
+<h2 id="putting-it-all-together"><a class="header" href="#putting-it-all-together">Putting It All Together</a></h2>
+<p>The most successful framework refactorings treat all ten areas as equally important. A framework that optimizes performance but breaks compatibility loses users. A framework with excellent documentation but poor security disappoints users. A framework designed for evolution but never documented leaves users confused.</p>
+<p>The case study of <code>clap-noun-verb</code> demonstrates this synthesis: Performance improvements are measured with benchmarks. The API evolves through deprecation and migration guides. Tests provide confidence through comprehensive coverage. Async capabilities enable modern applications. Types encode safety. Modularity enables contribution. Documentation guides users through change. Compatibility is maintained through grace periods. Security is hardened at every layer. Integration with the ecosystem multiplies impact.</p>
+<h2 id="the-continuous-improvement-cycle"><a class="header" href="#the-continuous-improvement-cycle">The Continuous Improvement Cycle</a></h2>
+<p>Refactoring is not a project with a beginning and end. It is a continuous cycle:</p>
+<pre><code>Measure
+    ↓
+Analyze
+    ↓
+Plan
+    ↓
+Implement (incrementally)
+    ↓
+Test
+    ↓
+Document
+    ↓
+Release (with care for users)
+    ↓
+Monitor
+    ↓
+(back to Measure)
+</code></pre>
+<p>Each cycle should take weeks or months, not years. Small, frequent improvements accumulate into significant evolution. This rhythm prevents technical debt from accumulating, keeps the team engaged, and demonstrates momentum to your users.</p>
+<h2 id="common-mistakes-to-avoid"><a class="header" href="#common-mistakes-to-avoid">Common Mistakes to Avoid</a></h2>
+<p>As you apply these principles, avoid these pitfalls:</p>
+<p><strong>The Big Bang Refactor</strong> - Refactoring everything at once is slower and riskier than incremental change. Break large refactorings into small, testable steps.</p>
+<p><strong>Performance Without Measurement</strong> - Optimizing without data is guessing. You may optimize the wrong thing and harm readability without gaining benefit.</p>
+<p><strong>Breaking Changes Without Migration</strong> - Users are not happy about your architectural improvements if they break their code. Plan deprecations in advance.</p>
+<p><strong>Documentation Debt</strong> - Documentation written during refactoring prevents exponentially more support burden later. Do not skip this.</p>
+<p><strong>Security as Afterthought</strong> - Security cannot be bolted on. It must be woven through design.</p>
+<p><strong>Isolation From Ecosystem</strong> - Frameworks that do not integrate well with surrounding systems remain niche. Design for composition.</p>
+<h2 id="metrics-for-success"><a class="header" href="#metrics-for-success">Metrics for Success</a></h2>
+<p>How do you know your refactoring is successful? Consider these metrics:</p>
+<p><strong>Technical Metrics</strong></p>
+<ul>
+<li>Compile time (should decrease or stay steady)</li>
+<li>Test execution time (should be fast)</li>
+<li>Binary size (should not grow excessively)</li>
+<li>Performance benchmarks (should improve or maintain)</li>
+<li>Code coverage (should not decrease)</li>
+</ul>
+<p><strong>User Metrics</strong></p>
+<ul>
+<li>Downloads and adoption (increasing is good)</li>
+<li>Support questions (decreasing is good)</li>
+<li>Community contributions (increasing indicates health)</li>
+<li>Time to migration (migration should be quick)</li>
+<li>User satisfaction (feedback should be positive)</li>
+</ul>
+<p><strong>Team Metrics</strong></p>
+<ul>
+<li>Development velocity (should increase or maintain)</li>
+<li>Bug escape rate (should decrease)</li>
+<li>Time to fix issues (should decrease)</li>
+<li>Team morale (should improve)</li>
+</ul>
+<h2 id="your-next-steps"><a class="header" href="#your-next-steps">Your Next Steps</a></h2>
+<p>Having completed this book, you are prepared to undertake significant framework refactoring. Here is how to proceed:</p>
+<h3 id="1-audit-your-framework"><a class="header" href="#1-audit-your-framework">1. Audit Your Framework</a></h3>
+<p>Honestly assess your current state against the ten areas:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Do you measure performance? Do you have baselines?</li>
+<li><input disabled="" type="checkbox"> Is your API stable or does it churn frequently?</li>
+<li><input disabled="" type="checkbox"> Is your test suite comprehensive?</li>
+<li><input disabled="" type="checkbox"> Can your system be made async-ready?</li>
+<li><input disabled="" type="checkbox"> Do your types prevent invalid states?</li>
+<li><input disabled="" type="checkbox"> Is your code organized into clear modules?</li>
+<li><input disabled="" type="checkbox"> Is your documentation accessible to new users?</li>
+<li><input disabled="" type="checkbox"> Do you maintain backward compatibility?</li>
+<li><input disabled="" type="checkbox"> Have you security-audited your code?</li>
+<li><input disabled="" type="checkbox"> Are you integrated with the broader ecosystem?</li>
+</ul>
+<h3 id="2-prioritize-your-improvements"><a class="header" href="#2-prioritize-your-improvements">2. Prioritize Your Improvements</a></h3>
+<p>Not everything can be improved at once. Based on your audit:</p>
+<ul>
+<li><strong>High-impact, low-effort</strong> improvements (do first)</li>
+<li><strong>High-impact, medium-effort</strong> improvements (plan for)</li>
+<li><strong>Low-impact improvements</strong> (defer)</li>
+</ul>
+<h3 id="3-create-a-refactoring-plan"><a class="header" href="#3-create-a-refactoring-plan">3. Create a Refactoring Plan</a></h3>
+<p>For each major area, write a plan:</p>
+<ul>
+<li>What is the current state?</li>
+<li>What is the target state?</li>
+<li>How will we get there incrementally?</li>
+<li>How will we measure success?</li>
+<li>What is the timeline?</li>
+</ul>
+<h3 id="4-communicate-with-your-users"><a class="header" href="#4-communicate-with-your-users">4. Communicate With Your Users</a></h3>
+<p>Before starting, tell your users:</p>
+<ul>
+<li>Why you are refactoring</li>
+<li>What will change</li>
+<li>How long it will take</li>
+<li>What migration support you will provide</li>
+<li>How you will maintain compatibility</li>
+</ul>
+<h3 id="5-execute-incrementally"><a class="header" href="#5-execute-incrementally">5. Execute Incrementally</a></h3>
+<p>Break large refactorings into small, releasable chunks. Each increment should:</p>
+<ul>
+<li>Be testable and measurable</li>
+<li>Include appropriate documentation</li>
+<li>Maintain backward compatibility (if possible)</li>
+<li>Be deployed within days or weeks, not months</li>
+</ul>
+<h3 id="6-gather-feedback"><a class="header" href="#6-gather-feedback">6. Gather Feedback</a></h3>
+<p>After each release:</p>
+<ul>
+<li>Monitor metrics</li>
+<li>Gather user feedback</li>
+<li>Identify unexpected issues</li>
+<li>Adjust your plan based on learning</li>
+</ul>
+<h2 id="the-philosophy-of-refactoring"><a class="header" href="#the-philosophy-of-refactoring">The Philosophy of Refactoring</a></h2>
+<p>Ultimately, refactoring reflects a philosophy: that software is never finished, only better or worse. That the only constant is change. That technical excellence is not achieved once but cultivated continuously. That respect for users means respecting their time and their code.</p>
+<p>The best frameworks are not perfect. They are honest about their limitations, transparent about their direction, and committed to evolution. They acknowledge that the developers who built them learned from mistakes and improved because of them.</p>
+<h2 id="final-thoughts"><a class="header" href="#final-thoughts">Final Thoughts</a></h2>
+<p>Rust provides powerful tools for building excellent frameworks: a type system that prevents entire classes of bugs, an ownership model that enforces safety, async primitives for modern applications, and a vibrant ecosystem that rewards good design.</p>
+<p>But tools alone do not make great frameworks. Great frameworks require:</p>
+<ul>
+<li><strong>Discipline</strong> in design and refactoring</li>
+<li><strong>Rigor</strong> in testing and measurement</li>
+<li><strong>Empathy</strong> for users and their needs</li>
+<li><strong>Humility</strong> about limitations and mistakes</li>
+<li><strong>Patience</strong> with incremental improvement</li>
+<li><strong>Vision</strong> for where you are heading</li>
+</ul>
+<p>May this book serve as a guide as you build, maintain, and evolve your frameworks. May you find the balance between innovation and stability, between performance and clarity, between technical purity and pragmatic service to users.</p>
+<p>The Rust ecosystem is stronger when every framework is well-maintained, well-tested, well-documented, and constantly improving. Your commitment to refactoring excellence contributes to the health of the entire ecosystem.</p>
+<p>Go forth and refactor with confidence.</p>
+<hr>
+<h2 id="additional-resources"><a class="header" href="#additional-resources">Additional Resources</a></h2>
+<h3 id="official-documentation"><a class="header" href="#official-documentation">Official Documentation</a></h3>
+<ul>
+<li><a href="https://doc.rust-lang.org/book/">The Rust Book</a></li>
+<li><a href="https://rust-lang.github.io/api-guidelines/">Rust API Guidelines</a></li>
+<li><a href="https://doc.rust-lang.org/cargo/">The Cargo Book</a></li>
+</ul>
+<h3 id="key-frameworks-referenced"><a class="header" href="#key-frameworks-referenced">Key Frameworks Referenced</a></h3>
+<ul>
+<li><a href="https://github.com/clap-rs/clap">clap</a> - Command-line argument parser</li>
+<li><a href="https://tokio.rs/">tokio</a> - Async runtime</li>
+<li><a href="https://serde.rs/">serde</a> - Serialization framework</li>
+<li><a href="https://docs.rs/tracing/">tracing</a> - Structured logging</li>
+</ul>
+<h3 id="related-projects"><a class="header" href="#related-projects">Related Projects</a></h3>
+<ul>
+<li><a href="https://doc.rust-lang.org/book/">The Rust Programming Language Book</a></li>
+<li><a href="https://github.com/rust-lang/rustlings">Rustlings</a> - Interactive learning</li>
+<li><a href="https://doc.rust-lang.org/rust-by-example/">Rust by Example</a></li>
+</ul>
+<h3 id="tools"><a class="header" href="#tools">Tools</a></h3>
+<ul>
+<li><a href="https://doc.rust-lang.org/cargo/">Cargo</a> - Package manager and build system</li>
+<li><a href="https://github.com/rust-lang/rust-clippy">Clippy</a> - Linter</li>
+<li><a href="https://github.com/rust-lang/rustfmt">Rustfmt</a> - Code formatter</li>
+<li><a href="https://rust-analyzer.github.io/">rust-analyzer</a> - Language server</li>
+<li><a href="https://rust-lang.github.io/mdBook/">mdBook</a> - Documentation generation</li>
+</ul>
+<hr>
+<p><em>Thank you for reading “Refactoring Rust Frameworks.” May your refactoring endeavors be successful and your frameworks excellent.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
