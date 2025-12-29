@@ -1,0 +1,33 @@
+[book]
+title = "Systems Architecture Patterns in Rust: 2026 Edition"
+authors = ["Jim Blandy", "Jason Orendorff", "Leonora Tindall", "Curated by Claude Code Team"]
+description = "Design patterns for building scalable, maintainable systems in Rust. Based on 24 complete, production-grade examples."
+language = "en"
+src = "src"
+
+[build]
+build-dir = "build"
+create-missing = false
+
+[output.html]
+theme = "custom"
+default-theme = "light"
+preferred-dark-theme = "dark"
+curly-quotes = true
+mathjax-support = false
+copy-fonts = true
+fold.enable = true
+fold.level = 1
+
+[output.html.search]
+limit-results = 30
+teaser-word-count = 30
+index-headings = true
+
+[output.html.playground]
+editable = true
+line-numbers = true
+runnable = true
+
+[preprocessor.links]
+renderers = ["html", "md"]
