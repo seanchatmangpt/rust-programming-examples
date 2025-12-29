@@ -1,0 +1,709 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 20: Pin, Unpin &amp; Self-Referential Structures - Refactoring Rust Frameworks</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-80709b90.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a688046c.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Refactoring Rust Frameworks</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/20-pin-unpin-self-referential.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="pin-unpin--self-referential-structures"><a class="header" href="#pin-unpin--self-referential-structures">Pin, Unpin &amp; Self-Referential Structures</a></h1>
+<p><strong>Target Audience</strong>: AI agents working with async code, futures, and self-referential data structures
+<strong>Prerequisites</strong>: Understanding of ownership, lifetimes, and unsafe code
+<strong>Scope</strong>: Pin guarantees, Unpin trait, structural pinning, async implications</p>
+<hr>
+<h2 id="1-why-pin-exists"><a class="header" href="#1-why-pin-exists">1. Why Pin Exists</a></h2>
+<h3 id="the-self-referential-problem"><a class="header" href="#the-self-referential-problem">The Self-Referential Problem</a></h3>
+<p>Rust’s ownership model assumes values can be moved freely in memory. However, certain data structures contain internal pointers that become invalid when the structure moves:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// PROBLEMATIC: Self-referential struct
+struct SelfReferential {
+    data: String,
+    ptr: *const String,  // Points to 'data' field
+}
+
+impl SelfReferential {
+    fn new(s: String) -&gt; Self {
+        let mut obj = SelfReferential {
+            data: s,
+            ptr: std::ptr::null(),
+        };
+        obj.ptr = &amp;obj.data as *const String;  // Becomes dangling on move!
+        obj
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>When this value moves in memory, the pointer becomes dangling because it still points to the old memory location.</p>
+<h3 id="async-state-machines-and-pin"><a class="header" href="#async-state-machines-and-pin">Async State Machines and Pin</a></h3>
+<p>The compiler transforms async functions into state machines that can self-reference:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn example() {
+    let local = String::from("data");
+    do_something(&amp;local).await;  // State machine holds reference to local
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pin solves this</strong> by guaranteeing the value won’t move in memory.</p>
+<h2 id="2-pin-fundamentals"><a class="header" href="#2-pin-fundamentals">2. Pin Fundamentals</a></h2>
+<h3 id="pinp-structure"><a class="header" href="#pinp-structure">Pin&lt;P<t>&gt; Structure</t></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Pin&lt;P&gt; {
+    pointer: P,
+}
+
+impl&lt;P: Deref&gt; Pin&lt;P&gt; {
+    // Safe: can only create Pin from pointer to Unpin type
+    pub fn new(pointer: P) -&gt; Pin&lt;P&gt;
+    where
+        P::Target: Unpin,
+    {
+        unsafe { Pin::new_unchecked(pointer) }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="creating-pinned-values"><a class="header" href="#creating-pinned-values">Creating Pinned Values</a></h3>
+<p><strong>Heap Pinning (Safe):</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+
+let pinned: Pin&lt;Box&lt;String&gt;&gt; = Box::pin(String::from("pinned"));
+// Value is now permanently pinned on heap
+<span class="boring">}</span></code></pre>
+<p><strong>Stack Pinning (With macro):</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::pin;
+
+fn stack_pin_example() {
+    let pinned = pin!(String::from("pinned"));
+    // Type: Pin&lt;&amp;mut String&gt;
+    // Valid only within this scope
+}
+<span class="boring">}</span></code></pre>
+<h2 id="3-unpin--opt-out"><a class="header" href="#3-unpin--opt-out">3. Unpin &amp; Opt-Out</a></h2>
+<h3 id="unpin-auto-trait"><a class="header" href="#unpin-auto-trait">Unpin Auto Trait</a></h3>
+<p><code>Unpin</code> is an <strong>auto trait</strong> implemented by default for most types:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// These automatically implement Unpin:
+struct Regular {
+    x: i32,
+    y: String,
+}
+
+// Unpin allows Pin to be safely created and unwrapped:
+let boxed = Box::new(Regular { x: 5, y: String::from("test") });
+let pinned = Pin::new(boxed);  // OK: Regular is Unpin
+let unpinned = Pin::into_inner(pinned);  // OK: can move again
+<span class="boring">}</span></code></pre>
+<h3 id="removing-unpin-with-phantompinned"><a class="header" href="#removing-unpin-with-phantompinned">Removing Unpin with PhantomPinned</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::marker::PhantomPinned;
+
+struct MustPin {
+    data: String,
+    ptr: *const String,
+    _pin: PhantomPinned,  // Removes Unpin
+}
+<span class="boring">}</span></code></pre>
+<p>A type is <code>!Unpin</code> if:</p>
+<ol>
+<li>It contains <code>PhantomPinned</code></li>
+<li>It contains a field that is <code>!Unpin</code></li>
+<li>It explicitly opts out: <code>impl !Unpin for MyType {}</code></li>
+</ol>
+<h2 id="4-projection--structural-pinning"><a class="header" href="#4-projection--structural-pinning">4. Projection &amp; Structural Pinning</a></h2>
+<h3 id="structural-pinning-rules"><a class="header" href="#structural-pinning-rules">Structural Pinning Rules</a></h3>
+<p><strong>Structural pinning</strong>: If a parent is pinned, its fields are also pinned.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+
+struct Parent {
+    field1: String,      // Unpin
+    field2: Vec&lt;u8&gt;,     // Unpin
+}
+
+impl Parent {
+    // SAFE projection: String is Unpin
+    fn project_field1(self: Pin&lt;&amp;mut Self&gt;) -&gt; &amp;mut String {
+        &amp;mut self.get_mut().field1
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="pinmap_unchecked-for-field-access"><a class="header" href="#pinmap_unchecked-for-field-access">Pin::map_unchecked for Field Access</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;P: Deref&gt; Pin&lt;P&gt; {
+    pub unsafe fn map_unchecked&lt;U, F&gt;(self, func: F) -&gt; Pin&lt;&amp;U&gt;
+    where
+        F: FnOnce(&amp;P::Target) -&gt; &amp;U,
+    {
+        // SAFETY: Caller must ensure structural pinning invariants
+        let pointer = &amp;*self.pointer;
+        let new_pointer = func(pointer);
+        Pin::new_unchecked(new_pointer)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="5-self-referential-structs"><a class="header" href="#5-self-referential-structs">5. Self-Referential Structs</a></h2>
+<h3 id="safe-self-referential-pattern"><a class="header" href="#safe-self-referential-pattern">Safe Self-Referential Pattern</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+pub struct SelfRef {
+    data: String,
+    // Points to data - only valid when pinned
+    data_ptr: *const String,
+    _pin: PhantomPinned,
+}
+
+impl SelfRef {
+    pub fn new(s: String) -&gt; Pin&lt;Box&lt;Self&gt;&gt; {
+        let mut obj = Box::new(SelfRef {
+            data: s,
+            data_ptr: std::ptr::null(),
+            _pin: PhantomPinned,
+        });
+
+        // Initialize pointer after boxing
+        let ptr: *const String = &amp;obj.data;
+        obj.data_ptr = ptr;
+
+        // Pin guarantees obj won't move
+        unsafe { Pin::new_unchecked(obj) }
+    }
+
+    pub fn get_data(&amp;self) -&gt; &amp;str {
+        &amp;self.data
+    }
+
+    pub fn get_via_pointer(&amp;self) -&gt; &amp;str {
+        unsafe {
+            // SAFETY: Pin guarantees data_ptr remains valid
+            &amp;*self.data_ptr
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="6-drop-with-pin"><a class="header" href="#6-drop-with-pin">6. Drop with Pin</a></h2>
+<h3 id="drop-requirements"><a class="header" href="#drop-requirements">Drop Requirements</a></h3>
+<p>When implementing <code>Drop</code> for pinned types:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+struct PinnedResource {
+    data: Vec&lt;u8&gt;,
+    registered: bool,
+    _pin: PhantomPinned,
+}
+
+impl Drop for PinnedResource {
+    fn drop(&amp;mut self) {
+        // SAFETY: Drop is called in-place
+        if self.registered {
+            println!("Unregistering resource at {:p}", self);
+        }
+        self.data.clear();
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Critical rule</strong>: Drop must never panic - it could leave the system in an inconsistent state.</p>
+<h2 id="7-asyncawait--pin"><a class="header" href="#7-asyncawait--pin">7. Async/Await &amp; Pin</a></h2>
+<h3 id="why-futures-require-pin"><a class="header" href="#why-futures-require-pin">Why Futures Require Pin</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+// Future trait requires Pin:
+pub trait Future {
+    type Output;
+
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Self::Output&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>The compiler generates state machines for async functions that self-reference across <code>await</code> points. Pin guarantees these self-references remain valid.</p>
+<h3 id="pinning-in-executors"><a class="header" href="#pinning-in-executors">Pinning in Executors</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::future::Future;
+use std::pin::Pin;
+
+struct SimpleExecutor;
+
+impl SimpleExecutor {
+    fn block_on&lt;F: Future&gt;(future: F) -&gt; F::Output {
+        // Must pin future before polling
+        let mut future = Box::pin(future);
+
+        loop {
+            match future.as_mut().poll(&amp;mut context) {
+                Poll::Ready(output) =&gt; return output,
+                Poll::Pending =&gt; {
+                    std::thread::yield_now();
+                }
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="8-common-pinning-patterns"><a class="header" href="#8-common-pinning-patterns">8. Common Pinning Patterns</a></h2>
+<h3 id="intrusive-linked-list"><a class="header" href="#intrusive-linked-list">Intrusive Linked List</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+pub struct IntrusiveNode&lt;T&gt; {
+    value: T,
+    next: Option&lt;*mut IntrusiveNode&lt;T&gt;&gt;,
+    prev: Option&lt;*mut IntrusiveNode&lt;T&gt;&gt;,
+    _pin: PhantomPinned,
+}
+
+pub struct IntrusiveList&lt;T&gt; {
+    head: Option&lt;Pin&lt;Box&lt;IntrusiveNode&lt;T&gt;&gt;&gt;&gt;,
+}
+<span class="boring">}</span></code></pre>
+<h3 id="custom-future-pattern"><a class="header" href="#custom-future-pattern">Custom Future Pattern</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+struct MyFuture {
+    state: State,
+    data: String,
+    data_ref: Option&lt;*const String&gt;,
+}
+
+enum State {
+    NotStarted,
+    InProgress,
+    Done,
+}
+
+impl Future for MyFuture {
+    type Output = usize;
+
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;usize&gt; {
+        let this = unsafe { self.get_unchecked_mut() };
+
+        match this.state {
+            State::NotStarted =&gt; {
+                // Initialize self-reference
+                this.data_ref = Some(&amp;this.data as *const String);
+                this.state = State::InProgress;
+                Poll::Pending
+            }
+            State::InProgress =&gt; {
+                let data_ref = unsafe { &amp;*this.data_ref.unwrap() };
+                this.state = State::Done;
+                Poll::Ready(data_ref.len())
+            }
+            State::Done =&gt; panic!("Polled after completion"),
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="9-pin-safety-rules"><a class="header" href="#9-pin-safety-rules">9. Pin Safety Rules</a></h2>
+<h3 id="structural-pinning-invariants"><a class="header" href="#structural-pinning-invariants">Structural Pinning Invariants</a></h3>
+<p><strong>Rule 1</strong>: If <code>Pin&lt;&amp;mut T&gt;</code> exists, <code>T</code> will not move until dropped.</p>
+<p><strong>Rule 2</strong>: Structural pinning - pinning a struct pins all <code>!Unpin</code> fields.</p>
+<p><strong>Rule 3</strong>: Cannot obtain <code>&amp;mut T</code> from <code>Pin&lt;&amp;mut T&gt;</code> if <code>T: !Unpin</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// SOUND projection:
+struct Sound {
+    unpinned: String,      // Unpin
+    pinned: PhantomPinned, // !Unpin
+}
+
+impl Sound {
+    // OK: String is Unpin
+    fn project_unpinned(self: Pin&lt;&amp;mut Self&gt;) -&gt; &amp;mut String {
+        &amp;mut self.get_mut().unpinned
+    }
+
+    // OK: Returns pinned reference
+    fn project_pinned(self: Pin&lt;&amp;mut Self&gt;) -&gt; Pin&lt;&amp;PhantomPinned&gt; {
+        unsafe { self.map_unchecked(|s| &amp;s.pinned) }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="10-testing-pinned-types"><a class="header" href="#10-testing-pinned-types">10. Testing Pinned Types</a></h2>
+<h3 id="asserting-unpin"><a class="header" href="#asserting-unpin">Asserting Unpin</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_unpin&lt;T: Unpin&gt;() {}
+
+    #[test]
+    fn test_unpin_properties() {
+        // These should be Unpin
+        assert_unpin::&lt;String&gt;();
+        assert_unpin::&lt;Vec&lt;u8&gt;&gt;();
+
+        // These should NOT be Unpin
+        // assert_unpin::&lt;PhantomPinned&gt;();  // Won't compile
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="miri-analysis"><a class="header" href="#miri-analysis">Miri Analysis</a></h3>
+<pre><code class="language-bash"># Run tests under Miri to detect undefined behavior
+cargo +nightly miri test
+
+# Miri will catch:
+# - Invalid pointer dereferences
+# - Use-after-free
+# - Violations of Pin guarantees
+</code></pre>
+<h2 id="11-performance-implications"><a class="header" href="#11-performance-implications">11. Performance Implications</a></h2>
+<h3 id="pin-overhead"><a class="header" href="#pin-overhead">Pin Overhead</a></h3>
+<p>Pin is a <strong>zero-cost abstraction</strong>. Pin overhead: ~0% at runtime.</p>
+<p>Pin is purely a type-system guarantee enforced at compile-time.</p>
+<h3 id="stack-vs-heap-pinning"><a class="header" href="#stack-vs-heap-pinning">Stack vs Heap Pinning</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn pinning_performance() {
+    // Heap allocation (required for safety)
+    let heap_pinned = Box::pin(String::from("heap"));
+
+    // Stack allocation (faster, lifetime-restricted)
+    let stack_pinned = std::pin::pin!(String::from("stack"));
+}
+<span class="boring">}</span></code></pre>
+<p>Stack pinning avoids allocation but has lifetime restrictions.</p>
+<h2 id="12-compiler-analysis"><a class="header" href="#12-compiler-analysis">12. Compiler Analysis</a></h2>
+<h3 id="pin-error-messages"><a class="header" href="#pin-error-messages">Pin Error Messages</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::pin::Pin;
+use std::marker::PhantomPinned;
+
+struct NotUnpin {
+    _pin: PhantomPinned,
+}
+
+fn causes_error() {
+    let value = Box::new(NotUnpin { _pin: PhantomPinned });
+    let pinned = Pin::new(value);
+    // ERROR: the trait `Unpin` is not implemented
+}
+<span class="boring">}</span></code></pre>
+<h3 id="common-pin-confusion"><a class="header" href="#common-pin-confusion">Common Pin Confusion</a></h3>
+<p>“Pin&lt;&amp;mut T&gt; doesn’t let me access fields” - this is by design for <code>!Unpin</code> types.</p>
+<h2 id="13-alternatives-to-pin"><a class="header" href="#13-alternatives-to-pin">13. Alternatives to Pin</a></h2>
+<h3 id="when-pin-is-unnecessary"><a class="header" href="#when-pin-is-unnecessary">When Pin Is Unnecessary</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BEFORE (using Pin):
+struct WithPin {
+    data: String,
+    ptr: *const String,
+    _pin: PhantomPinned,
+}
+
+// AFTER (avoiding self-reference):
+struct WithoutPin {
+    data: String,
+}
+
+impl WithoutPin {
+    fn get_ref(&amp;self) -&gt; &amp;str {
+        &amp;self.data  // Just borrow normally
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="14-ai-agent-pin-analysis"><a class="header" href="#14-ai-agent-pin-analysis">14. AI Agent Pin Analysis</a></h2>
+<h3 id="detecting-unsound-pinning"><a class="header" href="#detecting-unsound-pinning">Detecting Unsound Pinning</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// AI agents should flag this:
+struct Unsound {
+    data: Vec&lt;u8&gt;,
+    ptr: *const Vec&lt;u8&gt;,
+    _pin: PhantomPinned,
+}
+
+impl Unsound {
+    // UNSOUND: Exposes &amp;mut to !Unpin type
+    fn get_data_mut(self: Pin&lt;&amp;mut Self&gt;) -&gt; &amp;mut Vec&lt;u8&gt; {
+        unsafe { &amp;mut self.get_unchecked_mut().data }  // DANGER!
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="verification-checklist"><a class="header" href="#verification-checklist">Verification Checklist</a></h3>
+<p>AI agents analyzing Pin code should verify:</p>
+<ol>
+<li>✅ <strong>PhantomPinned usage</strong> - Present for self-referential types</li>
+<li>✅ <strong>Projection safety</strong> - Projections return <code>Pin&lt;&amp;mut Field&gt;</code> for <code>!Unpin</code> fields</li>
+<li>✅ <strong>Initialization order</strong> - Self-references initialized after pinning</li>
+<li>✅ <strong>Drop implementation</strong> - Panic-safe and doesn’t move values</li>
+<li>✅ <strong>Future implementation</strong> - Uses <code>Pin&lt;&amp;mut Self&gt;</code> correctly</li>
+</ol>
+<h2 id="summary-pin-mental-model"><a class="header" href="#summary-pin-mental-model">Summary: Pin Mental Model</a></h2>
+<pre><code>┌──────────────────────────────────────────┐
+│ Pin&lt;P&lt;T&gt;&gt; Guarantees                     │
+├──────────────────────────────────────────┤
+│                                          │
+│  IF T: !Unpin:                           │
+│    - Value CANNOT move in memory        │
+│    - Address remains stable until drop   │
+│    - Enables self-references             │
+│                                          │
+│  IF T: Unpin:                            │
+│    - Pin is transparent wrapper          │
+│    - Value CAN be moved                  │
+│    - No special guarantees               │
+│                                          │
+└──────────────────────────────────────────┘
+</code></pre>
+<p><strong>Key Insight</strong>: Pin enables safe self-referential structures by preventing moves through the type system. It’s essential for async/await but adds complexity—use only when necessary.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="19-compiler-intrinsics-llvm.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="21-raw-pointers-pointer-arithmetic.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="19-compiler-intrinsics-llvm.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="21-raw-pointers-pointer-arithmetic.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

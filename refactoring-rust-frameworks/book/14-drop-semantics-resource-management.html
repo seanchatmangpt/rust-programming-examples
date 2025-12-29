@@ -1,0 +1,1636 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 14: Drop Semantics &amp; Resource Management Internals - Refactoring Rust Frameworks</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to refactoring Rust frameworks with real-world patterns and best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-80709b90.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a688046c.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Refactoring Rust Frameworks</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/seanchatmangpt/rust-programming-examples/edit/main/docs/src/14-drop-semantics-resource-management.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="chapter-drop-semantics--resource-management-internals"><a class="header" href="#chapter-drop-semantics--resource-management-internals">Chapter: Drop Semantics &amp; Resource Management Internals</a></h1>
+<h2 id="executive-summary-for-ai-agents"><a class="header" href="#executive-summary-for-ai-agents">Executive Summary for AI Agents</a></h2>
+<p>This chapter provides comprehensive coverage of Rust’s Drop trait and resource management internals. Understanding drop semantics is critical for framework refactoring because <strong>resource cleanup errors are the source of memory leaks, use-after-free bugs, and system resource exhaustion</strong>. When refactoring frameworks like actix-web, tokio, or custom async runtimes, you must understand:</p>
+<ul>
+<li><strong>When</strong> drop executes (scope, panic, explicit)</li>
+<li><strong>How</strong> drop ordering affects correctness (cascading cleanup)</li>
+<li><strong>What</strong> happens when drop fails (double panic = abort)</li>
+<li><strong>Why</strong> zero-cost abstractions depend on drop analysis</li>
+<li><strong>Where</strong> to use ManuallyDrop, mem::forget, and Box::leak</li>
+</ul>
+<p>This knowledge enables you to safely migrate legacy cleanup code to RAII patterns, prevent resource leaks during refactoring, and maintain backward compatibility when changing drop behavior.</p>
+<hr>
+<h2 id="1-the-drop-trait--execution"><a class="header" href="#1-the-drop-trait--execution">1. The Drop Trait &amp; Execution</a></h2>
+<h3 id="when-drop-is-called"><a class="header" href="#when-drop-is-called">When Drop Is Called</a></h3>
+<p>The Drop trait executes during three primary scenarios:</p>
+<p><strong>Scenario 1: Variable Scope End</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn scope_example() {
+    let s = String::from("hello");
+    // s.drop() called here at end of scope
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Scenario 2: Explicit drop() Call</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn explicit_drop_example() {
+    let s = String::from("hello");
+    drop(s);  // s.drop() called immediately
+    // s is moved into drop(), no longer accessible
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Scenario 3: Panic Unwind</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn panic_unwind_example() {
+    let s = String::from("hello");
+    panic!("oops");
+    // s.drop() is called during unwinding
+}
+<span class="boring">}</span></code></pre>
+<h3 id="drop-execution-order-right-to-left"><a class="header" href="#drop-execution-order-right-to-left">Drop Execution Order: Right-to-Left</a></h3>
+<p>Rust drops variables in reverse declaration order within a scope:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn drop_order() {
+    let first = String::from("first");
+    let second = String::from("second");
+    let third = String::from("third");
+    // Drop order: third → second → first
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Why right-to-left?</strong> This ensures that dependencies are cleaned up before their dependents:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Database { /* ... */ }
+struct Connection&lt;'a&gt; { db: &amp;'a Database }
+
+fn example() {
+    let db = Database::new();
+    let conn = Connection { db: &amp;db };
+    // conn must drop before db (which it does: right-to-left)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="field-drop-order-in-structs"><a class="header" href="#field-drop-order-in-structs">Field Drop Order in Structs</a></h3>
+<p>Fields drop <strong>after</strong> the struct’s custom Drop implementation, in <strong>declaration order</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Resource {
+    first: String,
+    second: Vec&lt;i32&gt;,
+    third: Box&lt;File&gt;,
+}
+
+impl Drop for Resource {
+    fn drop(&amp;mut self) {
+        println!("Custom drop logic");
+        // Fields not yet dropped here
+    }
+    // After this exits:
+    // 1. first.drop()
+    // 2. second.drop()
+    // 3. third.drop()
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Critical implication for refactoring</strong>: If you add a custom Drop implementation to an existing struct, the field drop order changes from declaration order to “custom drop → then declaration order.”</p>
+<h3 id="double-drop-prevention"><a class="header" href="#double-drop-prevention">Double-Drop Prevention</a></h3>
+<p>Rust’s type system prevents double-drops at compile time:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let s = String::from("hello");
+drop(s);
+drop(s);  // ERROR: use of moved value
+<span class="boring">}</span></code></pre>
+<p>The <code>drop()</code> function takes ownership by value:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn drop&lt;T&gt;(_x: T) { }  // Takes ownership, T drops at end
+<span class="boring">}</span></code></pre>
+<h3 id="copy-vs-non-copy-types-and-drop"><a class="header" href="#copy-vs-non-copy-types-and-drop">Copy vs Non-Copy Types and Drop</a></h3>
+<p><strong>Copy types cannot implement Drop</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Copy, Clone)]
+struct Point { x: i32, y: i32 }
+
+impl Drop for Point {  // ERROR: Copy types cannot implement Drop
+    fn drop(&amp;mut self) { }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Why?</strong> Copy semantics imply bitwise copy with no cleanup. Drop implies resource ownership requiring cleanup. These are fundamentally incompatible.</p>
+<h3 id="conditional-drops-option-and-resultt-e"><a class="header" href="#conditional-drops-option-and-resultt-e">Conditional Drops: Option<t> and Result&lt;T, E&gt;</t></a></h3>
+<p>Option and Result conditionally drop their contents:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let opt: Option&lt;String&gt; = Some("hello".to_string());
+// When opt drops:
+// - If Some(s), s.drop() is called
+// - If None, no drop occurs
+
+let result: Result&lt;String, Error&gt; = Ok("success".to_string());
+// When result drops:
+// - If Ok(s), s.drop() is called
+// - If Err(e), e.drop() is called
+<span class="boring">}</span></code></pre>
+<p><strong>Real-world example from libgit2-rs-safe</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Repository {
+    raw: *mut raw::git_repository  // Always valid, always dropped
+}
+
+impl Drop for Repository {
+    fn drop(&amp;mut self) {
+        unsafe {
+            raw::git_repository_free(self.raw);  // Always called
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="2-drop-ordering--cascading-effects"><a class="header" href="#2-drop-ordering--cascading-effects">2. Drop Ordering &amp; Cascading Effects</a></h2>
+<h3 id="struct-field-drop-order-and-implications"><a class="header" href="#struct-field-drop-order-and-implications">Struct Field Drop Order and Implications</a></h3>
+<p><strong>Declaration order determines cleanup sequence</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct WebServer {
+    listener: TcpListener,    // Drops first
+    thread_pool: ThreadPool,  // Drops second
+    logger: Logger,           // Drops third
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Problem during refactoring</strong>: If you reorder fields, drop order changes:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct WebServer {
+    logger: Logger,           // Now drops first!
+    listener: TcpListener,    // Drops second
+    thread_pool: ThreadPool,  // Drops third
+}
+<span class="boring">}</span></code></pre>
+<p>If <code>ThreadPool::drop()</code> logs shutdown messages, but <code>Logger</code> has already closed the log file, those messages are lost.</p>
+<p><strong>Solution</strong>: Use explicit Drop implementation with controlled order:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Drop for WebServer {
+    fn drop(&amp;mut self) {
+        // Explicit, documented order
+        drop(&amp;mut self.thread_pool);  // Log shutdown messages
+        drop(&amp;mut self.listener);     // Close listener
+        // logger drops last automatically
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="tuple-drop-order"><a class="header" href="#tuple-drop-order">Tuple Drop Order</a></h3>
+<p>Tuples drop in field order (left to right):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let tuple = (
+    String::from("first"),
+    String::from("second"),
+    String::from("third"),
+);
+// Drop order: first → second → third
+<span class="boring">}</span></code></pre>
+<h3 id="variable-shadowing-and-early-drops"><a class="header" href="#variable-shadowing-and-early-drops">Variable Shadowing and Early Drops</a></h3>
+<p>Shadowing triggers immediate drop of the shadowed value:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let x = String::from("first");
+let x = String::from("second");  // "first" is dropped here
+// Only "second" exists now
+<span class="boring">}</span></code></pre>
+<p><strong>Practical use</strong>: Early resource release:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let file = File::open("data.txt")?;
+let data = read_all(&amp;file)?;
+let file = ();  // Explicitly drop file early, shadow with ()
+// file handle released, data still accessible
+<span class="boring">}</span></code></pre>
+<h3 id="explicit-drop-calls-and-semantics"><a class="header" href="#explicit-drop-calls-and-semantics">Explicit drop() Calls and Semantics</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut vec = vec![1, 2, 3];
+drop(vec);
+// vec is moved, cannot use it
+// vec.push(4);  // ERROR: use of moved value
+<span class="boring">}</span></code></pre>
+<p><strong>When to use explicit drop()</strong>:</p>
+<ol>
+<li>Release resources early in long-running functions</li>
+<li>Clarify drop order in complex code</li>
+<li>Trigger side effects at precise points</li>
+</ol>
+<h3 id="manuallydrop-preventing-drops"><a class="header" href="#manuallydrop-preventing-drops">ManuallyDrop: Preventing Drops</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::mem::ManuallyDrop;
+
+struct ResourceManager {
+    handle: ManuallyDrop&lt;File&gt;,
+}
+
+impl Drop for ResourceManager {
+    fn drop(&amp;mut self) {
+        // Manually control when file closes
+        unsafe {
+            ManuallyDrop::drop(&amp;mut self.handle);
+        }
+        // Perform additional cleanup
+        log_shutdown();
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Real-world pattern</strong>: FFI resource management where C code owns the resource:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct CResource {
+    ptr: ManuallyDrop&lt;*mut c_void&gt;,
+}
+
+// C code will free this, don't drop in Rust
+<span class="boring">}</span></code></pre>
+<h3 id="drop-guards-and-raii-patterns"><a class="header" href="#drop-guards-and-raii-patterns">Drop Guards and RAII Patterns</a></h3>
+<p><strong>Mutex drop guard</strong> (standard library):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;T&gt; Drop for MutexGuard&lt;'_, T&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            self.lock.inner.raw_unlock();  // Always unlocks
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Custom scope guard pattern</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct ScopeGuard&lt;F: FnOnce()&gt; {
+    cleanup: Option&lt;F&gt;,
+}
+
+impl&lt;F: FnOnce()&gt; Drop for ScopeGuard&lt;F&gt; {
+    fn drop(&amp;mut self) {
+        if let Some(cleanup) = self.cleanup.take() {
+            cleanup();
+        }
+    }
+}
+
+fn transactional_operation() {
+    let _guard = ScopeGuard {
+        cleanup: Some(|| rollback_transaction())
+    };
+
+    perform_operation()?;
+
+    std::mem::forget(_guard);  // Success: don't rollback
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="3-panic-safety-during-drop"><a class="header" href="#3-panic-safety-during-drop">3. Panic Safety During Drop</a></h2>
+<h3 id="what-happens-when-drop-panics"><a class="header" href="#what-happens-when-drop-panics">What Happens When Drop Panics</a></h3>
+<p><strong>Double panic = immediate abort</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct PanickingDrop;
+
+impl Drop for PanickingDrop {
+    fn drop(&amp;mut self) {
+        panic!("Drop panic!");
+    }
+}
+
+fn example() {
+    let _x = PanickingDrop;
+    panic!("First panic");
+    // During unwind, _x.drop() panics
+    // Double panic: process aborts
+}
+<span class="boring">}</span></code></pre>
+<h3 id="drop-panic-handling-in-drop-implementations"><a class="header" href="#drop-panic-handling-in-drop-implementations">Drop Panic Handling in Drop Implementations</a></h3>
+<p><strong>Never panic in drop</strong> (unless you want to abort):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD: Can panic
+impl Drop for Database {
+    fn drop(&amp;mut self) {
+        self.connection.flush().unwrap();  // Panic if flush fails!
+    }
+}
+
+// GOOD: Handle errors
+impl Drop for Database {
+    fn drop(&amp;mut self) {
+        if let Err(e) = self.connection.flush() {
+            eprintln!("Warning: flush failed during drop: {}", e);
+            // Log but don't panic
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="real-world-example-gap-buffer"><a class="header" href="#real-world-example-gap-buffer">Real-World Example: Gap Buffer</a></h3>
+<p>From <code>/home/user/rust-programming-examples/gap-buffer/src/lib.rs</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;T&gt; Drop for GapBuffer&lt;T&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            // Drop elements before gap
+            for i in 0 .. self.gap.start {
+                std::ptr::drop_in_place(self.space_mut(i));
+            }
+            // Drop elements after gap
+            for i in self.gap.end .. self.capacity() {
+                std::ptr::drop_in_place(self.space_mut(i));
+            }
+        }
+        // Vec&lt;T&gt; itself drops, freeing storage
+        // No panics possible unless T::drop() panics
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Why this is panic-safe</strong>: If any element’s drop panics, unwinding continues. Remaining elements might leak, but no double-free occurs because:</p>
+<ol>
+<li>Elements are only dropped once</li>
+<li>Vec’s storage is freed regardless (Vec::drop doesn’t panic)</li>
+</ol>
+<h3 id="testing-drop-behavior-during-panics"><a class="header" href="#testing-drop-behavior-during-panics">Testing Drop Behavior During Panics</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+#[should_panic]
+fn test_drop_during_panic() {
+    struct DropChecker(Arc&lt;AtomicBool&gt;);
+
+    impl Drop for DropChecker {
+        fn drop(&amp;mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+
+    let dropped = Arc::new(AtomicBool::new(false));
+    let checker = DropChecker(dropped.clone());
+
+    panic!("test panic");
+
+    // This won't run, but drop will
+    assert!(dropped.load(Ordering::SeqCst));
+}
+<span class="boring">}</span></code></pre>
+<h3 id="ensuring-drop-never-panics"><a class="header" href="#ensuring-drop-never-panics">Ensuring Drop Never Panics</a></h3>
+<p><strong>Best practices</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Drop for CriticalResource {
+    fn drop(&amp;mut self) {
+        // 1. Catch panics from fallible operations
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.risky_cleanup();
+        }));
+
+        // 2. Use abort on critical failures
+        if !self.cleanup_critical_invariant() {
+            std::process::abort();
+        }
+
+        // 3. Log errors instead of panicking
+        if let Err(e) = self.flush() {
+            log::error!("Flush failed in drop: {}", e);
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="4-zero-cost-abstractions-through-drop"><a class="header" href="#4-zero-cost-abstractions-through-drop">4. Zero-Cost Abstractions Through Drop</a></h2>
+<h3 id="how-drop-enables-zero-cost-abstractions"><a class="header" href="#how-drop-enables-zero-cost-abstractions">How Drop Enables Zero-Cost Abstractions</a></h3>
+<p><strong>String vs &amp;str</strong>: String owns heap memory, drop frees it. &amp;str is a view with no drop cost.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn process(s: String) {
+    // Uses s
+}  // s.drop() frees heap allocation
+
+fn process_ref(s: &amp;str) {
+    // Uses s
+}  // No drop, no cost
+<span class="boring">}</span></code></pre>
+<p><strong>RAII Mutex Lock</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Zero runtime cost compared to manual lock/unlock
+let guard = mutex.lock();
+// Use guard
+// guard.drop() unlocks automatically - no extra code
+<span class="boring">}</span></code></pre>
+<h3 id="compiler-optimizations-drop-elision"><a class="header" href="#compiler-optimizations-drop-elision">Compiler Optimizations: Drop Elision</a></h3>
+<p>The compiler can <strong>elide drops</strong> when it proves they’re unnecessary:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example() {
+    let x = 42_i32;
+}  // No drop code generated: i32 has no drop
+<span class="boring">}</span></code></pre>
+<p><strong>More complex</strong>: The compiler tracks which paths need drops:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn conditional_drop(flag: bool) {
+    let s = String::from("hello");
+    if flag {
+        drop(s);
+        return;
+    }
+    // Compiler knows s needs drop here
+}  // Drop only on non-early-return path
+<span class="boring">}</span></code></pre>
+<h3 id="unused-variable-optimization"><a class="header" href="#unused-variable-optimization">Unused Variable Optimization</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example() {
+    let _unused = String::from("never used");
+    // Compiler might eliminate allocation entirely
+}
+<span class="boring">}</span></code></pre>
+<p><strong>With side effects</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example() {
+    let _file = File::create("log.txt")?;  // Created
+    // Not used, but drop has side effects (close file)
+    // Compiler cannot elide
+}
+<span class="boring">}</span></code></pre>
+<h3 id="dead-code-elimination-with-drop-analysis"><a class="header" href="#dead-code-elimination-with-drop-analysis">Dead Code Elimination with Drop Analysis</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example(flag: bool) {
+    let s = String::from("hello");
+    if flag {
+        return;
+    }
+    // s used here
+    println!("{}", s);
+}
+
+// Compiler generates two drop paths:
+// 1. Early return: drop s
+// 2. Normal exit: drop s after println
+<span class="boring">}</span></code></pre>
+<h3 id="escape-analysis-and-drop-implications"><a class="header" href="#escape-analysis-and-drop-implications">Escape Analysis and Drop Implications</a></h3>
+<p><strong>Heap allocation can be optimized to stack</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn no_escape() -&gt; i32 {
+    let b = Box::new(42);
+    *b  // Box doesn't escape, might be stack-allocated
+}
+<span class="boring">}</span></code></pre>
+<p><strong>But drop prevents some optimizations</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn with_drop_side_effect() {
+    let b = Box::new(File::open("log.txt")?);
+    // Cannot optimize away heap allocation:
+    // Drop has side effects (closes file)
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="5-custom-drop-implementations"><a class="header" href="#5-custom-drop-implementations">5. Custom Drop Implementations</a></h2>
+<h3 id="writing-correct-drop-implementations"><a class="header" href="#writing-correct-drop-implementations">Writing Correct Drop Implementations</a></h3>
+<p><strong>Golden rules</strong>:</p>
+<ol>
+<li><strong>Drop must be idempotent-safe</strong>: Calling drop twice is prevented by type system, but partial drops during panic must be safe.</li>
+<li><strong>Drop must not panic</strong>: Unless you want to abort.</li>
+<li><strong>Drop must not leak</strong>: Clean up all owned resources.</li>
+<li><strong>Drop must not access dropped fields</strong>: Fields drop after your Drop::drop.</li>
+</ol>
+<p><strong>Correct pattern</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Resource {
+    handle: File,
+    buffer: Vec&lt;u8&gt;,
+}
+
+impl Drop for Resource {
+    fn drop(&amp;mut self) {
+        // 1. Flush buffer to file
+        let _ = self.handle.write_all(&amp;self.buffer);
+
+        // 2. handle and buffer drop after this
+        //    (fields drop in declaration order)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="interaction-with-box-vec-string"><a class="header" href="#interaction-with-box-vec-string">Interaction with Box, Vec, String</a></h3>
+<p><strong>Box<t></t></strong> drops T then frees allocation:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;T&gt; Drop for Box&lt;T&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            ptr::drop_in_place(self.as_mut_ptr());  // Drop T
+            // Free allocation
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Vec<t></t></strong> drops all elements then frees buffer:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;T&gt; Drop for Vec&lt;T&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            // Drop each element
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len()));
+            // Free buffer
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="ffi-cleanup-patterns-real-example-from-libgit2-rs-safe"><a class="header" href="#ffi-cleanup-patterns-real-example-from-libgit2-rs-safe">FFI Cleanup Patterns: Real Example from libgit2-rs-safe</a></h3>
+<p>From <code>/home/user/rust-programming-examples/libgit2-rs-safe/src/git/mod.rs</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Repository {
+    raw: *mut raw::git_repository  // C pointer
+}
+
+impl Drop for Repository {
+    fn drop(&amp;mut self) {
+        unsafe {
+            raw::git_repository_free(self.raw);  // Call C free function
+        }
+    }
+}
+
+pub struct Commit&lt;'repo&gt; {
+    raw: *mut raw::git_commit,
+    _marker: PhantomData&lt;&amp;'repo Repository&gt;  // Lifetime dependency
+}
+
+impl&lt;'repo&gt; Drop for Commit&lt;'repo&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            raw::git_commit_free(self.raw);  // Free commit before repo
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Why PhantomData?</strong> Ensures Commit cannot outlive Repository. The lifetime ’repo ties commit cleanup to repository lifetime.</p>
+<h3 id="nested-drops-and-complex-ownership"><a class="header" href="#nested-drops-and-complex-ownership">Nested Drops and Complex Ownership</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Parent {
+    children: Vec&lt;Child&gt;,
+}
+
+struct Child {
+    data: String,
+}
+
+impl Drop for Parent {
+    fn drop(&amp;mut self) {
+        println!("Dropping parent");
+        // children.drop() happens after this
+        // which drops each Child
+    }
+}
+
+impl Drop for Child {
+    fn drop(&amp;mut self) {
+        println!("Dropping child");
+        // data.drop() happens after this
+    }
+}
+
+// Output when Parent drops:
+// Dropping parent
+// Dropping child (for each child)
+<span class="boring">}</span></code></pre>
+<h3 id="common-drop-implementation-pitfalls"><a class="header" href="#common-drop-implementation-pitfalls">Common Drop Implementation Pitfalls</a></h3>
+<p><strong>Pitfall 1: Accessing fields after manual drop</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD
+impl Drop for Resource {
+    fn drop(&amp;mut self) {
+        unsafe { ManuallyDrop::drop(&amp;mut self.handle); }
+        self.handle.flush();  // Use-after-free!
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pitfall 2: Recursive drop causing stack overflow</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD: Recursive structure without indirection
+struct Node {
+    next: Option&lt;Node&gt;,  // Should be Box&lt;Node&gt;
+}
+
+// Dropping deep list causes stack overflow
+<span class="boring">}</span></code></pre>
+<p><strong>Pitfall 3: Forgetting to drop all resources</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD
+struct TwoResources {
+    first: File,
+    second: File,
+}
+
+impl Drop for TwoResources {
+    fn drop(&amp;mut self) {
+        drop(&amp;mut self.first);
+        // Forgot to drop self.second!
+        // Actually both drop automatically, but if manually managing:
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="6-drop-gadgets--type-system-tricks"><a class="header" href="#6-drop-gadgets--type-system-tricks">6. Drop Gadgets &amp; Type System Tricks</a></h2>
+<h3 id="phantomdata-and-drop-variance"><a class="header" href="#phantomdata-and-drop-variance">PhantomData and Drop Variance</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::marker::PhantomData;
+
+struct Invariant&lt;'a, T&gt; {
+    _marker: PhantomData&lt;fn(&amp;'a T) -&gt; &amp;'a T&gt;,  // Invariant over 'a and T
+}
+
+// Drop check uses PhantomData to understand lifetimes
+impl&lt;'a, T&gt; Drop for Invariant&lt;'a, T&gt; {
+    fn drop(&amp;mut self) {
+        // Compiler knows 'a must be valid here
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="using-drop-for-compile-time-invariant-checking"><a class="header" href="#using-drop-for-compile-time-invariant-checking">Using Drop for Compile-Time Invariant Checking</a></h3>
+<p><strong>Enforce “exactly once” semantics</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Transaction {
+    committed: bool,
+}
+
+impl Drop for Transaction {
+    fn drop(&amp;mut self) {
+        if !self.committed {
+            panic!("Transaction dropped without commit or rollback!");
+        }
+    }
+}
+
+impl Transaction {
+    fn commit(mut self) {
+        // Perform commit
+        self.committed = true;
+        // self drops here, but committed = true, so no panic
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="type-level-drop-patterns"><a class="header" href="#type-level-drop-patterns">Type-Level Drop Patterns</a></h3>
+<p><strong>DropGuard pattern</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct DropGuard&lt;T, F: FnOnce(&amp;mut T)&gt; {
+    value: ManuallyDrop&lt;T&gt;,
+    cleanup: ManuallyDrop&lt;F&gt;,
+}
+
+impl&lt;T, F: FnOnce(&amp;mut T)&gt; Drop for DropGuard&lt;T, F&gt; {
+    fn drop(&amp;mut self) {
+        unsafe {
+            let cleanup = ManuallyDrop::take(&amp;mut self.cleanup);
+            cleanup(ManuallyDrop::deref_mut(&amp;mut self.value));
+            ManuallyDrop::drop(&amp;mut self.value);
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>NoDrop marker</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct NoDrop&lt;T&gt; {
+    inner: ManuallyDrop&lt;T&gt;,
+}
+
+impl&lt;T&gt; NoDrop&lt;T&gt; {
+    fn new(value: T) -&gt; Self {
+        NoDrop { inner: ManuallyDrop::new(value) }
+    }
+
+    fn into_inner(mut self) -&gt; T {
+        unsafe { ManuallyDrop::take(&amp;mut self.inner) }
+    }
+}
+// NoDrop never calls T::drop unless explicitly into_inner
+<span class="boring">}</span></code></pre>
+<h3 id="scope-guards"><a class="header" href="#scope-guards">Scope Guards</a></h3>
+<p><strong>defer! macro pattern</strong> (popular in Go):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>macro_rules! defer {
+    ($($body:tt)*) =&gt; {
+        let _guard = {
+            struct Guard&lt;F: FnOnce()&gt;(Option&lt;F&gt;);
+            impl&lt;F: FnOnce()&gt; Drop for Guard&lt;F&gt; {
+                fn drop(&amp;mut self) {
+                    (self.0.take().unwrap())()
+                }
+            }
+            Guard(Some(|| { $($body)* }))
+        };
+    };
+}
+
+fn example() {
+    defer! { println!("Cleanup"); }
+    println!("Work");
+    // Prints: Work, Cleanup
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="7-advanced-patterns-leaking--dropping"><a class="header" href="#7-advanced-patterns-leaking--dropping">7. Advanced Patterns: Leaking &amp; Dropping</a></h2>
+<h3 id="memforget-and-why-it-exists"><a class="header" href="#memforget-and-why-it-exists">mem::forget and Why It Exists</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let s = String::from("leak this");
+std::mem::forget(s);  // s is never dropped, memory leaked
+<span class="boring">}</span></code></pre>
+<p><strong>Why allow leaking?</strong> Leaking is <strong>safe</strong> in Rust’s memory model:</p>
+<ul>
+<li>No undefined behavior</li>
+<li>No dangling pointers</li>
+<li>Just resource leak (like C malloc without free)</li>
+</ul>
+<p><strong>When to use</strong>:</p>
+<ol>
+<li><strong>FFI ownership transfer</strong>:</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[no_mangle]
+pub extern "C" fn create_string() -&gt; *mut c_char {
+    let s = CString::new("Hello").unwrap();
+    let ptr = s.as_ptr();
+    std::mem::forget(s);  // Transfer ownership to C
+    ptr as *mut c_char
+}
+<span class="boring">}</span></code></pre>
+<ol start="2">
+<li><strong>Singleton initialization</strong>:</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn get_global() -&gt; &amp;'static Config {
+    static ONCE: Once = Once::new();
+    static mut CONFIG: Option&lt;Config&gt; = None;
+
+    ONCE.call_once(|| {
+        let config = Config::load();
+        unsafe { CONFIG = Some(config); }
+    });
+
+    unsafe { CONFIG.as_ref().unwrap() }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="intentional-leaking"><a class="header" href="#intentional-leaking">Intentional Leaking</a></h3>
+<p><strong>Static initialization</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn leak_for_static&lt;T&gt;(value: T) -&gt; &amp;'static T {
+    Box::leak(Box::new(value))
+}
+
+static LOGGER: &amp;Logger = leak_for_static(Logger::new());
+<span class="boring">}</span></code></pre>
+<p><strong>Background task ownership</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn spawn_background_task() {
+    let state = Arc::new(Mutex::new(State::new()));
+
+    std::thread::spawn({
+        let state = Arc::clone(&amp;state);
+        move || loop {
+            // state kept alive by this thread forever
+        }
+    });
+
+    std::mem::forget(state);  // Main thread drops reference
+    // Background thread keeps state alive
+}
+<span class="boring">}</span></code></pre>
+<h3 id="boxleak-semantics"><a class="header" href="#boxleak-semantics">Box::leak Semantics</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let b = Box::new(42);
+let static_ref: &amp;'static i32 = Box::leak(b);
+// b's memory is never freed, but accessible forever
+<span class="boring">}</span></code></pre>
+<p><strong>Difference from forget</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let b = Box::new(42);
+let ptr = &amp;*b as *const i32;
+std::mem::forget(b);
+// ptr is dangling! Box deallocated but not dropped
+
+let b = Box::new(42);
+let r = Box::leak(b);
+// r is valid forever, memory intentionally leaked
+<span class="boring">}</span></code></pre>
+<h3 id="leak-detection-and-safety"><a class="header" href="#leak-detection-and-safety">Leak Detection and Safety</a></h3>
+<p><strong>Leak Amplification Attack</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD: User can cause unbounded leak
+pub fn user_operation(s: String) {
+    std::mem::forget(s);  // Each call leaks
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Detection with Drop flags</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+struct LeakDetector {
+    dropped: Arc&lt;AtomicBool&gt;,
+}
+
+#[cfg(test)]
+impl Drop for LeakDetector {
+    fn drop(&amp;mut self) {
+        self.dropped.store(true, Ordering::SeqCst);
+    }
+}
+
+#[test]
+fn test_no_leak() {
+    let dropped = Arc::new(AtomicBool::new(false));
+    let detector = LeakDetector { dropped: dropped.clone() };
+
+    some_operation(detector);
+
+    assert!(dropped.load(Ordering::SeqCst), "Memory leaked!");
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="8-concurrent-drop--thread-safety"><a class="header" href="#8-concurrent-drop--thread-safety">8. Concurrent Drop &amp; Thread Safety</a></h2>
+<h3 id="drop-thread-safety-requirements"><a class="header" href="#drop-thread-safety-requirements">Drop Thread Safety Requirements</a></h3>
+<p><strong>Send + Sync requirements propagate to Drop</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Resource {
+    data: Rc&lt;i32&gt;,  // Not Send
+}
+
+// Cannot send to another thread:
+// std::thread::spawn(|| { let r = Resource { ... }; });
+// ERROR: Rc&lt;i32&gt; is not Send
+
+impl Drop for Resource {
+    fn drop(&amp;mut self) {
+        // Runs on whatever thread owns Resource
+        // If Resource is not Send, drop always runs on original thread
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="sendsync-and-drop-constraints"><a class="header" href="#sendsync-and-drop-constraints">Send/Sync and Drop Constraints</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Send: Can drop on any thread
+struct SendResource {
+    data: Arc&lt;i32&gt;,  // Send + Sync
+}
+
+// Safe to move to another thread and drop there
+std::thread::spawn(move || {
+    let r = SendResource { data: Arc::new(42) };
+    // r.drop() happens on this thread
+});
+<span class="boring">}</span></code></pre>
+<h3 id="locking-in-drop-and-deadlock-prevention"><a class="header" href="#locking-in-drop-and-deadlock-prevention">Locking in Drop and Deadlock Prevention</a></h3>
+<p><strong>Real-world pattern from spawn-blocking</strong>:</p>
+<p>From <code>/home/user/rust-programming-examples/spawn-blocking/src/lib.rs</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct SpawnBlocking&lt;T&gt;(Arc&lt;Mutex&lt;Shared&lt;T&gt;&gt;&gt;);
+
+struct Shared&lt;T&gt; {
+    value: Option&lt;T&gt;,
+    waker: Option&lt;Waker&gt;,
+}
+
+// No explicit Drop - Arc handles reference counting
+// When last Arc drops, Mutex and contents drop
+// No deadlock: Mutex lock is never held across await
+<span class="boring">}</span></code></pre>
+<p><strong>Deadlock example</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// BAD: Potential deadlock
+impl Drop for ResourceA {
+    fn drop(&amp;mut self) {
+        let _lock = GLOBAL_LOCK_A.lock();
+        let _lock2 = GLOBAL_LOCK_B.lock();  // A -&gt; B order
+    }
+}
+
+impl Drop for ResourceB {
+    fn drop(&amp;mut self) {
+        let _lock = GLOBAL_LOCK_B.lock();
+        let _lock2 = GLOBAL_LOCK_A.lock();  // B -&gt; A order - DEADLOCK!
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Solution: Consistent lock ordering</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// GOOD: Same order everywhere
+impl Drop for ResourceA {
+    fn drop(&amp;mut self) {
+        let _lock = GLOBAL_LOCK_A.lock();
+        let _lock2 = GLOBAL_LOCK_B.lock();  // A -&gt; B
+    }
+}
+
+impl Drop for ResourceB {
+    fn drop(&amp;mut self) {
+        let _lock = GLOBAL_LOCK_A.lock();
+        let _lock2 = GLOBAL_LOCK_B.lock();  // A -&gt; B (same order)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="cross-thread-resource-cleanup"><a class="header" href="#cross-thread-resource-cleanup">Cross-Thread Resource Cleanup</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct SharedResource {
+    handle: Arc&lt;Mutex&lt;File&gt;&gt;,
+}
+
+impl Drop for SharedResource {
+    fn drop(&amp;mut self) {
+        if Arc::strong_count(&amp;self.handle) == 1 {
+            // Last reference: perform expensive cleanup
+            let mut file = self.handle.lock().unwrap();
+            file.flush().ok();
+        }
+        // Arc drops, maybe frees
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="drop-order-in-concurrent-code"><a class="header" href="#drop-order-in-concurrent-code">Drop Order in Concurrent Code</a></h3>
+<p><strong>Problem</strong>: Drop order is deterministic per-thread, but thread scheduling is not:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn concurrent_drop() {
+    let a = Resource::new("A");
+    let b = Resource::new("B");
+
+    std::thread::scope(|s| {
+        s.spawn(|| drop(a));  // Thread 1
+        s.spawn(|| drop(b));  // Thread 2
+    });
+
+    // a and b drop in non-deterministic order!
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Solution</strong>: Explicit synchronization:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn synchronized_drop() {
+    let a = Arc::new(Resource::new("A"));
+    let b = Arc::new(Resource::new("B"));
+
+    let (tx, rx) = channel();
+
+    std::thread::spawn({
+        let a = Arc::clone(&amp;a);
+        move || {
+            drop(a);
+            tx.send(()).unwrap();  // Signal completion
+        }
+    });
+
+    rx.recv().unwrap();  // Wait for a to drop
+    drop(b);  // Now b drops after a
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="9-compiler-analysis--optimization"><a class="header" href="#9-compiler-analysis--optimization">9. Compiler Analysis &amp; Optimization</a></h2>
+<h3 id="how-drop-affects-borrow-checker-analysis"><a class="header" href="#how-drop-affects-borrow-checker-analysis">How Drop Affects Borrow Checker Analysis</a></h3>
+<p><strong>Drop extends lifetimes</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example() {
+    let x = String::from("hello");
+    let r = &amp;x;
+
+    println!("{}", r);
+    // x.drop() happens here, not after `let r = &amp;x`
+    // Borrow checker extends x's lifetime to cover r's usage
+}
+<span class="boring">}</span></code></pre>
+<h3 id="lifetime-extension-through-drop-order"><a class="header" href="#lifetime-extension-through-drop-order">Lifetime Extension Through Drop Order</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Container&lt;'a&gt; {
+    data: &amp;'a str,
+}
+
+fn example() {
+    let s = String::from("hello");
+    let c = Container { data: &amp;s };
+
+    // s must outlive c
+    // Drop order: c.drop(), then s.drop()
+    // Borrow checker ensures this
+}
+<span class="boring">}</span></code></pre>
+<h3 id="nll-non-lexical-lifetimes-and-drop"><a class="header" href="#nll-non-lexical-lifetimes-and-drop">NLL (Non-Lexical Lifetimes) and Drop</a></h3>
+<p><strong>Pre-NLL</strong> (Rust 2015):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example() {
+    let mut x = String::from("hello");
+    let r = &amp;x;
+    println!("{}", r);
+    // r's lifetime extends to end of scope
+    x.push_str(" world");  // ERROR: x still borrowed
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Post-NLL</strong> (Rust 2018+):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn example() {
+    let mut x = String::from("hello");
+    let r = &amp;x;
+    println!("{}", r);  // Last use of r
+    // r's lifetime ends here
+    x.push_str(" world");  // OK: x no longer borrowed
+}
+<span class="boring">}</span></code></pre>
+<p>Drop analysis works with NLL to minimize lifetime extents.</p>
+<h3 id="unused-destructuring-and-drop"><a class="header" href="#unused-destructuring-and-drop">Unused Destructuring and Drop</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let (a, _b) = (String::from("used"), String::from("unused"));
+// _b is dropped immediately (unused binding)
+// a lives until end of scope
+<span class="boring">}</span></code></pre>
+<p><strong>With explicit use</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let (a, b) = (String::from("used"), String::from("also used"));
+println!("{} {}", a, b);
+// Both live until after println
+<span class="boring">}</span></code></pre>
+<h3 id="function-inlining-and-drop-implications"><a class="header" href="#function-inlining-and-drop-implications">Function Inlining and Drop Implications</a></h3>
+<p><strong>Without inlining</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn process(s: String) {
+    // Use s
+}  // s.drop() here
+
+fn caller() {
+    let s = String::from("hello");
+    process(s);  // Ownership moved, drop happens in process()
+}
+<span class="boring">}</span></code></pre>
+<p><strong>With inlining</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn caller() {
+    let s = String::from("hello");
+    // process() inlined here
+    {
+        let s = s;  // Moved into inline scope
+        // Use s
+    }  // s.drop() here (in caller's stack frame)
+}
+<span class="boring">}</span></code></pre>
+<p>Inlining can change <strong>where</strong> drop code executes, but not <strong>when</strong> (semantically).</p>
+<hr>
+<h2 id="10-practical-patterns-for-framework-refactoring"><a class="header" href="#10-practical-patterns-for-framework-refactoring">10. Practical Patterns for Framework Refactoring</a></h2>
+<h3 id="changing-drop-behavior-during-refactoring"><a class="header" href="#changing-drop-behavior-during-refactoring">Changing Drop Behavior During Refactoring</a></h3>
+<p><strong>Scenario</strong>: Migrating from manual cleanup to RAII.</p>
+<p><strong>Before</strong> (manual cleanup):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Server {
+    socket: Socket,
+}
+
+impl Server {
+    fn shutdown(&amp;mut self) {
+        self.socket.close();  // Manual cleanup
+    }
+}
+
+// Users must call shutdown() explicitly
+<span class="boring">}</span></code></pre>
+<p><strong>After</strong> (RAII):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Server {
+    socket: Socket,
+}
+
+impl Drop for Server {
+    fn drop(&amp;mut self) {
+        self.socket.close();  // Automatic cleanup
+    }
+}
+
+// Cleanup happens automatically
+<span class="boring">}</span></code></pre>
+<p><strong>Migration strategy</strong>:</p>
+<ol>
+<li>Add Drop implementation</li>
+<li>Deprecate manual cleanup method</li>
+<li>Make manual method a no-op (drop handles it)</li>
+<li>Eventually remove manual method</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Server {
+    #[deprecated(note = "Cleanup now happens automatically in Drop")]
+    fn shutdown(&amp;mut self) {
+        // No-op, drop handles it
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migrating-manual-cleanup-to-drop"><a class="header" href="#migrating-manual-cleanup-to-drop">Migrating Manual Cleanup to Drop</a></h3>
+<p><strong>Complex example: Connection pool</strong>:</p>
+<p><strong>Before</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct ConnectionPool {
+    connections: Vec&lt;Connection&gt;,
+}
+
+impl ConnectionPool {
+    fn close_all(&amp;mut self) {
+        for conn in &amp;mut self.connections {
+            conn.close();
+        }
+    }
+}
+
+// Usage: pool.close_all() before drop
+<span class="boring">}</span></code></pre>
+<p><strong>After</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Drop for ConnectionPool {
+    fn drop(&amp;mut self) {
+        for conn in &amp;mut self.connections {
+            if let Err(e) = conn.close() {
+                eprintln!("Warning: failed to close connection: {}", e);
+            }
+        }
+    }
+}
+
+// Automatic cleanup
+<span class="boring">}</span></code></pre>
+<h3 id="handling-nested-async-drops"><a class="header" href="#handling-nested-async-drops">Handling Nested Async Drops</a></h3>
+<p><strong>Problem</strong>: Drop is not async, but cleanup might need async operations.</p>
+<p><strong>Pattern 1: Spawn cleanup task</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct AsyncResource {
+    handle: Handle,
+    runtime: tokio::runtime::Handle,
+}
+
+impl Drop for AsyncResource {
+    fn drop(&amp;mut self) {
+        let handle = self.handle.clone();
+        self.runtime.spawn(async move {
+            handle.close().await;  // Async cleanup in background
+        });
+        // Drop returns immediately
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pattern 2: Blocking cleanup</strong> (use sparingly):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Drop for AsyncResource {
+    fn drop(&amp;mut self) {
+        tokio::task::block_in_place(|| {
+            futures::executor::block_on(async {
+                self.handle.close().await;
+            })
+        });
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Pattern 3: Explicit async shutdown</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct AsyncResource {
+    handle: Option&lt;Handle&gt;,
+}
+
+impl AsyncResource {
+    async fn shutdown(&amp;mut self) {
+        if let Some(handle) = self.handle.take() {
+            handle.close().await;
+        }
+    }
+}
+
+impl Drop for AsyncResource {
+    fn drop(&amp;mut self) {
+        if self.handle.is_some() {
+            eprintln!("Warning: AsyncResource dropped without shutdown()");
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="custom-drop-in-trait-objects"><a class="header" href="#custom-drop-in-trait-objects">Custom Drop in Trait Objects</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Resource {
+    fn cleanup(&amp;mut self);
+}
+
+struct ResourceBox {
+    resource: Box&lt;dyn Resource&gt;,
+}
+
+impl Drop for ResourceBox {
+    fn drop(&amp;mut self) {
+        self.resource.cleanup();  // Dynamic dispatch
+        // Box&lt;dyn Resource&gt; drops after, freeing memory
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="drop-order-changes-and-backward-compatibility"><a class="header" href="#drop-order-changes-and-backward-compatibility">Drop Order Changes and Backward Compatibility</a></h3>
+<p><strong>Problem</strong>: Field reordering changes drop order.</p>
+<p><strong>Before</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Service {
+    logger: Logger,      // Drops first
+    database: Database,  // Drops second
+}
+<span class="boring">}</span></code></pre>
+<p><strong>After</strong> (fields reordered):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Service {
+    database: Database,  // Now drops first!
+    logger: Logger,      // Drops second
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Impact</strong>: If Database::drop() logs errors, but Logger already closed, logs are lost.</p>
+<p><strong>Solution: Explicit drop order</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Drop for Service {
+    fn drop(&amp;mut self) {
+        // Explicit, documented order (won't change with field reordering)
+        drop(&amp;mut self.database);  // Database logs errors
+        drop(&amp;mut self.logger);    // Logger closes last
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="real-world-framework-examples"><a class="header" href="#real-world-framework-examples">Real-World Framework Examples</a></h3>
+<p><strong>Actix-Web Server Shutdown</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Simplified actix-web pattern
+struct Server {
+    acceptor: Acceptor,
+    workers: Vec&lt;Worker&gt;,
+    system: System,
+}
+
+impl Drop for Server {
+    fn drop(&amp;mut self) {
+        // 1. Stop accepting new connections
+        self.acceptor.stop();
+
+        // 2. Drain workers
+        for worker in &amp;mut self.workers {
+            worker.shutdown_graceful();
+        }
+
+        // 3. Shutdown system
+        self.system.stop();
+
+        // Fields drop in order after this:
+        // acceptor, workers, system
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Tokio Runtime Cleanup</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Simplified tokio pattern
+pub struct Runtime {
+    blocking_pool: ThreadPool,
+    scheduler: Scheduler,
+}
+
+impl Drop for Runtime {
+    fn drop(&amp;mut self) {
+        // Shutdown scheduler first (stops scheduling new work)
+        self.scheduler.shutdown();
+
+        // Then blocking pool (waits for blocking tasks)
+        self.blocking_pool.shutdown_timeout(Duration::from_secs(10));
+
+        // If timeout, remaining tasks are cancelled
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="key-takeaways-for-framework-refactoring"><a class="header" href="#key-takeaways-for-framework-refactoring">Key Takeaways for Framework Refactoring</a></h2>
+<h3 id="critical-principles"><a class="header" href="#critical-principles">Critical Principles</a></h3>
+<ol>
+<li><strong>Drop is not async</strong>: Design explicit async shutdown methods for async resources.</li>
+<li><strong>Drop order matters</strong>: Field reordering changes cleanup sequence.</li>
+<li><strong>Never panic in drop</strong>: Log errors, don’t propagate them.</li>
+<li><strong>Use ManuallyDrop for complex ownership</strong>: When Rust’s automatic drop is wrong.</li>
+<li><strong>Explicit drop() for clarity</strong>: Make cleanup order visible in complex code.</li>
+</ol>
+<h3 id="refactoring-checklist"><a class="header" href="#refactoring-checklist">Refactoring Checklist</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"> Identify all manual cleanup code (search for <code>close()</code>, <code>shutdown()</code>, <code>cleanup()</code>)</li>
+<li><input disabled="" type="checkbox"> Determine drop order dependencies (what must cleanup first?)</li>
+<li><input disabled="" type="checkbox"> Add Drop implementations with error handling (no panics)</li>
+<li><input disabled="" type="checkbox"> Test drop behavior during panics (<code>#[should_panic]</code> tests)</li>
+<li><input disabled="" type="checkbox"> Document drop order in comments if non-obvious</li>
+<li><input disabled="" type="checkbox"> Check for async cleanup (needs explicit async shutdown method)</li>
+<li><input disabled="" type="checkbox"> Verify backward compatibility (existing cleanup methods still work)</li>
+<li><input disabled="" type="checkbox"> Add deprecation warnings for manual cleanup</li>
+<li><input disabled="" type="checkbox"> Monitor for resource leaks in testing (use leak detectors)</li>
+</ul>
+<h3 id="common-refactoring-patterns"><a class="header" href="#common-refactoring-patterns">Common Refactoring Patterns</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Pattern</th><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td>Manual → RAII</td><td><code>obj.cleanup()</code> explicit call</td><td><code>impl Drop</code> automatic</td></tr>
+<tr><td>Explicit → Implicit</td><td>Ordered cleanup calls</td><td>Field order or Drop impl</td></tr>
+<tr><td>Sync → Async</td><td>Blocking cleanup in drop</td><td>Async shutdown + drop warning</td></tr>
+<tr><td>Single → Nested</td><td>Flat structure</td><td>Nested drops (field order)</td></tr>
+<tr><td>Raw → Safe</td><td>FFI manual free</td><td>Drop wrapper with safety</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>Drop semantics are foundational to Rust’s resource management model. Understanding drop execution timing, ordering, panic behavior, and compiler optimizations enables you to:</p>
+<ul>
+<li><strong>Refactor legacy code</strong> to use RAII patterns safely</li>
+<li><strong>Debug resource leaks</strong> by analyzing drop chains</li>
+<li><strong>Optimize performance</strong> by understanding drop elision</li>
+<li><strong>Design FFI wrappers</strong> that correctly manage C resources</li>
+<li><strong>Build async frameworks</strong> that handle cleanup properly</li>
+</ul>
+<p>The examples in this chapter, drawn from real projects in this repository (libgit2-rs-safe, gap-buffer, spawn-blocking), demonstrate production-grade drop patterns. Apply these principles when refactoring frameworks to ensure resource safety and maintain backward compatibility.</p>
+<p><strong>Next Steps</strong>: Review the drop implementations in <code>/home/user/rust-programming-examples/libgit2-rs-safe/src/git/mod.rs</code> and <code>/home/user/rust-programming-examples/gap-buffer/src/lib.rs</code> to see these patterns in action.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="13-unsafe-rust-memory-layout.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="15-lifetime-variance-subtyping.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="13-unsafe-rust-memory-layout.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="15-lifetime-variance-subtyping.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
