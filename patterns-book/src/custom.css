@@ -1,0 +1,66 @@
+/* Custom styles for Rust Patterns book */
+
+/* Alexander-style diamond separators */
+.content p:contains("◆ ◆ ◆") {
+    text-align: center;
+    font-size: 1.2em;
+    letter-spacing: 0.5em;
+    margin: 2em 0;
+    color: #666;
+}
+
+/* Pattern titles */
+.content h1 {
+    border-bottom: 3px solid #a72145;
+    padding-bottom: 0.5em;
+}
+
+/* Italic illustration descriptions */
+.content > p:first-of-type em {
+    display: block;
+    font-style: italic;
+    color: #555;
+    border-left: 3px solid #ddd;
+    padding-left: 1em;
+    margin: 1em 0;
+}
+
+/* Therefore: solution blocks */
+.content p strong:first-child {
+    color: #a72145;
+}
+
+/* Code blocks with rust syntax */
+pre code.language-rust {
+    background: #f5f5f5;
+    border-left: 3px solid #a72145;
+}
+
+/* Admonish blocks custom styling */
+.admonition {
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+/* Pattern cross-references */
+a[href*="patterns/"] {
+    font-weight: 500;
+}
+
+/* Print styles */
+@media print {
+    .content h1 {
+        page-break-before: always;
+    }
+
+    pre code {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .nav-chapters,
+    .nav-wrapper,
+    .menu-bar {
+        display: none !important;
+    }
+}

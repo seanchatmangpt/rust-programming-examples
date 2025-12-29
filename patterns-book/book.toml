@@ -1,0 +1,41 @@
+[book]
+title = "Rust Patterns: An Alexander-Style Pattern Language"
+authors = ["Programming Rust Examples Contributors"]
+description = "A pattern language for Rust programming, inspired by Christopher Alexander's approach to design patterns"
+language = "en"
+
+[build]
+build-dir = "book"
+
+# =============================================================================
+# HTML Output
+# =============================================================================
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "coal"
+git-repository-url = "https://github.com/ProgrammingRust/code-examples"
+additional-js = ["mermaid.min.js", "mermaid-init.js", "mathjax-init.js"]
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = true
+copy-js = true
+
+[output.html.search]
+enable = true
+limit-results = 30
+boost-title = 2
+expand = true
+
+# =============================================================================
+# Preprocessors
+# =============================================================================
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+# Math rendering via MathJax (included in additional-js)
+# KaTeX preprocessor has compatibility issues with current mdbook
